@@ -207,7 +207,11 @@ def test_folding_is_still_request_only():
         ("Fix this Unity performance bottleneck", "unity-sample",
          "performance-profiling-method"),
         ("Build an authentication system", "web-next-sample",
-         "client-server-trust"),
+         "web-authentication"),
+        ("Create an inventory system in Godot", "godot-sample",
+         "godot-project-conventions"),
+        ("Debug my character controller", "godot-sample",
+         "godot-character-controllers"),
     ],
 )
 def test_readme_example_requests_route_correctly(

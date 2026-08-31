@@ -51,7 +51,7 @@ demands evidence, and review the result adversarially before calling it done.
 
 | | Count | What it is |
 |---|---|---|
-| **Skills** | 67 | Procedural knowledge, loaded on demand |
+| **Skills** | 71 | Procedural knowledge, loaded on demand |
 | **Agents** | 15 | Specialists with defined responsibilities |
 | **Workflows** | 8 | Repeatable procedures, usable as slash commands |
 | **Adapters** | 6 | Platform detection + routing manifests |
@@ -59,7 +59,7 @@ demands evidence, and review the result adversarially before calling it done.
 
 **Skills** split into 29 engine-agnostic core skills — profiling method,
 root-cause debugging, architecture, the client-server trust rule, rendering
-fundamentals — and 38 platform skills that specialise them. Composition, not
+fundamentals — and 42 platform skills that specialise them. Composition, not
 duplication: `unreal-performance-profiling` states the Unreal-specific part and
 *requires* `performance-profiling-method` for the method itself.
 
@@ -79,10 +79,10 @@ confirm the work.
 |---|---|---|---|
 | **Unreal Engine** | 8 | `*.uproject` | Engine version, C++ modules, GAS |
 | **Unity** | 7 | `ProjectSettings/ProjectVersion.txt` | Editor version, **render pipeline**, packages |
-| **Godot** | 5 | `project.godot` | **Major version (3.x vs 4.x)**, renderer |
+| **Godot** | 7 | `project.godot` | **Major version (3.x vs 4.x)**, renderer |
 | **Roblox Studio** | 6 | `*.rbxl`, `default.project.json` | Rojo vs Studio workflow, toolchain, Luau mode |
 | **Minecraft** | 7 | `gradle.properties`, loader metadata | **Loader**, MC version, mappings, Java |
-| **Web** | 5 | `package.json` + lockfile | Framework majors, package manager, test runner |
+| **Web** | 7 | `package.json` + lockfile | Framework majors, package manager, test runner |
 
 The bolded facts are the ones that make otherwise-correct code wrong. They are
 extracted automatically, and the detector reports which file each came from.
@@ -262,7 +262,7 @@ false-positive checks), skill selection and context isolation (19 scenario
 tests), validation (19 tests), install (17 tests), and all six platform entry
 skills plus `roblox-security`.
 
-**Partial:** platform skill coverage. Unreal has 8, Unity and Minecraft 7 each, Roblox 6, Godot and Web 5 each. The [roadmap](docs/roadmap.md) lists the planned skills per
+**Partial:** platform skill coverage. Unreal has 8; Unity, Minecraft, Godot and Web have 7 each; Roblox has 6. The [roadmap](docs/roadmap.md) lists the planned skills per
 platform. Core coverage is missing several planned gamedev skills — inventory, quests, dialogue, game AI, procedural generation, audio,
 animation — and `asset-optimization`, `loading-and-streaming`, `ci-cd-pipelines`
 and `technical-documentation`.
