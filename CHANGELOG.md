@@ -32,10 +32,11 @@ coverage is partial and tracked in [docs/roadmap.md](docs/roadmap.md).
 
 ### Added — content
 
-- **60 skills**: 28 engine-agnostic core skills across programming, gamedev,
-  graphics, performance, production and security; 32 platform skills.
-- **6 platform adapters**: Unreal, Unity, Godot, Roblox, Minecraft, Web — each
-  with detection signals, version extraction and routing.
+- **71 skills**: 29 engine-agnostic core skills across programming, gamedev,
+  graphics, performance, production and security; 42 platform skills.
+- **6 platform adapters**: Unreal (8 skills), Unity (7), Godot (7),
+  Minecraft (7), Web (7), Roblox (6) — each with detection signals, version
+  extraction and routing.
 - **15 agents**: orchestrator, architect, programmer, debugger, reviewer, QA,
   performance, graphics, security, plus one specialist per platform.
 - **8 workflows**: `build-feature`, `fix-bug`, `optimize`, `review`,
@@ -55,20 +56,24 @@ coverage is partial and tracked in [docs/roadmap.md](docs/roadmap.md).
 - `uad install` — installation into five verified client targets, with platform
   filtering, namespacing, symlink or copy, dry run and uninstall.
 - `uad list`, `uad doctor`.
+- `tools/audit.py` — skill-quality linting: runnable validation steps, real
+  version awareness in platform skills, no absolute claims about moving APIs.
 - `tools/check_links.py` — relative link checking across all Markdown.
 - Zero runtime dependencies: `tools/uad/miniyaml.py` implements the YAML subset
   the toolkit needs, so it runs on a bare Python 3.9+ install.
 
 ### Added — verification
 
-- **108 tests**: YAML parser (14), detection (23), scenarios (19), selector
-  precision (19), validation (19), installation (14).
+- **118 tests**: YAML parser (14), detection (23), scenarios (19), selector
+  precision (27), validation (19), installation (14) — including one asserting
+  that every example request advertised in the README routes correctly.
 - The validator has negative tests asserting it rejects each defect class it
   claims to catch.
 - Detection has false-positive tests asserting no fixture matches a platform it
   is not.
 - GitHub Actions CI across Linux, macOS and Windows on Python 3.9 and 3.12,
-  running validation, tests, an install smoke test and the link check.
+  running validation, the quality audit, tests, an install smoke test and the
+  link check.
 
 ### Fixed during development
 
@@ -86,6 +91,10 @@ regression tests:
   performance request gave Enhanced Input and the ability system a name match.
   Platform vocabulary is now excluded from relevance scoring, since detection
   has already established the platform.
+- **"Optimize" never reached a skill named "...-performance-..."**, so
+  `unreal-performance-profiling` did not load for a request the README
+  advertises. Synonyms may now fold to several canonical terms, and a test
+  asserts every advertised example request routes correctly.
 - **Synonym folding was applied to skill vocabulary**, so
   `multiplayer-networking` — tagged "lag compensation", where lag means latency
   — matched frame-rate questions. Folding now applies to the request only.
@@ -100,11 +109,12 @@ regression tests:
 
 ### Known limitations
 
-- Platform skill coverage is uneven: Unity and Minecraft have 7 skills each,
-  Roblox has 3. See the roadmap.
-- Several planned core skills are absent, including save systems, inventory,
-  quests, dialogue, game AI, procedural generation, audio, animation, asset
-  optimisation, loading and streaming, CI/CD and technical documentation.
+- Platform coverage is even but partial: 42 skills against roughly 90 planned.
+  Each pack carries its entry skill plus the areas where a mistake is most
+  expensive; the rest is listed in the roadmap.
+- Several planned core skills are absent, including inventory, quests, dialogue,
+  game AI, procedural generation, audio, animation, asset optimisation, loading
+  and streaming, CI/CD and technical documentation.
 - The `gemini-cli` install path follows the documented convention but was not
   verified; `uad doctor` marks it as such.
 - Claude Code plugin packaging is not included. The nested `skills/` layout was
