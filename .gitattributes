@@ -1,0 +1,16 @@
+# Normalise line endings so cross-platform contributors do not produce
+# whole-file diffs. This repository is text-only apart from generated fixtures.
+* text=auto eol=lf
+
+# Shell scripts must keep LF or they fail to execute on Unix.
+*.sh text eol=lf
+
+# PowerShell is happiest with CRLF on Windows.
+*.ps1 text eol=crlf
+
+# Treat these as text for diffing even though tooling reads them.
+*.md      text diff=markdown
+*.py      text diff=python
+*.yaml    text
+*.yml     text
+*.json    text

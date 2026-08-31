@@ -1,0 +1,69 @@
+# Godot platform adapter.
+# Detection rules, version extraction and skill routing for Godot projects.
+
+platform: godot
+title: Godot Engine
+aliases: [godot, gdscript]
+languages: [gdscript, csharp]
+entry_skills: [godot-project-conventions]
+
+detect:
+  signals:
+    - glob: 'project.godot'
+      weight: 100
+      depth: 3
+      note: 'Godot project manifest - definitive marker'
+    - glob: '*.tscn'
+      weight: 45
+      note: 'Godot scene files'
+    - glob: '*.gd'
+      weight: 40
+      note: 'GDScript source files'
+    - glob: '*.tres'
+      weight: 30
+      note: 'Godot resource files'
+    - glob: 'export_presets.cfg'
+      weight: 30
+      depth: 2
+      note: 'Godot export configuration'
+    - glob: '*.gdextension'
+      weight: 35
+      note: 'GDExtension binding manifest'
+    - glob: '*.import'
+      weight: 20
+      note: 'Godot asset import metadata'
+
+  version:
+    - label: engine
+      file: 'project.godot'
+      depth: 3
+      pattern: 'config/features\s*=\s*PackedStringArray\("([0-9.]+)"'
+      note: 'Godot 4.x records its feature version here'
+    - label: config_version
+      file: 'project.godot'
+      depth: 3
+      pattern: 'config_version\s*=\s*(\d+)'
+      note: 'config_version 5 means Godot 4.x, 4 means Godot 3.x'
+    - label: dotnet
+      file: '*.csproj'
+      pattern: '(Godot(?:Sharp)?)'
+      note: 'C# support is in use'
+    - label: renderer
+      file: 'project.godot'
+      depth: 3
+      pattern: 'renderer/rendering_method\s*=\s*"([^"]+)"'
+
+  required_facts: [config_version]
+
+version_gate:
+  ask_if_unresolved:
+    - 'Which Godot major version does this project target (3.x or 4.x)?'
+  notes: |
+    Godot 3 and Godot 4 are different APIs sharing a name. config_version=5 means
+    4.x, config_version=4 means 3.x. KinematicBody/move_and_slide(velocity) is 3.x;
+    CharacterBody2D/3D with a velocity property is 4.x. Never mix the two.
+    Within 4.x, check config/features for the minor version before using recent
+    APIs; Jolt became the default 3D physics engine in 4.6.
+
+knowledge:
+  reference: ../../../knowledge/version-matrix.yaml

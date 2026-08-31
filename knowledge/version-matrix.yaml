@@ -1,0 +1,157 @@
+# Version reference matrix.
+#
+# WHAT THIS IS FOR: orientation, not authority. It records what was current when
+# this file was last reviewed so an agent can recognise whether a project is
+# recent or lagging, and knows which facts are version-gated.
+#
+# IT IS NOT A SOURCE OF TRUTH FOR ANY PROJECT. Always read the version from the
+# project's own files (see `detect_from` below). A project pinned to an older
+# release needs that release's API, and assuming the newest is the assumption
+# most likely to be wrong, because real projects lag.
+#
+# Keeping this current is a maintenance task; see CONTRIBUTING.md.
+
+reviewed: "2026-08"
+disclaimer: >
+  Entries reflect the state at the review date. Verify anything version-sensitive
+  against the project and against current upstream documentation before relying
+  on it.
+
+platforms:
+
+  unreal:
+    title: Unreal Engine
+    detect_from: "*.uproject -> EngineAssociation"
+    detect_note: >
+      A GUID rather than a version string means a registered source build; read
+      Engine/Build/Build.version from the engine directory instead.
+    current_stable: "5.7"
+    line: "5.x"
+    version_gated:
+      - "Nanite Foliage - experimental in 5.7"
+      - "MegaLights - beta in 5.7, experimental earlier"
+      - "PCG and Substrate - production-ready in 5.7, earlier status varies"
+      - "Lumen - converging on hardware ray tracing as the single path"
+      - "Enhanced Input - the current input system; legacy input still present"
+      - "World Partition - replaced the older level streaming workflow"
+    never_assume: >
+      Feature status changes between minor versions. A feature that is
+      production-ready in 5.7 may be experimental or absent in 5.3.
+
+  unity:
+    title: Unity
+    detect_from: "ProjectSettings/ProjectVersion.txt -> m_EditorVersion"
+    detect_note: >
+      Unity 6 reads as 6000.x.y. Also read Packages/manifest.json for the render
+      pipeline and key packages.
+    current_lts: "6.3 LTS"
+    line: "6000.x"
+    version_gated:
+      - "URP - Unity's stated investment target"
+      - "HDRP - maintenance only; no new features planned"
+      - "Built-in Render Pipeline - deprecation began in 6.5"
+      - "Input System package vs legacy Input Manager - both exist; check which"
+      - "UI Toolkit vs uGUI - both supported; check which the project uses"
+    critical_fact: >
+      The render pipeline changes what is correct. Shaders, lighting, camera
+      setup and post-processing do not port between URP, HDRP and Built-in.
+      Neither URP nor HDRP in the manifest means Built-in.
+
+  godot:
+    title: Godot Engine
+    detect_from: "project.godot -> config_version and config/features"
+    detect_note: "config_version=5 means Godot 4.x; config_version=4 means 3.x."
+    current_stable: "4.6.3"
+    also_released: "4.7"
+    line: "4.x"
+    version_gated:
+      - "Jolt - default 3D physics engine from 4.6"
+      - "Screen space reflections - rewritten in 4.6"
+      - "LibGodot - engine embeddable as a library, from 4.6"
+    critical_fact: >
+      Godot 3 and Godot 4 share a name and almost no API. KinematicBody and
+      move_and_slide(velocity) are 3.x; CharacterBody2D/3D with a velocity
+      property and move_and_slide() taking no argument are 4.x. Spatial is 3.x,
+      Node3D is 4.x. yield() is 3.x, await is 4.x. Never mix them.
+
+  roblox:
+    title: Roblox Studio
+    detect_from: "default.project.json, *.rbxl / *.rbxlx, rokit.toml, .luaurc"
+    versioning: rolling
+    versioning_note: >
+      Roblox ships a single rolling engine version. There is no version to pin
+      and no version-gated API table to maintain. What must be established
+      instead is the workflow.
+    critical_fact: >
+      A Rojo filesystem project is edited as source files that sync into Studio.
+      A Studio-only place has no files to edit, and writing .luau files produces
+      work the developer cannot use. Establish which before proposing edits.
+    deprecated_signals:
+      - "wait() and spawn() - superseded by task.wait() and task.spawn()"
+      - "Humanoid:LoadAnimation - superseded by Animator:LoadAnimation"
+      - "Their presence usually indicates code copied from old tutorials, which typically also carry client authority"
+
+  minecraft:
+    title: Minecraft Modding
+    detect_from: "gradle.properties, fabric.mod.json, META-INF/neoforge.mods.toml"
+    current_line: "1.21.x"
+    loaders:
+      neoforge:
+        status: "Default loader for 1.20.5+; dominant in modern modpacks"
+        origin: "Community hard fork of Forge, 2023"
+        metadata_file: "src/main/resources/META-INF/neoforge.mods.toml"
+        recent_versions: "tracking 1.21.1, 1.21.6, 1.21.9, 1.21.11"
+      fabric:
+        status: "Lighter, faster to update; strong performance-mod ecosystem"
+        metadata_file: "src/main/resources/fabric.mod.json"
+      forge:
+        status: "The older lineage NeoForge forked from; still used on older versions"
+        metadata_file: "META-INF/mods.toml"
+      quilt:
+        status: "Minority fork of Fabric"
+        metadata_file: "quilt.mod.json"
+    mappings:
+      - "Yarn - typically with Fabric"
+      - "Mojang official - permitted since 1.16.5"
+      - "Parchment - Mojang names plus community parameter names"
+    critical_fact: >
+      Loader plus game version plus mappings is one indivisible fact. Fabric and
+      NeoForge never shared an API. Registration, networking, data generation and
+      rendering have all changed shape across recent versions. Code for the wrong
+      combination does not compile, or compiles and misbehaves.
+    api_volatility: high
+    api_volatility_note: >
+      Exact class and method signatures change every version and are renamed by
+      mappings. Teach the shape of the solution and the procedure for finding the
+      current API in the project's own decompiled sources. State the version any
+      concrete signature came from.
+
+  web:
+    title: Web Development
+    detect_from: "package.json AND the lockfile"
+    detect_note: >
+      The manifest states ranges; the lockfile records what is installed. Audit
+      and reason about the lockfile.
+    versioning: "fast-moving; majors break"
+    version_gated:
+      - "Next.js - routing and caching semantics changed materially across majors"
+      - "React - effect and concurrency behaviour differs by major"
+      - "Vue 3 Composition API vs Options API"
+      - "Svelte 5 runes vs earlier reactivity"
+      - "Node - ESM vs CJS, and which built-ins are available"
+    critical_fact: >
+      Never assume the newest release. Read the installed version and write for
+      it. A project pinned to an older major needs that major's API.
+
+# Signals that a project is lagging, and what that implies.
+lag_signals:
+  - signal: "Engine version several minor releases behind current"
+    implication: "Recent features are unavailable; check before proposing them"
+  - signal: "Built-in Render Pipeline in a Unity project"
+    implication: "Deprecating; migration is a real cost to plan, not a quick change"
+  - signal: "config_version=4 in project.godot"
+    implication: "Godot 3.x - a different API surface entirely"
+  - signal: "META-INF/mods.toml rather than neoforge.mods.toml"
+    implication: "Forge lineage, likely an older Minecraft version"
+  - signal: "No lockfile in a Node project"
+    implication: "Builds are not reproducible; this is itself a finding"

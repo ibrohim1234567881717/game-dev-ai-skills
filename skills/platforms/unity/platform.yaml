@@ -1,0 +1,81 @@
+# Unity platform adapter.
+# Detection rules, version extraction and skill routing for Unity projects.
+
+platform: unity
+title: Unity
+aliases: [unity, unity3d]
+languages: [csharp]
+entry_skills: [unity-project-conventions]
+
+detect:
+  signals:
+    - glob: 'ProjectVersion.txt'
+      weight: 100
+      depth: 3
+      note: 'ProjectSettings/ProjectVersion.txt - definitive marker'
+    - dir: 'ProjectSettings'
+      weight: 45
+      depth: 2
+      note: 'Unity project settings folder'
+    - glob: '*.asmdef'
+      weight: 40
+      note: 'Assembly definition files are Unity-only'
+    - glob: '*.unity'
+      weight: 40
+      note: 'Unity scene files'
+    - glob: 'manifest.json'
+      weight: 25
+      depth: 3
+      contains: 'com\.unity\.'
+      note: 'Packages/manifest.json listing Unity packages'
+    - glob: '*.prefab'
+      weight: 25
+      note: 'Unity prefab assets'
+    - dir: 'Assets'
+      weight: 15
+      depth: 2
+      note: 'Assets root (weak on its own)'
+
+  version:
+    - label: editor
+      file: 'ProjectVersion.txt'
+      depth: 3
+      pattern: 'm_EditorVersion:\s*(\S+)'
+    - label: render_pipeline_urp
+      file: 'manifest.json'
+      depth: 3
+      pattern: 'com\.unity\.render-pipelines\.universal"\s*:\s*"([^"]+)"'
+    - label: render_pipeline_hdrp
+      file: 'manifest.json'
+      depth: 3
+      pattern: 'com\.unity\.render-pipelines\.high-definition"\s*:\s*"([^"]+)"'
+    - label: input_system
+      file: 'manifest.json'
+      depth: 3
+      pattern: 'com\.unity\.inputsystem"\s*:\s*"([^"]+)"'
+    - label: netcode
+      file: 'manifest.json'
+      depth: 3
+      pattern: 'com\.unity\.netcode\.gameobjects"\s*:\s*"([^"]+)"'
+    - label: entities
+      file: 'manifest.json'
+      depth: 3
+      pattern: 'com\.unity\.entities"\s*:\s*"([^"]+)"'
+    - label: addressables
+      file: 'manifest.json'
+      depth: 3
+      pattern: 'com\.unity\.addressables"\s*:\s*"([^"]+)"'
+
+  required_facts: [editor]
+
+version_gate:
+  ask_if_unresolved:
+    - 'Which Unity version and render pipeline does this project use?'
+  notes: |
+    Neither URP nor HDRP in the manifest means the Built-in Render Pipeline.
+    Shader code, lighting setup and post-processing differ per pipeline and do
+    not port across without rewriting. Resolve the pipeline before touching
+    anything visual.
+
+knowledge:
+  reference: ../../../knowledge/version-matrix.yaml

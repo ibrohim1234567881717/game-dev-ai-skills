@@ -1,0 +1,118 @@
+# Minecraft modding platform adapter.
+# Loader, game version and mappings must all be resolved before any code is
+# written - the same feature has a different API in every combination.
+
+platform: minecraft
+title: Minecraft Modding
+# Aliases route a request that names the platform, and are excluded from
+# relevance scoring: "mod" identifies the platform, not the task within it.
+aliases: [minecraft, fabric, neoforge, forge, quilt, mcmod, mod, mods, modding, loader]
+languages: [java, kotlin]
+entry_skills: [minecraft-project-conventions]
+
+detect:
+  signals:
+    - glob: 'fabric.mod.json'
+      weight: 100
+      note: 'Fabric mod metadata - definitive marker'
+    - glob: 'neoforge.mods.toml'
+      weight: 100
+      note: 'NeoForge mod metadata - definitive marker'
+    - glob: 'mods.toml'
+      weight: 90
+      note: 'Forge mod metadata (legacy lineage)'
+    - glob: 'quilt.mod.json'
+      weight: 90
+      note: 'Quilt mod metadata'
+    - glob: 'gradle.properties'
+      weight: 45
+      depth: 2
+      contains: 'minecraft_version|mod_id|neoforge|fabric'
+      note: 'Gradle properties naming Minecraft coordinates'
+    - glob: 'build.gradle'
+      weight: 35
+      depth: 2
+      contains: 'fabric-loom|net\.neoforged|minecraftforge|architectury'
+      note: 'Loom or NeoGradle build script'
+    - glob: 'build.gradle.kts'
+      weight: 35
+      depth: 2
+      contains: 'fabric-loom|net\.neoforged|minecraftforge|architectury'
+      note: 'Kotlin DSL build script for a mod'
+
+  version:
+    - label: loader
+      file: 'neoforge.mods.toml'
+      value: 'neoforge'
+    - label: loader
+      file: 'fabric.mod.json'
+      value: 'fabric'
+    - label: loader
+      file: 'quilt.mod.json'
+      value: 'quilt'
+    - label: loader
+      file: 'mods.toml'
+      value: 'forge'
+    - label: minecraft
+      file: 'gradle.properties'
+      depth: 2
+      pattern: 'minecraft_version\s*=\s*(\S+)'
+    - label: minecraft
+      file: 'fabric.mod.json'
+      pattern: '"minecraft"\s*:\s*"([^"]+)"'
+    - label: loader_version
+      file: 'gradle.properties'
+      depth: 2
+      pattern: 'loader_version\s*=\s*(\S+)'
+    - label: neoforge_version
+      file: 'gradle.properties'
+      depth: 2
+      pattern: 'neoforge_version\s*=\s*(\S+)'
+    # Ordered most-specific first: the first pattern to resolve wins the label.
+    - label: mappings
+      file: 'gradle.properties'
+      depth: 2
+      pattern: 'yarn_mappings\s*=\s*(\S+)'
+    - label: mappings
+      file: 'gradle.properties'
+      depth: 2
+      pattern: 'parchment_mappings_version\s*=\s*(\S+)'
+    - label: mappings
+      file: 'gradle.properties'
+      depth: 2
+      pattern: 'mapping_channel\s*=\s*(\S+)'
+    - label: mappings
+      file: 'build.gradle'
+      depth: 2
+      pattern: '(officialMojangMappings|mojang\s*\(\s*\))'
+    - label: mod_id
+      file: 'gradle.properties'
+      depth: 2
+      pattern: 'mod_id\s*=\s*(\S+)'
+    - label: java
+      file: 'gradle.properties'
+      depth: 2
+      pattern: 'java_version\s*=\s*(\S+)'
+
+  # Detection is not complete until these are known. The orchestrator must not
+  # generate registration or networking code while any of them is missing.
+  required_facts: [loader, minecraft]
+
+version_gate:
+  ask_if_unresolved:
+    - 'Which Minecraft version does this mod target?'
+    - 'Which mod loader: Fabric, NeoForge, Forge or Quilt?'
+    - 'Which mappings: Yarn, Mojang official, or Parchment?'
+  notes: |
+    Loader plus game version plus mappings is one indivisible fact. Registration,
+    networking, data generation and rendering all changed shape between recent
+    versions, and Fabric and NeoForge never shared an API. Code written for the
+    wrong combination does not merely warn - it does not compile, or worse, it
+    compiles and misbehaves at runtime.
+
+    Read gradle.properties first; it is the single place a modern mod records
+    every coordinate. If it disagrees with the mod metadata file, trust
+    gradle.properties for the toolchain and flag the mismatch.
+
+knowledge:
+  reference: ../../../knowledge/version-matrix.yaml

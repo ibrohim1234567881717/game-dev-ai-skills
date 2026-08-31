@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate skills (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.9", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      # No dependencies are installed on purpose. The toolkit ships its own
+      # YAML subset parser, and this job is what proves it stays that way.
+      - name: Report environment
+        shell: bash
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python tools/uad.py doctor
+
+      - name: Validate repository (strict)
+        shell: bash
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python tools/uad.py validate --strict
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pytest
+
+      - name: Build fixtures
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python tests/make_fixtures.py
+
+      - name: Run tests
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python -m pytest tests/ -q
+
+  install-smoke:
+    name: Install smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install every target into a scratch directory
+        shell: bash
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          set -euo pipefail
+          for target in claude-code codex copilot cursor gemini-cli generic; do
+            python tools/uad.py install \
+              --target "$target" \
+              --dest "/tmp/uad-install/$target" \
+              --platforms godot web
+          done
+          test -f /tmp/uad-install/claude-code/skills/godot-project-conventions/SKILL.md
+          test -f /tmp/uad-install/claude-code/agents/orchestrator.md
+          test -f /tmp/uad-install/claude-code/commands/fix-bug.md
+          # Platform filtering must exclude what was not requested.
+          if ls /tmp/uad-install/codex/skills | grep -q '^unreal-'; then
+            echo "platform filter leaked unreal skills into a godot/web install"
+            exit 1
+          fi
+
+      - name: Namespaced install stays spec-compliant
+        shell: bash
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          set -euo pipefail
+          python tools/uad.py install --target generic \
+            --dest /tmp/uad-ns --platforms godot --namespace uad-
+          grep -q '^name: uad-godot-project-conventions' \
+            /tmp/uad-ns/skills/uad-godot-project-conventions/SKILL.md
+
+  links:
+    name: Link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check relative links in all Markdown
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python tools/check_links.py

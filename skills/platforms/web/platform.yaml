@@ -1,0 +1,115 @@
+# Web platform adapter.
+# Core web skills are framework-neutral; framework specifics live in their own
+# skills under skills/platforms/web/frameworks/ so no single file grows unbounded.
+
+platform: web
+title: Web Development
+aliases: [web, frontend, backend, javascript, typescript, node, react, nextjs, vue, svelte]
+languages: [javascript, typescript, html, css]
+entry_skills: [web-project-conventions]
+
+detect:
+  signals:
+    # depth 4 so a web app inside a monorepo still registers, and `contains`
+    # so Unity's embedded package manifests (Packages/com.x/package.json) do
+    # not masquerade as a Node project.
+    - glob: 'package.json'
+      weight: 55
+      depth: 4
+      contains: '"(scripts|devDependencies)"\s*:'
+      note: 'Node package manifest with build scripts or dev dependencies'
+    - glob: 'tsconfig.json'
+      weight: 30
+      depth: 2
+      note: 'TypeScript configuration'
+    - glob: 'index.html'
+      weight: 20
+      depth: 3
+      note: 'HTML entry point'
+    - glob: 'vite.config.*'
+      weight: 40
+      depth: 2
+      note: 'Vite build configuration'
+    - glob: 'next.config.*'
+      weight: 45
+      depth: 2
+      note: 'Next.js configuration'
+    - glob: 'svelte.config.*'
+      weight: 40
+      depth: 2
+      note: 'Svelte configuration'
+    - glob: 'nuxt.config.*'
+      weight: 40
+      depth: 2
+      note: 'Nuxt configuration'
+    - glob: 'astro.config.*'
+      weight: 40
+      depth: 2
+      note: 'Astro configuration'
+    - glob: 'pnpm-lock.yaml'
+      weight: 25
+      depth: 2
+      note: 'pnpm lockfile'
+    - glob: 'package-lock.json'
+      weight: 25
+      depth: 2
+      note: 'npm lockfile'
+    - glob: 'yarn.lock'
+      weight: 25
+      depth: 2
+      note: 'Yarn lockfile'
+    - glob: 'bun.lockb'
+      weight: 25
+      depth: 2
+      note: 'Bun lockfile'
+    - glob: 'deno.json'
+      weight: 40
+      depth: 2
+      note: 'Deno configuration'
+
+  version:
+    - label: runtime
+      file: 'package.json'
+      depth: 2
+      pattern: '"node"\s*:\s*"([^"]+)"'
+    - label: framework_next
+      file: 'package.json'
+      depth: 2
+      pattern: '"next"\s*:\s*"([^"]+)"'
+    - label: framework_react
+      file: 'package.json'
+      depth: 2
+      pattern: '"react"\s*:\s*"([^"]+)"'
+    - label: framework_vue
+      file: 'package.json'
+      depth: 2
+      pattern: '"vue"\s*:\s*"([^"]+)"'
+    - label: framework_svelte
+      file: 'package.json'
+      depth: 2
+      pattern: '"svelte"\s*:\s*"([^"]+)"'
+    - label: typescript
+      file: 'package.json'
+      depth: 2
+      pattern: '"typescript"\s*:\s*"([^"]+)"'
+    - label: package_manager
+      file: 'package.json'
+      depth: 2
+      pattern: '"packageManager"\s*:\s*"([^"]+)"'
+    - label: test_runner
+      file: 'package.json'
+      depth: 2
+      pattern: '"(vitest|jest|playwright|mocha|node:test)"'
+
+  required_facts: []
+
+version_gate:
+  ask_if_unresolved: []
+  notes: |
+    Read the declared dependency ranges rather than assuming the newest release.
+    A project pinned to an older major of a framework needs that major's API.
+    Where a lockfile exists it, not package.json, holds the version actually
+    installed.
+
+knowledge:
+  reference: ../../../knowledge/version-matrix.yaml

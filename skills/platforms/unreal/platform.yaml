@@ -1,0 +1,65 @@
+# Unreal Engine platform adapter.
+# Detection rules, version extraction and skill routing for Unreal projects.
+
+platform: unreal
+title: Unreal Engine
+aliases: [ue, ue4, ue5, unreal, unrealengine]
+languages: [cpp, blueprint]
+entry_skills: [unreal-project-conventions]
+
+detect:
+  signals:
+    - glob: '*.uproject'
+      weight: 100
+      depth: 3
+      note: 'Unreal project descriptor - definitive marker'
+    - glob: '*.uplugin'
+      weight: 60
+      note: 'Unreal plugin descriptor'
+    - glob: 'DefaultEngine.ini'
+      weight: 45
+      note: 'Config/DefaultEngine.ini exists in every Unreal project'
+    - glob: '*.Build.cs'
+      weight: 40
+      note: 'UnrealBuildTool module rules'
+    - glob: '*.Target.cs'
+      weight: 35
+      note: 'UnrealBuildTool target rules'
+    - dir: 'Content'
+      weight: 15
+      depth: 2
+      note: 'Content root (weak on its own)'
+    - glob: '*.uasset'
+      weight: 20
+      note: 'Unreal asset files'
+
+  version:
+    - label: engine
+      file: '*.uproject'
+      depth: 3
+      pattern: '"EngineAssociation"\s*:\s*"([^"]+)"'
+      note: 'A GUID here means a source build - read Engine/Build/Build.version instead'
+    - label: engine_build
+      file: 'Build.version'
+      pattern: '"MajorVersion"\s*:\s*(\d+)'
+    - label: has_cpp
+      file: '*.Build.cs'
+      value: 'yes'
+    - label: gas
+      file: '*.Build.cs'
+      pattern: '(GameplayAbilities)'
+      note: 'Gameplay Ability System is in use'
+
+  required_facts: [engine]
+
+# Facts the agent must resolve before writing version-sensitive code.
+version_gate:
+  ask_if_unresolved:
+    - 'Which Unreal Engine version does this project target?'
+  notes: |
+    EngineAssociation holds either a version string ("5.7") or a GUID pointing at
+    a registered source build. On a GUID, read Engine/Build/Build.version from the
+    engine directory, or ask. Never assume the newest engine.
+
+knowledge:
+  reference: ../../../knowledge/version-matrix.yaml

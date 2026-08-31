@@ -1,0 +1,87 @@
+# Roblox Studio platform adapter.
+# Detection rules, toolchain facts and skill routing for Roblox projects.
+
+platform: roblox
+title: Roblox Studio
+aliases: [roblox, luau, rojo]
+languages: [luau]
+entry_skills: [roblox-project-conventions, roblox-security]
+
+detect:
+  signals:
+    - glob: '*.rbxlx'
+      weight: 100
+      note: 'Roblox place file (XML) - definitive marker'
+    - glob: '*.rbxl'
+      weight: 100
+      note: 'Roblox place file (binary) - definitive marker'
+    - glob: 'default.project.json'
+      weight: 90
+      depth: 2
+      note: 'Rojo project manifest'
+    - glob: '*.project.json'
+      weight: 55
+      contains: '"tree"'
+      note: 'Rojo project manifest under another name'
+    - glob: '*.luau'
+      weight: 50
+      note: 'Luau source files'
+    - glob: '.luaurc'
+      weight: 45
+      note: 'Luau language configuration'
+    - glob: 'wally.toml'
+      weight: 40
+      depth: 2
+      note: 'Wally package manifest (Roblox-only)'
+    - glob: 'selene.toml'
+      weight: 30
+      depth: 2
+      contains: 'roblox'
+      note: 'Selene linter configured for the Roblox standard library'
+    - glob: '*.rbxmx'
+      weight: 40
+      note: 'Roblox model file'
+    - glob: 'package.json'
+      weight: 35
+      depth: 2
+      contains: 'roblox-ts'
+      note: 'roblox-ts project - TypeScript compiled to Luau'
+
+  version:
+    - label: toolchain
+      file: 'rokit.toml'
+      depth: 2
+      value: 'rokit'
+    - label: toolchain
+      file: 'aftman.toml'
+      depth: 2
+      value: 'aftman'
+    - label: rojo
+      file: 'rokit.toml'
+      depth: 2
+      pattern: 'rojo\s*=\s*"[^@"]*@?([0-9][^"]*)"'
+    - label: sync_tool
+      file: 'default.project.json'
+      depth: 2
+      value: 'rojo'
+    - label: luau_mode
+      file: '.luaurc'
+      pattern: '"languageMode"\s*:\s*"([^"]+)"'
+    - label: source_language
+      file: 'package.json'
+      depth: 2
+      pattern: '"(roblox-ts)"'
+
+  required_facts: []
+
+version_gate:
+  ask_if_unresolved: []
+  notes: |
+    Roblox ships a single rolling engine version, so there is no engine version
+    to pin. What must be resolved instead is the *workflow*: a Rojo/filesystem
+    project is edited as source files, while a Studio-only project is edited
+    inside Studio and cannot take file edits. Writing .luau files into a
+    Studio-only project produces work the developer cannot use.
+
+knowledge:
+  reference: ../../../knowledge/version-matrix.yaml
