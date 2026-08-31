@@ -16,7 +16,7 @@ reports the live numbers.
 | Validation | Complete, with negative tests |
 | Install | Complete for 5 verified targets |
 | Core skills | 29 of ~42 planned |
-| Platform skills | 35, unevenly distributed |
+| Platform skills | 38, unevenly distributed |
 | Agents | 15, complete |
 | Workflows | 8, complete |
 
@@ -59,16 +59,17 @@ reports the live numbers.
 
 | Platform | Present | Planned |
 |---|---|---|
-| **Unreal** (5) | project conventions, C++ gameplay, Blueprint/C++ boundary, Enhanced Input, GAS | UMG, networking/replication, AI & behaviour trees, Niagara, materials, rendering features, performance profiling, World Partition, data assets, packaging |
+| **Unreal** (8) | project conventions, C++ gameplay, Blueprint/C++ boundary, Enhanced Input, GAS, networking/replication, rendering features, performance profiling | UMG, AI & behaviour trees, Niagara, materials, World Partition, data assets, packaging |
 | **Unity** (7) | project conventions, C# patterns, ScriptableObjects, prefabs & scenes, input system, physics, animation | UI systems, render pipelines, shaders & VFX, Addressables, netcode, performance profiling, mobile optimization, editor tooling, build pipeline |
 | **Godot** (5) | project conventions, GDScript patterns, C# integration, scene composition, signals | resources & data, character controllers, physics, UI controls, animation, shaders, navigation, multiplayer, editor plugins, performance, export |
 | **Roblox** (6) | project conventions, **security**, Luau patterns, client-server architecture, DataStore persistence, monetization | UI, character systems, NPC AI, physics, performance, procedural generation, testing |
 | **Minecraft** (7) | project conventions, mod architecture, blocks & items, entities & mobs, recipes & datagen, worldgen, networking | GUI/screens, rendering & particles, commands & events, config & compatibility, performance, loader portability |
 | **Web** (5) | project conventions, frontend architecture, backend architecture, TypeScript patterns, CSS layout | accessibility, REST API design, database layer, authentication, security, performance, testing, deployment, plus framework skills (React, Next.js, Node, Vue/Svelte) |
 
-The Unreal pack is now the thinnest relative to its planned scope. Roblox
-covers security, the trust boundary, persistence and purchases — the four areas
-where a mistake costs real money or player progress.
+Godot and Web are now the thinnest relative to their planned scope. Unreal
+covers the three areas a project is most likely to need help with — performance,
+replication and the rendering feature set — and Roblox covers security, the
+trust boundary, persistence and purchases.
 
 ## New engine adapters
 
@@ -84,7 +85,7 @@ ecosystem.
 ## Tooling
 
 **Present:** `detect`, `select`, `validate`, `list`, `install`, `doctor`; a
-zero-dependency YAML subset parser; 89 tests; GitHub Actions CI.
+zero-dependency YAML subset parser; 116 tests; GitHub Actions CI.
 
 **Planned:**
 

@@ -50,6 +50,9 @@ STOPWORDS = {
 }
 
 # Words that mean the same thing to a developer but not to a string match.
+# A value may be a tuple when one word should reach several canonical terms:
+# "optimize" is both an optimisation word and a performance word, and a skill
+# named `unreal-performance-profiling` must be reachable from either.
 SYNONYMS = {
     # Inflected forms are listed explicitly rather than stemmed: a stemmer
     # would also collapse words that must stay distinct, and the vocabulary
@@ -62,9 +65,15 @@ SYNONYMS = {
     "hitch": "performance", "hitches": "performance", "hitching": "performance",
     "freeze": "performance", "freezes": "performance", "freezing": "performance",
     "bottleneck": "performance", "bottlenecks": "performance",
-    "optimize": "optimization", "optimise": "optimization",
-    "optimizing": "optimization", "optimising": "optimization",
-    "profiling": "profile", "profiler": "profile",
+    "optimize": ("optimization", "performance"),
+    "optimise": ("optimization", "performance"),
+    "optimizing": ("optimization", "performance"),
+    "optimising": ("optimization", "performance"),
+    "optimization": ("optimization", "performance"),
+    "optimisation": ("optimization", "performance"),
+    "profiling": ("profile", "performance"),
+    "profiler": ("profile", "performance"),
+    "profile": ("profile", "performance"),
     "bug": "debugging", "bugs": "debugging", "crash": "debugging",
     "crashes": "debugging", "crashing": "debugging", "broken": "debugging",
     "breaks": "debugging", "breaking": "debugging",
@@ -156,10 +165,14 @@ def tokenize(text: str, fold: bool = False) -> set:
         word = raw.strip(".")
         if not word or word in STOPWORDS or len(word) < 2:
             continue
+        # The literal is always kept, so exact names like "c#" or "niagara" hit.
         tokens.add(word)
         if fold:
-            # Keep the literal too, so exact names like "c#" or "niagara" hit.
-            tokens.add(SYNONYMS.get(word, word))
+            canonical = SYNONYMS.get(word)
+            if isinstance(canonical, tuple):
+                tokens.update(canonical)
+            elif canonical is not None:
+                tokens.add(canonical)
     return tokens
 
 

@@ -156,3 +156,67 @@ def test_selection_stays_small(fixtures, project):
     """Progressive disclosure means a bounded set, dependencies included."""
     selection = run(fixtures, project, "find and fix a performance problem")
     assert len(selection.selected) <= 16, [s.name for s in selection.selected]
+
+
+# --------------------------------------------------------------------------- #
+# 4. A word may need to reach more than one canonical term
+# --------------------------------------------------------------------------- #
+
+def test_optimize_reaches_performance_skills(fixtures):
+    """"Optimize my Unreal project" did not load unreal-performance-profiling.
+
+    "optimize" folded only to "optimization", so it matched the core
+    optimisation skills by name but never reached a skill named
+    `...-performance-...`. Synonyms may now fold to several canonical terms.
+    """
+    selection = run(
+        fixtures, "unreal-sample", "Optimize my Unreal Engine project"
+    )
+    assert "unreal-performance-profiling" in selection.names
+    assert "performance-profiling-method" in selection.names
+
+
+def test_multi_target_synonyms_expand_to_every_term():
+    tokens = select.tokenize("optimize", fold=True)
+    assert {"optimize", "optimization", "performance"} <= tokens
+
+    # Single-target synonyms still work, and the literal is always kept.
+    tokens = select.tokenize("lag", fold=True)
+    assert {"lag", "performance"} <= tokens
+
+
+def test_folding_is_still_request_only():
+    """The multi-target change must not start expanding skill vocabulary."""
+    assert "performance" not in select.tokenize("optimize")
+    assert "performance" not in select.tokenize("lag")
+
+
+# --------------------------------------------------------------------------- #
+# 5. The requests advertised in the README must actually work
+# --------------------------------------------------------------------------- #
+
+@pytest.mark.parametrize(
+    "request_text,project,must_include",
+    [
+        ("Optimize my Unreal Engine project", "unreal-sample",
+         "unreal-performance-profiling"),
+        ("Find security problems in my Roblox game", "roblox-sample",
+         "roblox-security"),
+        ("Add a custom mob to my Minecraft mod", "minecraft-fabric-sample",
+         "minecraft-entities-mobs"),
+        ("Fix this Unity performance bottleneck", "unity-sample",
+         "performance-profiling-method"),
+        ("Build an authentication system", "web-next-sample",
+         "client-server-trust"),
+    ],
+)
+def test_readme_example_requests_route_correctly(
+    fixtures, request_text, project, must_include
+):
+    """These exact strings are advertised in the README as things that work.
+
+    A request the front page promises and the selector fumbles is worse than
+    one that was never claimed.
+    """
+    selection = run(fixtures, project, request_text)
+    assert must_include in selection.names, selection.names
