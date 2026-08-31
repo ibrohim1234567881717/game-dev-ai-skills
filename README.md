@@ -1,5 +1,11 @@
 # Universal AI Dev
 
+[![CI](https://github.com/ibrohim1234567881717/game-dev-ai-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/ibrohim1234567881717/game-dev-ai-skills/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Agent Skills](https://img.shields.io/badge/format-Agent%20Skills-5A67D8)](https://agentskills.io)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
+[![No dependencies](https://img.shields.io/badge/dependencies-none-success)](tools/uad/miniyaml.py)
+
 **Skills, agents and workflows that make AI coding assistants competent at game
 and software development — across Unreal, Unity, Godot, Roblox, Minecraft
 modding and the web.**
@@ -285,6 +291,18 @@ engine APIs move and this repository will drift.
 Read [CONTRIBUTING.md](CONTRIBUTING.md). The bar is simple: a skill must make an
 agent measurably better at a real task. Fifty skills that do that beat five
 hundred that restate documentation.
+
+**Where help is most useful right now**, in order of leverage:
+
+1. **A new engine adapter** — Bevy, Three.js, Phaser, GameMaker, Blender. One
+   directory, no code changes, and the whole 28-skill core library immediately
+   applies to that ecosystem. See [docs/adding-a-platform.md](docs/adding-a-platform.md).
+2. **Roblox and Unreal skills** — the thinnest packs relative to their scope.
+3. **Corrections.** Engine APIs move; a wrong claim fixed is worth more than a
+   new skill added.
+
+Issues labelled `good first issue` are scoped so you can start without reading
+the whole repository.
 
 ## License
 

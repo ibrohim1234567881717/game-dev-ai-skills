@@ -5,7 +5,7 @@ license: MIT
 metadata:
   uad-layer: platform
   uad-platform: web
-  uad-domain: frontend
+  uad-domain: programming
   uad-version: "1.0.0"
   uad-requires: "software-architecture"
   uad-tags: "components, state management, data fetching, rendering, ssr, ssg, streaming, folder structure"
