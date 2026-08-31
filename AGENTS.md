@@ -22,9 +22,14 @@ toolkit needs, so the toolkit runs on a bare Python install.
 
 ```bash
 python tools/uad.py doctor           # environment + repository health
-python tools/uad.py validate --strict
+python tools/uad.py validate --strict # structural validity
+python tools/audit.py --strict        # skill quality (heuristic)
+python tools/check_links.py           # relative links across all Markdown
 python -m pytest tests/ -q
 ```
+
+`validate` asks whether a skill is well-formed; `audit` asks whether it is any
+good. Both run in CI.
 
 `pytest` is needed only for the test suite. Fixtures are generated, not
 committed:

@@ -7,6 +7,7 @@ metadata:
   uad-platform: web
   uad-domain: programming
   uad-version: "1.0.0"
+  uad-requires: "api-design, secure-coding"
   uad-tags: "typescript, types, strict, discriminated union, narrowing, generics, unknown, zod, runtime validation, tsconfig"
   uad-maturity: stable
 ---

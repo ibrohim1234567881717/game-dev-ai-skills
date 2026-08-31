@@ -85,16 +85,16 @@ ecosystem.
 
 ## Tooling
 
-**Present:** `detect`, `select`, `validate`, `list`, `install`, `doctor`; a
-zero-dependency YAML subset parser; 116 tests; GitHub Actions CI.
+**Present:** `detect`, `select`, `validate`, `list`, `install`, `doctor`;
+`tools/audit.py` for skill-quality linting; `tools/check_links.py`; a
+zero-dependency YAML subset parser; 118 tests; GitHub Actions CI running all of
+them on every push.
 
 **Planned:**
 
 - **`uad new skill|platform`** — scaffolding from the templates.
 - **Claude Code plugin packaging** — install via the plugin marketplace instead
   of the CLI.
-- **Skill-quality linting** — flag filler content, missing runnable validation
-  steps, and version claims with no verification instruction.
 - **Detection signal coverage report** — which signals never fire against the
   fixture corpus.
 - **A larger fixture corpus**, including real-world project shapes rather than

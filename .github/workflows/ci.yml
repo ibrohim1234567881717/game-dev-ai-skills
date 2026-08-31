@@ -37,6 +37,16 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python tools/uad.py validate --strict
 
+      # Structural validity is not the same as usefulness. This checks that a
+      # skill's Validation section has something runnable, that a platform skill
+      # says something real about versions, and that nothing claims certainty a
+      # moving API cannot support.
+      - name: Audit skill quality (strict)
+        shell: bash
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python tools/audit.py --strict
+
   test:
     name: Tests
     runs-on: ubuntu-latest
