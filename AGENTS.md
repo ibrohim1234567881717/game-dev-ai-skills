@@ -53,7 +53,9 @@ workflows/<name>.md                             procedures / slash commands
 instructions/*.md                               cross-cutting agent rules
 knowledge/version-matrix.yaml                   version reference
 tools/uad/                                      detect, select, validate, install
-tests/                                          89 tests
+tools/audit.py                                  skill-quality linting
+tools/make_social_preview.py                    regenerates assets/social-preview.png
+tests/                                          118 tests
 ```
 
 ## Conventions that are enforced
@@ -116,6 +118,8 @@ Read [docs/skill-format.md](docs/skill-format.md) before writing a skill.
 ## What not to do
 
 - Do not add a runtime dependency. Zero-dependency is a design constraint.
+  `tools/make_social_preview.py` needs Pillow, but it is a development-time
+  tool that nothing at runtime imports — keep it that way.
 - Do not couple the core to one AI provider. Skills are portable by construction.
 - Do not create a skill to fill a gap in a list. Quality over count is the stated
   standard, and an empty skill costs context for nothing.
