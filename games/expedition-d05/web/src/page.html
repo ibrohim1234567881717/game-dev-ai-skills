@@ -1,0 +1,120 @@
+<title>UMBRA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:wght@500;600;700;800&family=Fira+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/*__CSS__*/
+</style>
+<div id="app">
+  <canvas id="game" aria-label="Игровое поле"></canvas>
+
+  <div id="hud" hidden>
+    <div id="objective" class="panel">
+      <div class="label">Цель</div>
+      <div id="objText"></div>
+    </div>
+    <div id="compass" aria-hidden="true"><div id="compassStrip"></div><div class="compass-tick"></div></div>
+    <div id="journalChip" class="panel" hidden></div>
+    <div id="noise" class="panel" aria-label="Уровень шума"><span class="label">Шум</span><i></i><i></i><i></i></div>
+    <div id="health" class="panel" aria-label="Биомонитор"><span class="label">Пульс</span><b></b><b></b><b></b></div>
+    <div id="observe" hidden><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" class="track"></circle><circle id="observeArc" cx="20" cy="20" r="16" class="arc"></circle></svg><span>Наблюдение</span></div>
+    <div id="prompt" hidden><span id="promptKey"></span><span id="promptText"></span><div id="promptBar"><div></div></div></div>
+    <div id="radio" hidden><div id="radioWho"></div><div id="radioText"></div></div>
+    <div id="case" class="panel">
+      <div class="label">Genetic samples <b id="caseCount">0/5</b></div>
+      <div id="caseSlots"></div>
+    </div>
+    <div id="big" hidden><div id="bigTitle"></div><div id="bigSub"></div></div>
+    <div id="toast" hidden></div>
+    <div id="viewfinder" hidden>
+      <div class="vf-corner tl"></div><div class="vf-corner tr"></div><div class="vf-corner bl"></div><div class="vf-corner br"></div>
+      <div id="vfLabel"></div><div id="vfCross"></div>
+    </div>
+    <div id="danger"></div>
+    <div id="timer" class="panel" hidden></div>
+  </div>
+
+  <div id="touch" hidden>
+    <div id="stick"><div id="stickKnob"></div></div>
+    <div id="tbtns">
+      <button class="tbtn" data-action="interact" id="tbInteract">Действие</button>
+      <button class="tbtn" data-action="crouch" id="tbCrouch">Присесть</button>
+      <button class="tbtn" data-action="photo" id="tbPhoto">Камера</button>
+      <button class="tbtn" data-action="shoot" id="tbShoot" hidden>Снимок</button>
+      <button class="tbtn" data-action="throw" id="tbThrow" hidden>Приманка</button>
+      <button class="tbtn small" data-action="journal" id="tbJournal">Журнал</button>
+      <button class="tbtn small" data-action="pause" id="tbPause">Пауза</button>
+    </div>
+  </div>
+
+  <div id="letterbox" aria-hidden="true"><div></div><div></div></div>
+  <div id="fade"></div>
+  <div id="flash"></div>
+
+  <section id="menu" class="overlay">
+    <div class="menu-inner">
+      <div class="eyebrow">ORIGO · Threshold Station · Site U</div>
+      <h1 id="logo">UMBRA</h1>
+      <div class="sub">Expedition D-05</div>
+      <p class="blurb">Остров, которого нет на картах. Пять видов. Пять образцов живой ДНК. И вопрос, который никто не задал вслух: зачем?</p>
+      <div class="menu-actions">
+        <button class="btn primary" id="btnStart">Начать экспедицию</button>
+        <button class="btn" id="btnContinue" hidden>Продолжить</button>
+        <button class="btn" id="btnChapters">Главы</button>
+      </div>
+      <div id="chapterList" hidden></div>
+      <div class="controls-help" id="helpDesk">
+        <div><kbd>W A S D</kbd> идти</div><div><kbd>Мышь</kbd> смотреть</div><div><kbd>Shift</kbd> бежать</div>
+        <div><kbd>C</kbd> присесть</div><div><kbd>E</kbd> действие</div><div><kbd>F</kbd> камера</div>
+        <div><kbd>Q</kbd> приманка</div><div><kbd>J</kbd> журнал</div><div><kbd>Esc</kbd> пауза</div>
+      </div>
+      <div class="controls-help" id="helpTouch" hidden>
+        <div>Левый палец — идти</div><div>Правый палец — смотреть</div><div>Джойстик до упора — бег</div>
+      </div>
+      <p class="fine">Звук важен: насекомые замолкают, когда рядом хищник. Лучше играть в наушниках.</p>
+    </div>
+  </section>
+
+  <section id="pause" class="overlay" hidden>
+    <div class="menu-inner narrow">
+      <h2>Пауза</h2>
+      <div class="menu-actions col">
+        <button class="btn primary" id="btnResume">Продолжить</button>
+        <button class="btn" id="btnRestartCp">Вернуться к контрольной точке</button>
+        <button class="btn" id="btnSound">Звук: вкл</button>
+        <button class="btn" id="btnMenu">Главное меню</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="journal" class="overlay" hidden>
+    <div class="journal-inner">
+      <header><h2>Field Journal</h2><button class="btn" id="btnJournalClose">Закрыть</button></header>
+      <div id="jTabs"></div>
+      <div id="jBody"></div>
+    </div>
+  </section>
+
+  <section id="card" class="overlay card" hidden>
+    <div class="card-inner">
+      <div class="eyebrow" id="cardEyebrow"></div>
+      <h2 id="cardTitle"></h2>
+      <p id="cardText"></p>
+      <button class="btn primary" id="btnCard">Дальше</button>
+    </div>
+  </section>
+
+  <section id="choice" class="overlay" hidden>
+    <div class="menu-inner narrow">
+      <div class="eyebrow" id="choiceEyebrow"></div>
+      <h2 id="choiceTitle"></h2>
+      <p id="choiceText"></p>
+      <div class="menu-actions col" id="choiceBtns"></div>
+    </div>
+  </section>
+
+  <div id="boot">Загрузка острова…</div>
+</div>
+<script type="module">
+/*__JS__*/
+</script>
