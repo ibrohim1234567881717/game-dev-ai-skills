@@ -373,7 +373,11 @@ function makePtera(o = {}) {
 }
 
 // ---------- Tyrannosaurus ----------
+// the author's skinned model when the build carries it (24-rex-model.js), this one when it does not
 function makeRex() {
+  return makeRexSkinned() || makeRexProcedural();
+}
+function makeRexProcedural() {
   const M = mat('#4d4436'), MB = mat('#7a6b54'), MT = mat('#e6dcc2', { rough: 0.5 });
   const g = new THREE.Group();
   const body = new THREE.Group(); body.position.y = 4.1; g.add(body);

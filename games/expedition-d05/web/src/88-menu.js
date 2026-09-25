@@ -19,6 +19,7 @@ const CREDITS = [
     ['Мара Линд', 'руководитель экспедиции D-04'], ['Элиас Варн', 'создатель острова'], ['Пилот D-02', 'бортовой самописец'],
   ] },
   { head: 'Голоса', lines: ['Синтез речи Qwen3-TTS 1.7B VoiceDesign', '<small>каждому персонажу — свой голос по описанию</small>'] },
+  { head: 'Модели', lines: ['Тираннозавр — Meshy (meshy.ai), модель автора', '<small>лицензия CC BY 4.0</small>'] },
   { head: 'Технологии', lines: ['three.js — 3D в браузере', 'Web Audio API — звук, синтезированный в реальном времени', 'Fira Sans · Fira Sans Extra Condensed · IBM Plex Mono', '<small>шрифты под лицензией SIL Open Font License</small>'] },
 ];
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

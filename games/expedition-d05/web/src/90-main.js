@@ -300,5 +300,5 @@ function boot() {
   // two frames: the title screen is on screen and listening before the platform drops its loader
   requestAnimationFrame(() => requestAnimationFrame(() => Platform.ready()));
 }
-window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, Settings, UI, MenuMusic, Music, Platform, renderer, get ctx() { return Game.ctx; } };
+window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, Settings, UI, MenuMusic, Music, Platform, makeRex, renderer, get ctx() { return Game.ctx; } };
 boot();

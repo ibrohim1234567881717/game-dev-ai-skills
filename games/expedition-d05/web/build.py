@@ -30,6 +30,10 @@ push the page past what browsers and hosts load comfortably. Keep dist/music/
 next to dist/umbra.html. The cues the game knows are MUSIC_CUES; see
 music/README.md.
 
+Models (optional): models/rex.json, written by models/prepare_rex.py from the
+author's Meshy T-Rex, is embedded as window.MODEL_REX. Without it (or with
+--no-models) the game builds its procedural T-Rex instead.
+
 Yandex Games (--target yandex): the platform wants a whole index.html at the
 archive root and no requests to outside hosts. This target inlines three.js
 and the fonts from vendor/ (see vendor/fetch_vendor.py), loads the Yandex SDK
@@ -56,6 +60,7 @@ OUT = ROOT / "dist" / "umbra.html"
 THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
 VOICE_DIR = ROOT / "voice"
 VENDOR = ROOT / "vendor"
+MODELS = ROOT / "models"
 YANDEX_OUT = OUT.parent / "yandex"
 YANDEX_ZIP = OUT.parent / "umbra-yandex.zip"
 YANDEX_LIMIT = 100 * 1024 * 1024  # unpacked archive, per the Yandex Games requirements
@@ -241,6 +246,7 @@ def main(argv=None) -> None:
                     help="folder with manifest.json (default: voice/audio)")
     ap.add_argument("--no-music", action="store_true", help="leave music out (the game falls back to its synthesized score)")
     ap.add_argument("--music-dir", type=Path, default=MUSIC_DIR, help="folder with the music files (default: music)")
+    ap.add_argument("--no-models", action="store_true", help="leave the skinned models out (procedural stand-ins are used)")
     ap.add_argument("--target", choices=("web", "yandex"), default="web",
                     help="web: dist/umbra.html, three.js and fonts from CDNs (default); "
                          "yandex: dist/yandex/index.html and dist/umbra-yandex.zip, nothing loaded from outside")
@@ -284,6 +290,14 @@ def main(argv=None) -> None:
     for n in music_notes:
         print(f"warning: music {n}")
     parts.append("window.MUSIC_TRACKS = " + _js_json(tracks) + ";")
+    # skinned models prepared by models/prepare_*.py; without one the game builds its procedural stand-in
+    rex = MODELS / "rex.json"
+    if rex.is_file() and not args.no_models:
+        parts.append("window.MODEL_REX = " + rex.read_text(encoding="utf-8") + ";")
+        model_note = f"models: T-Rex ({rex.stat().st_size / 1048576:.2f} MB)"
+    else:
+        parts.append("window.MODEL_REX = null;")
+        model_note = "models: none, procedural stand-ins" if not args.no_models else "models: off (--no-models)"
     if tracks:
         music_note = f"music: {len(tracks)} track(s) ({', '.join(sorted(tracks))}), {music_bytes / 1048576:.2f} MB in {music_out.relative_to(ROOT)}/"
     else:
@@ -302,6 +316,7 @@ def main(argv=None) -> None:
     size = len(html.encode("utf-8"))
     print(voice_note)
     print(music_note)
+    print(model_note)
     print(f"wrote {out_html.relative_to(ROOT.parent)} ({size // 1024} KB)")
     if size > WARN_HTML_BYTES:
         print(f"warning: {out_html.name} is {size / 1048576:.1f} MB (> 15 MB); some browsers and hosts "
