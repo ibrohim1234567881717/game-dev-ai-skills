@@ -57,6 +57,8 @@ function teardown() {
   HUD.hideBig(); HUD.observe(null); HUD.danger(false); HUD.timer(null); HUD.journalChip(null);
   HUD.viewfinder(null); HUD.throwBtn(false);
   Cam.mode = 'third'; Cam.pull = null;
+  Guide.reset(); Tutorial.reset(); Cast.reset();
+  Sound.stopEmitters(0.4);
   Sound.silenceAll(0.8);
 }
 
@@ -231,12 +233,18 @@ function frame(now) {
       Interact.update(dt, Game.world);
       if ((Cam.mode === 'photo') && Input.pressed('shoot')) Photo.shoot(Game.world.scene, Game.ctx.subjects ? Game.ctx.subjects() : []);
       if (Cam.mode === 'aim' && Input.pressed('shoot') && Game.ctx.onShoot) Game.ctx.onShoot();
+      Cast.update(Game.world, dt);
       Cine.update(dt);
       Cam.update(dt);
       const p = Game.player.pos;
-      const mk = (Game.ctx.markers ? Game.ctx.markers() : []).map((m) => ({ ...m, bearing: Math.atan2(m.x - p.x, -(m.z - p.z)) }));
+      const mk = (Game.ctx.markers ? Game.ctx.markers() : []).map((m) => ({ ...m, bearing: Math.atan2(m.x - p.x, -(m.z - p.z)), cls: (m.cls || '') + (m.goal ? ' goal' : '') }));
       HUD.compass(Cam.heading(), mk);
+      if (Input.pressed('objective')) Guide.recall();
+      Guide.update(dt, mk);
+      Tutorial.update(dt);
     }
+    Cast.tags(Game.world);
+    Sound.listen(camera);
     renderer.render(Game.world.scene, camera);
   }
   HUD.endFrame();
@@ -252,5 +260,5 @@ function boot() {
   HUD.fade(0, 1.4);
   requestAnimationFrame(frame);
 }
-window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, get ctx() { return Game.ctx; } };
+window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, renderer, get ctx() { return Game.ctx; } };
 boot();

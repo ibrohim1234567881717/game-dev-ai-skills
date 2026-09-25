@@ -1,6 +1,7 @@
 // ============================================================
 // 10-audio.js — synthesized ambience, music and effects
 // ============================================================
+const _lsnF = new THREE.Vector3(), _lsnU = new THREE.Vector3();
 const Sound = {
   ctx: null, master: null, noiseBuf: null,
   beds: {}, musicGain: null, droneOsc: [],
@@ -15,6 +16,10 @@ const Sound = {
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 4;
     this.master.connect(comp); comp.connect(ctx.destination);
+    // buses: ambience beds duck under dialogue; positional emitters get their own bus
+    this.bedBus = ctx.createGain(); this.bedBus.connect(this.master);
+    this.sfxBus = ctx.createGain(); this.sfxBus.connect(this.master);
+    this.voiceBus = ctx.createGain(); this.voiceBus.gain.value = 1.15; this.voiceBus.connect(this.master);
     const len = ctx.sampleRate * 2;
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = buf.getChannelData(0);
@@ -28,7 +33,91 @@ const Sound = {
     this.beds.water = this._bed('bandpass', 700, 1.2, 0);
     this.beds.hum = this._tone(55, 'sawtooth', 180, 0);
     this.beds.drone = this._tone(41.2, 'sawtooth', 240, 0, 41.6);
+    if (typeof Voice !== 'undefined') Voice.prefetch();
   },
+  duck(on) {
+    if (!this.ctx || !this.bedBus) return;
+    this.bedBus.gain.setTargetAtTime(on ? 0.5 : 1, this.ctx.currentTime, on ? 0.12 : 0.5);
+  },
+  // ---------- positional audio ----------
+  emitters: [],
+  listen(cam) {
+    if (!this.ctx) return;
+    const L = this.ctx.listener, p = cam.position;
+    cam.getWorldDirection(_lsnF);
+    _lsnU.set(0, 1, 0).applyQuaternion(cam.quaternion);
+    if (L.positionX) {
+      L.positionX.value = p.x; L.positionY.value = p.y; L.positionZ.value = p.z;
+      L.forwardX.value = _lsnF.x; L.forwardY.value = _lsnF.y; L.forwardZ.value = _lsnF.z;
+      L.upX.value = _lsnU.x; L.upY.value = _lsnU.y; L.upZ.value = _lsnU.z;
+    } else if (L.setPosition) { L.setPosition(p.x, p.y, p.z); L.setOrientation(_lsnF.x, _lsnF.y, _lsnF.z, _lsnU.x, _lsnU.y, _lsnU.z); }
+    for (let i = this.emitters.length - 1; i >= 0; i--) this.emitters[i]._tick(p);
+  },
+  // looping positional source; kinds: 'heli' (rotor + turbine), 'gen' (generator hum), 'fire'
+  emitter(kind, o = {}) {
+    const dummy = { setPos() {}, setLevel() {}, setRate() {}, stop() {}, _tick() {}, dead: true };
+    if (!this.ctx) return dummy;
+    const ctx = this.ctx, S = this;
+    const out = ctx.createGain(); out.gain.value = 0;
+    const air = ctx.createBiquadFilter(); air.type = 'lowpass'; air.frequency.value = 9000;
+    const pan = ctx.createPanner();
+    pan.panningModel = QUALITY ? 'HRTF' : 'equalpower'; pan.distanceModel = 'inverse';
+    pan.refDistance = o.ref ?? 6; pan.rolloffFactor = o.rolloff ?? 1.1; pan.maxDistance = 1000;
+    out.connect(air); air.connect(pan); pan.connect(this.sfxBus);
+    const srcs = [];
+    const noise = (type, f, q, gain) => { const s = this._noiseSrc(); const fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const g = ctx.createGain(); g.gain.value = gain; s.connect(fl); fl.connect(g); s.start(0, Math.random()); srcs.push(s); return { s, fl, g }; };
+    const osc = (type, f, gain) => { const s = ctx.createOscillator(); s.type = type; s.frequency.value = f; const g = ctx.createGain(); g.gain.value = gain; s.connect(g); s.start(); srcs.push(s); return { s, g }; };
+    let rate = 1;
+    const e = { dead: false, level: o.level ?? 1, pos: new THREE.Vector3(), near: 0 };
+    if (kind === 'heli') {
+      // blade slap: band-limited noise, amplitude-modulated at the blade-pass rate
+      const thump = noise('bandpass', 170, 0.9, 1.0);
+      const am = ctx.createGain(); am.gain.value = 0.35;
+      const lfo = osc('sawtooth', 18, 0.65); lfo.g.connect(am.gain);
+      thump.g.connect(am); am.connect(out);
+      const wash = noise('lowpass', 700, 0.5, 0.55); wash.g.connect(out);
+      const whine = osc('sine', 1300, 0.035); const wf = ctx.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 1300; whine.g.connect(wf); wf.connect(out);
+      e.setRate = (r) => {
+        rate = clamp(r, 0, 1.2);
+        const t = ctx.currentTime;
+        lfo.s.frequency.setTargetAtTime(2.5 + rate * 16, t, 0.1);
+        whine.s.frequency.setTargetAtTime(380 + rate * 980, t, 0.2); wf.frequency.setTargetAtTime(380 + rate * 980, t, 0.2);
+        whine.g.gain.setTargetAtTime(0.012 + rate * 0.03, t, 0.2);
+        thump.fl.frequency.setTargetAtTime(90 + rate * 110, t, 0.1);
+        wash.g.gain.setTargetAtTime(0.1 + rate * 0.5, t, 0.2);
+      };
+    } else if (kind === 'gen') {
+      const hum = osc('sawtooth', 50, 0.12); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260; hum.g.connect(f); f.connect(out);
+      const rattle = noise('bandpass', 900, 3, 0.18); rattle.g.connect(out);
+      e.setRate = (r) => { rate = r; hum.s.frequency.setTargetAtTime(35 + r * 15, ctx.currentTime, 0.3); };
+    } else if (kind === 'fire') {
+      const crackle = noise('highpass', 2000, 0.6, 0.35); crackle.g.connect(out);
+      const roar = noise('lowpass', 300, 0.5, 0.6); roar.g.connect(out);
+      e.setRate = (r) => { rate = r; };
+    } else e.setRate = (r) => { rate = r; };
+    e.setPos = (v) => { e.pos.copy(v); if (pan.positionX) { pan.positionX.value = v.x; pan.positionY.value = v.y; pan.positionZ.value = v.z; } else pan.setPosition(v.x, v.y, v.z); };
+    e.setLevel = (v) => { e.level = v; };
+    e._tick = (lp) => {
+      if (e.dead) return;
+      const d = lp.distanceTo(e.pos);
+      // air absorption: distant engines lose their top end
+      air.frequency.value = 900 + 8100 * Math.exp(-d / 90);
+      const lvl = e.level * clamp(rate * 1.4, 0, 1) * (o.gain ?? 1);
+      out.gain.setTargetAtTime(Game.muted ? 0 : lvl, ctx.currentTime, 0.08);
+    };
+    e.stop = (fade = 1.2) => {
+      if (e.dead) return;
+      e.dead = true;
+      const t = ctx.currentTime;
+      out.gain.cancelScheduledValues(t); out.gain.setTargetAtTime(0, t, Math.max(0.05, fade / 4));
+      setTimeout(() => { srcs.forEach((s) => { try { s.stop(); } catch (err) { /* stopped */ } }); out.disconnect(); pan.disconnect(); }, fade * 1000 + 200);
+      const i = S.emitters.indexOf(e); if (i >= 0) S.emitters.splice(i, 1);
+    };
+    e.setRate(o.rate ?? 1);
+    this.emitters.push(e);
+    return e;
+  },
+  stopEmitters(fade = 0.6) { [...this.emitters].forEach((e) => e.stop(fade)); },
   _noiseSrc() { const s = this.ctx.createBufferSource(); s.buffer = this.noiseBuf; s.loop = true; return s; },
   _bed(type, freq, q, level, amRate) {
     const ctx = this.ctx, src = this._noiseSrc();
@@ -40,8 +129,8 @@ const Sound = {
       const lfo = ctx.createOscillator(); lfo.frequency.value = amRate;
       const lg = ctx.createGain(); lg.gain.value = 0.5;
       lfo.connect(lg); lg.connect(am.gain); lfo.start();
-      g.connect(am); am.connect(this.master);
-    } else g.connect(this.master);
+      g.connect(am); am.connect(this.bedBus);
+    } else g.connect(this.bedBus);
     src.start();
     return { gain: g, filter: f, target: level };
   },
@@ -50,7 +139,7 @@ const Sound = {
     const g = ctx.createGain(); g.gain.value = level;
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp;
     [freq, freq2].filter(Boolean).forEach((fr) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = fr; o.connect(f); o.start(); });
-    f.connect(g); g.connect(this.master);
+    f.connect(g); g.connect(this.bedBus);
     return { gain: g, filter: f, target: level };
   },
   bed(name, level, time = 1.5) {

@@ -5,7 +5,8 @@ const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vect
 
 class Player {
   constructor() {
-    this.model = makeHuman({ pack: true, caseLights: true, outfit: '#56603f', pants: '#3d3f30', hair: '#3b2a1c', skin: '#b98d6a' });
+    this.model = makeCharacter('ethan');
+    this.model.userData.isPlayer = true;
     this.pos = new THREE.Vector3();
     this.yaw = 0;
     this.crouch = false;
@@ -121,7 +122,8 @@ class Player {
     if (this.inWater > 0) this.model.position.y = Math.max(this.pos.y, w.waterY - 0.9);
     this.model.rotation.y = this.yaw;
     this.model.visible = Cam.mode === 'third' || Cam.mode === 'cine';
-    this.model.userData.anim(dt, this.speed, { crouch: this.crouch });
+    const sp = HUD.speaking;
+    this.model.userData.anim(dt, this.speed, { crouch: this.crouch, talk: !!(sp && sp.key === 'ethan' && !sp.radio) });
   }
   eye() { return _v3.set(this.pos.x, this.pos.y + (this.crouch ? 1.05 : 1.62), this.pos.z); }
 }

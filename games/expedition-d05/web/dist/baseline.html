@@ -331,57 +331,11 @@ kbd { font: 500 11px/1 var(--mono); color: var(--ink); border: 1px solid rgba(23
   #objective.fresh, #big.show, .slot.analyzing { animation: none; }
 }
 
-/* ---------- guidance: banner, waypoint, tutorials, nameplates ---------- */
-#objective.collapsed #objText small { display: none; }
-#compassStrip span.mk.goal { color: #ffd27a; font-size: 12px; }
-#objBanner {
-  position: absolute; left: 50%; top: calc(58px + var(--safe-t)); transform: translateX(-50%);
-  text-align: center; width: min(560px, 90vw); pointer-events: none;
-  text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 16px rgba(0,0,0,.55);
-}
-#objBanner.show { animation: obIn 3.4s ease forwards; }
-@keyframes obIn { 0% { opacity: 0; transform: translate(-50%, -8px);} 10% { opacity: 1; transform: translate(-50%, 0);} 82% { opacity: 1;} 100% { opacity: 0;} }
-#obKind { display: inline-flex; align-items: center; gap: 10px; font: 700 11px/1 var(--display); letter-spacing: .28em; text-transform: uppercase; color: var(--amber); }
-#obKind::before, #obKind::after { content: ""; width: 34px; height: 1px; background: currentColor; opacity: .7; }
-#obTitle { font: 700 clamp(19px, 2.6vw, 26px)/1.15 var(--display); letter-spacing: .03em; margin-top: 6px; text-wrap: balance; }
-#waypoint { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; margin: -8px 0 0 -8px; pointer-events: none; }
-#waypoint i { width: 12px; height: 12px; border: 2px solid #ffd27a; transform: rotate(45deg); box-shadow: 0 0 8px rgba(0,0,0,.6); }
-#waypoint span { font: 500 11px/1 var(--mono); color: #ffe2a8; text-shadow: 0 1px 2px #000; }
-#waypoint.edge i { background: rgba(255,210,122,.35); }
-#tutorial {
-  position: absolute; left: calc(12px + var(--safe-l)); bottom: calc(86px + var(--safe-b));
-  max-width: min(360px, 70vw); padding: 9px 12px; border-radius: 4px;
-  background: rgba(8,14,11,.78); border: 1px solid rgba(255,210,122,.45); border-left: 3px solid var(--amber);
-  font: 500 14px/1.35 var(--body); color: var(--ink); transition: opacity .4s, transform .4s;
-}
-#tutorial.show { animation: tutIn .45s ease-out; }
-#tutorial.done { opacity: 0; transform: translateY(6px); }
-@keyframes tutIn { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: none;} }
-#tutorial kbd { font-size: 12px; padding: 2px 6px; }
-body.touch #tutorial { left: 50%; bottom: auto; top: calc(96px + var(--safe-t)); transform: translateX(-50%); }
-body.touch #tutorial.done { transform: translate(-50%, 6px); }
-#tags { position: absolute; inset: 0; pointer-events: none; }
-#tags .tag { position: absolute; left: 0; top: 0; transform-origin: 50% 100%; margin: 0; white-space: nowrap; text-align: center; translate: -50% -100%;
-  font: 600 12px/1.15 var(--display); letter-spacing: .06em; color: var(--ink); text-shadow: 0 1px 2px #000, 0 0 8px rgba(0,0,0,.7); }
-#tags .tag small { display: block; font: 500 10.5px/1.2 var(--body); letter-spacing: .02em; color: var(--muted); }
-#tags .tag.talk b::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: var(--amber); vertical-align: 1px; box-shadow: 0 0 6px var(--amber); }
-#tags .tag.speaking b { color: var(--amber); }
-@media (prefers-reduced-motion: reduce) { #objBanner.show { animation: none; } #tutorial.show { animation: none; } }
-
-/* cinematics: only subtitles stay on screen */
-#objective, #case, #noise, #health, #compass, #journalChip, #tutorial, #tags, #waypoint, #timer, #observe { transition: opacity .5s; }
-body.cine #objective, body.cine #case, body.cine #noise, body.cine #health, body.cine #compass, body.cine #journalChip,
-body.cine #tutorial, body.cine #tags, body.cine #waypoint, body.cine #timer, body.cine #observe, body.cine #prompt, body.cine #touch { opacity: 0; }
-
 </style>
 <div id="app">
   <canvas id="game" aria-label="Игровое поле"></canvas>
 
   <div id="hud" hidden>
-    <div id="tags" aria-hidden="true"></div>
-    <div id="waypoint" hidden aria-hidden="true"><i></i><span id="wpDist"></span></div>
-    <div id="objBanner" hidden><div id="obKind"></div><div id="obTitle"></div></div>
-    <div id="tutorial" hidden role="status"></div>
     <div id="objective" class="panel">
       <div class="label">Цель</div>
       <div id="objText"></div>
@@ -416,7 +370,6 @@ body.cine #tutorial, body.cine #tags, body.cine #waypoint, body.cine #timer, bod
       <button class="tbtn" data-action="shoot" id="tbShoot" hidden>Снимок</button>
       <button class="tbtn" data-action="throw" id="tbThrow" hidden>Приманка</button>
       <button class="tbtn small" data-action="journal" id="tbJournal">Журнал</button>
-      <button class="tbtn small" data-action="objective" id="tbObjective">Цель</button>
       <button class="tbtn small" data-action="pause" id="tbPause">Пауза</button>
     </div>
   </div>
@@ -440,7 +393,7 @@ body.cine #tutorial, body.cine #tags, body.cine #waypoint, body.cine #timer, bod
       <div class="controls-help" id="helpDesk">
         <div><kbd>W A S D</kbd> идти</div><div><kbd>Мышь</kbd> смотреть</div><div><kbd>Shift</kbd> бежать</div>
         <div><kbd>C</kbd> присесть</div><div><kbd>E</kbd> действие</div><div><kbd>F</kbd> камера</div>
-        <div><kbd>Q</kbd> приманка</div><div><kbd>J</kbd> журнал</div><div><kbd>Tab</kbd> цель</div>
+        <div><kbd>Q</kbd> приманка</div><div><kbd>J</kbd> журнал</div><div><kbd>Esc</kbd> пауза</div>
       </div>
       <div class="controls-help" id="helpTouch" hidden>
         <div>Левый палец — идти</div><div>Правый палец — смотреть</div><div>Джойстик до упора — бег</div>
@@ -491,8 +444,6 @@ body.cine #tutorial, body.cine #tags, body.cine #waypoint, body.cine #timer, bod
 </div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-window.VOICE_BANK = null;
-window.VOICE_SPEAKERS = [["Дневник D-04 · Мара Линд","mara"],["Бортовой самописец D-02","d02pilot"],["Эфир · закрытый канал","halm"],["Мара Линд","mara"],["Кесслер","kessler"],["Хальм","halm"],["Лукас","lucas"],["Диего","diego"],["Лена","lena"],["Итан","ethan"],["Нора","nora"],["Юсуф","yusuf"],["Варн","varn"]];
 // ---- 00-core.js ----
 // ============================================================
 // 00-core.js — math, renderer, materials, save, game state
@@ -680,7 +631,7 @@ function dnaCount() { return DNA_KEYS.filter((k) => Game.state.dna[k]).length; }
 const KEYMAP = {
   KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
   ShiftLeft: 'run', ShiftRight: 'run', KeyE: 'interact', KeyF: 'photo', KeyC: 'crouch', ControlLeft: 'crouch',
-  KeyJ: 'journal', Tab: 'objective', KeyQ: 'throw', Escape: 'pause', KeyP: 'pause', Space: 'shoot', KeyM: 'mute', Enter: 'confirm',
+  KeyJ: 'journal', Tab: 'journal', KeyQ: 'throw', Escape: 'pause', KeyP: 'pause', Space: 'shoot', KeyM: 'mute', Enter: 'confirm',
 };
 const Input = {
   held: Object.create(null),
@@ -715,7 +666,7 @@ const Input = {
 window.addEventListener('keydown', (e) => {
   const a = KEYMAP[e.code];
   if (!a) return;
-  if (a === 'journal' || a === 'objective' || a === 'shoot' || e.code.startsWith('Arrow')) e.preventDefault();
+  if (a === 'journal' || a === 'shoot' || e.code.startsWith('Arrow')) e.preventDefault();
   if (!e.repeat) Input.press(a);
   Input.held[a] = true;
 });
@@ -790,7 +741,6 @@ document.querySelectorAll('.tbtn').forEach((b) => {
 // ============================================================
 // 10-audio.js — synthesized ambience, music and effects
 // ============================================================
-const _lsnF = new THREE.Vector3(), _lsnU = new THREE.Vector3();
 const Sound = {
   ctx: null, master: null, noiseBuf: null,
   beds: {}, musicGain: null, droneOsc: [],
@@ -805,10 +755,6 @@ const Sound = {
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 4;
     this.master.connect(comp); comp.connect(ctx.destination);
-    // buses: ambience beds duck under dialogue; positional emitters get their own bus
-    this.bedBus = ctx.createGain(); this.bedBus.connect(this.master);
-    this.sfxBus = ctx.createGain(); this.sfxBus.connect(this.master);
-    this.voiceBus = ctx.createGain(); this.voiceBus.gain.value = 1.15; this.voiceBus.connect(this.master);
     const len = ctx.sampleRate * 2;
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = buf.getChannelData(0);
@@ -822,91 +768,7 @@ const Sound = {
     this.beds.water = this._bed('bandpass', 700, 1.2, 0);
     this.beds.hum = this._tone(55, 'sawtooth', 180, 0);
     this.beds.drone = this._tone(41.2, 'sawtooth', 240, 0, 41.6);
-    if (typeof Voice !== 'undefined') Voice.prefetch();
   },
-  duck(on) {
-    if (!this.ctx || !this.bedBus) return;
-    this.bedBus.gain.setTargetAtTime(on ? 0.5 : 1, this.ctx.currentTime, on ? 0.12 : 0.5);
-  },
-  // ---------- positional audio ----------
-  emitters: [],
-  listen(cam) {
-    if (!this.ctx) return;
-    const L = this.ctx.listener, p = cam.position;
-    cam.getWorldDirection(_lsnF);
-    _lsnU.set(0, 1, 0).applyQuaternion(cam.quaternion);
-    if (L.positionX) {
-      L.positionX.value = p.x; L.positionY.value = p.y; L.positionZ.value = p.z;
-      L.forwardX.value = _lsnF.x; L.forwardY.value = _lsnF.y; L.forwardZ.value = _lsnF.z;
-      L.upX.value = _lsnU.x; L.upY.value = _lsnU.y; L.upZ.value = _lsnU.z;
-    } else if (L.setPosition) { L.setPosition(p.x, p.y, p.z); L.setOrientation(_lsnF.x, _lsnF.y, _lsnF.z, _lsnU.x, _lsnU.y, _lsnU.z); }
-    for (let i = this.emitters.length - 1; i >= 0; i--) this.emitters[i]._tick(p);
-  },
-  // looping positional source; kinds: 'heli' (rotor + turbine), 'gen' (generator hum), 'fire'
-  emitter(kind, o = {}) {
-    const dummy = { setPos() {}, setLevel() {}, setRate() {}, stop() {}, _tick() {}, dead: true };
-    if (!this.ctx) return dummy;
-    const ctx = this.ctx, S = this;
-    const out = ctx.createGain(); out.gain.value = 0;
-    const air = ctx.createBiquadFilter(); air.type = 'lowpass'; air.frequency.value = 9000;
-    const pan = ctx.createPanner();
-    pan.panningModel = QUALITY ? 'HRTF' : 'equalpower'; pan.distanceModel = 'inverse';
-    pan.refDistance = o.ref ?? 6; pan.rolloffFactor = o.rolloff ?? 1.1; pan.maxDistance = 1000;
-    out.connect(air); air.connect(pan); pan.connect(this.sfxBus);
-    const srcs = [];
-    const noise = (type, f, q, gain) => { const s = this._noiseSrc(); const fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const g = ctx.createGain(); g.gain.value = gain; s.connect(fl); fl.connect(g); s.start(0, Math.random()); srcs.push(s); return { s, fl, g }; };
-    const osc = (type, f, gain) => { const s = ctx.createOscillator(); s.type = type; s.frequency.value = f; const g = ctx.createGain(); g.gain.value = gain; s.connect(g); s.start(); srcs.push(s); return { s, g }; };
-    let rate = 1;
-    const e = { dead: false, level: o.level ?? 1, pos: new THREE.Vector3(), near: 0 };
-    if (kind === 'heli') {
-      // blade slap: band-limited noise, amplitude-modulated at the blade-pass rate
-      const thump = noise('bandpass', 170, 0.9, 1.0);
-      const am = ctx.createGain(); am.gain.value = 0.35;
-      const lfo = osc('sawtooth', 18, 0.65); lfo.g.connect(am.gain);
-      thump.g.connect(am); am.connect(out);
-      const wash = noise('lowpass', 700, 0.5, 0.55); wash.g.connect(out);
-      const whine = osc('sine', 1300, 0.035); const wf = ctx.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 1300; whine.g.connect(wf); wf.connect(out);
-      e.setRate = (r) => {
-        rate = clamp(r, 0, 1.2);
-        const t = ctx.currentTime;
-        lfo.s.frequency.setTargetAtTime(2.5 + rate * 16, t, 0.1);
-        whine.s.frequency.setTargetAtTime(380 + rate * 980, t, 0.2); wf.frequency.setTargetAtTime(380 + rate * 980, t, 0.2);
-        whine.g.gain.setTargetAtTime(0.012 + rate * 0.03, t, 0.2);
-        thump.fl.frequency.setTargetAtTime(90 + rate * 110, t, 0.1);
-        wash.g.gain.setTargetAtTime(0.1 + rate * 0.5, t, 0.2);
-      };
-    } else if (kind === 'gen') {
-      const hum = osc('sawtooth', 50, 0.12); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260; hum.g.connect(f); f.connect(out);
-      const rattle = noise('bandpass', 900, 3, 0.18); rattle.g.connect(out);
-      e.setRate = (r) => { rate = r; hum.s.frequency.setTargetAtTime(35 + r * 15, ctx.currentTime, 0.3); };
-    } else if (kind === 'fire') {
-      const crackle = noise('highpass', 2000, 0.6, 0.35); crackle.g.connect(out);
-      const roar = noise('lowpass', 300, 0.5, 0.6); roar.g.connect(out);
-      e.setRate = (r) => { rate = r; };
-    } else e.setRate = (r) => { rate = r; };
-    e.setPos = (v) => { e.pos.copy(v); if (pan.positionX) { pan.positionX.value = v.x; pan.positionY.value = v.y; pan.positionZ.value = v.z; } else pan.setPosition(v.x, v.y, v.z); };
-    e.setLevel = (v) => { e.level = v; };
-    e._tick = (lp) => {
-      if (e.dead) return;
-      const d = lp.distanceTo(e.pos);
-      // air absorption: distant engines lose their top end
-      air.frequency.value = 900 + 8100 * Math.exp(-d / 90);
-      const lvl = e.level * clamp(rate * 1.4, 0, 1) * (o.gain ?? 1);
-      out.gain.setTargetAtTime(Game.muted ? 0 : lvl, ctx.currentTime, 0.08);
-    };
-    e.stop = (fade = 1.2) => {
-      if (e.dead) return;
-      e.dead = true;
-      const t = ctx.currentTime;
-      out.gain.cancelScheduledValues(t); out.gain.setTargetAtTime(0, t, Math.max(0.05, fade / 4));
-      setTimeout(() => { srcs.forEach((s) => { try { s.stop(); } catch (err) { /* stopped */ } }); out.disconnect(); pan.disconnect(); }, fade * 1000 + 200);
-      const i = S.emitters.indexOf(e); if (i >= 0) S.emitters.splice(i, 1);
-    };
-    e.setRate(o.rate ?? 1);
-    this.emitters.push(e);
-    return e;
-  },
-  stopEmitters(fade = 0.6) { [...this.emitters].forEach((e) => e.stop(fade)); },
   _noiseSrc() { const s = this.ctx.createBufferSource(); s.buffer = this.noiseBuf; s.loop = true; return s; },
   _bed(type, freq, q, level, amRate) {
     const ctx = this.ctx, src = this._noiseSrc();
@@ -918,8 +780,8 @@ const Sound = {
       const lfo = ctx.createOscillator(); lfo.frequency.value = amRate;
       const lg = ctx.createGain(); lg.gain.value = 0.5;
       lfo.connect(lg); lg.connect(am.gain); lfo.start();
-      g.connect(am); am.connect(this.bedBus);
-    } else g.connect(this.bedBus);
+      g.connect(am); am.connect(this.master);
+    } else g.connect(this.master);
     src.start();
     return { gain: g, filter: f, target: level };
   },
@@ -928,7 +790,7 @@ const Sound = {
     const g = ctx.createGain(); g.gain.value = level;
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp;
     [freq, freq2].filter(Boolean).forEach((fr) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = fr; o.connect(f); o.start(); });
-    f.connect(g); g.connect(this.bedBus);
+    f.connect(g); g.connect(this.master);
     return { gain: g, filter: f, target: level };
   },
   bed(name, level, time = 1.5) {
@@ -1008,116 +870,6 @@ const Sound = {
   },
 };
 
-// ---- 12-voice.js ----
-// ============================================================
-// 12-voice.js — voice-over playback for subtitle lines
-// Audio is generated offline (web/voice/, Qwen3-TTS) and embedded by
-// build.py as window.VOICE_BANK = { id: { d: seconds, u: dataURL } }.
-// A line's id is FNV-1a-32(speakerKey + '|' + rawText) — the same rule
-// web/voice/extract_lines.py uses, so regenerated audio keeps matching.
-// ============================================================
-const VOICE_SPEAKERS = [
-  ['Дневник D-04 · Мара Линд', 'mara'], ['Мара Линд', 'mara'], ['Бортовой самописец D-02', 'd02pilot'], ['Эфир · закрытый канал', 'halm'],
-  ['Хальм', 'halm'], ['Лена', 'lena'], ['Лукас', 'lucas'], ['Диего', 'diego'], ['Итан', 'ethan'], ['Нора', 'nora'],
-  ['Юсуф', 'yusuf'], ['Варн', 'varn'], ['Кесслер', 'kessler'],
-];
-// build.py can ship the table from voice/voices.json (longest prefix first), so a new speaker is a JSON edit
-const _speakerTable = (typeof window !== 'undefined' && Array.isArray(window.VOICE_SPEAKERS) && window.VOICE_SPEAKERS.length) ? window.VOICE_SPEAKERS : VOICE_SPEAKERS;
-function speakerKey(who) {
-  if (!who) return null;
-  let s = who;
-  const i = s.indexOf(' (');
-  if (i >= 0) s = s.slice(0, i);
-  s = s.replace(/^\[|\]$/g, '').trim();
-  for (const [p, k] of _speakerTable) if (s.startsWith(p)) return k;
-  return null;
-}
-// radio / intercom / recordings get the band-limited treatment at playback time
-function isRadioLine(who) { return !!who && (/\((рация|радио|интерком|спутниковый канал)\)/.test(who) || who.startsWith('[')); }
-const _te = new TextEncoder();
-function fnv1a(str) {
-  let h = 0x811c9dc5;
-  for (const b of _te.encode(str)) { h ^= b; h = Math.imul(h, 0x01000193) >>> 0; }
-  return (h >>> 0).toString(16).padStart(8, '0');
-}
-
-const Voice = {
-  bank: (typeof window !== 'undefined' && window.VOICE_BANK) || null,
-  buffers: new Map(), pending: new Map(), cur: null, enabled: true,
-  count() { return this.bank ? Object.keys(this.bank).length : 0; },
-  lookup(who, text) {
-    if (!this.bank || !this.enabled) return null;
-    const k = speakerKey(who);
-    if (!k) return null;
-    const id = fnv1a(k + '|' + text);
-    const e = this.bank[id];
-    return e ? { id, d: e.d, u: e.u } : null;
-  },
-  _decode(id) {
-    if (this.buffers.has(id)) return Promise.resolve(this.buffers.get(id));
-    if (this.pending.has(id)) return this.pending.get(id);
-    const e = this.bank && this.bank[id];
-    if (!e || !Sound.ctx) return Promise.resolve(null);
-    // decode the data URL by hand: fetch(data:) can be blocked by a page's connect-src policy
-    const p = new Promise((res) => {
-      try {
-        const b64 = e.u.slice(e.u.indexOf(',') + 1), bin = atob(b64), u8 = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-        res(u8.buffer);
-      } catch (err) { res(null); }
-    }).then((ab) => (ab ? Sound.ctx.decodeAudioData(ab) : null)).then((buf) => { if (buf) this.buffers.set(id, buf); this.pending.delete(id); return buf; }).catch(() => { this.pending.delete(id); return null; });
-    this.pending.set(id, p);
-    return p;
-  },
-  // decode everything in the background once audio is unlocked
-  prefetch() {
-    if (!this.bank || this._prefetching) return;
-    this._prefetching = true;
-    const ids = Object.keys(this.bank);
-    let i = 0;
-    const step = () => { if (i >= ids.length) return; Promise.all(ids.slice(i, i + 6).map((id) => this._decode(id))).then(() => { i += 6; setTimeout(step, 30); }); };
-    step();
-  },
-  play(v, radio) {
-    this.stop();
-    if (!Sound.ctx) return;
-    const token = {};
-    this.cur = token;
-    this._decode(v.id).then((buf) => {
-      if (!buf || this.cur !== token) return;
-      const ctx = Sound.ctx;
-      const src = ctx.createBufferSource(); src.buffer = buf;
-      const g = ctx.createGain(); g.gain.value = radio ? 0.95 : 1.0;
-      let head = src;
-      if (radio) {
-        const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 380;
-        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200;
-        const sh = ctx.createWaveShaper(); sh.curve = Voice._crunch();
-        src.connect(hp); hp.connect(lp); lp.connect(sh); head = sh;
-        Sound.noise(Math.min(buf.duration, 8), 2400, 'bandpass', 0.018);
-        Sound.sfx('click', 0.25);
-      }
-      head.connect(g); g.connect(Sound.voiceBus || Sound.master);
-      src.start();
-      token.src = src;
-      Sound.duck(true);
-      src.onended = () => { if (this.cur === token) { this.cur = null; Sound.duck(false); } };
-    });
-  },
-  stop() {
-    const c = this.cur;
-    this.cur = null;
-    if (c && c.src) { try { c.src.stop(); } catch (e) { /* already stopped */ } }
-    Sound.duck(false);
-  },
-  _crunch() {
-    if (this._curve) return this._curve;
-    const n = 256, c = new Float32Array(n);
-    for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; c[i] = Math.tanh(x * 2.2) / Math.tanh(2.2); }
-    return (this._curve = c);
-  },
-};
-
 // ---- 15-hud.js ----
 // ============================================================
 // 15-hud.js — HUD, radio, prompts, case, journal, DNA flow
@@ -1126,14 +878,12 @@ const HUD = {
   _promptSet: false, _radioQ: [], _radioBusy: false, _bigTimer: null, _toastTimer: null,
   show(on) { $('hud').hidden = !on; $('touch').hidden = !(on && IS_TOUCH); },
   objective(text, sub) {
-    $('objective').hidden = text === '…'; // no placeholder panel while a chapter sets up
     const el = $('objText');
     el.innerHTML = text + (sub ? `<small>${sub}</small>` : '');
     const o = $('objective');
     o.classList.remove('fresh'); void o.offsetWidth; o.classList.add('fresh');
-    Guide.onObjective(text, sub);
+    Sound.sfx('ping', 0.5);
   },
-  speaking: null, // { key, radio } while a subtitle line is up
   beginFrame() { this._promptSet = false; },
   endFrame() { if (!this._promptSet) $('prompt').hidden = true; },
   prompt(text, key = 'E', progress = null, warn = false) {
@@ -1155,7 +905,6 @@ const HUD = {
     if (typeof Cine !== 'undefined' && Cine.active) interrupt = true;
     if (interrupt) {
       clearTimeout(this._radioTimer);
-      Voice.stop();
       if (this._radioCur && this._radioCur.done) this._radioCur.done();
       for (const q of this._radioQ) if (q.done) q.done();
       this._radioQ.length = 0;
@@ -1170,23 +919,17 @@ const HUD = {
     const r = $('radio');
     const l = this._radioQ.shift();
     this._radioCur = l || null;
-    if (!l) { this._radioBusy = false; r.hidden = true; this.speaking = null; return; }
+    if (!l) { this._radioBusy = false; r.hidden = true; return; }
     this._radioBusy = true;
     r.hidden = false;
     $('radioWho').textContent = l.who || '';
     $('radioWho').className = l.who && l.who.startsWith('[') ? 'sys' : '';
     $('radioText').innerHTML = l.text;
-    const radio = isRadioLine(l.who);
-    this.speaking = { key: speakerKey(l.who), radio, until: Game.time + 99 };
-    let dur = l.dur ?? clamp(1.6 + l.text.length * 0.055, 2.2, 7.5);
-    const v = Voice.lookup(l.who, l.text);
-    if (v && Sound.ctx && !Game.muted) { Voice.play(v, radio); dur = v.d + 0.35; }
+    const dur = l.dur ?? clamp(1.6 + l.text.length * 0.055, 2.2, 7.5);
     this._radioTimer = setTimeout(() => { const d = l.done; l.done = null; if (d) d(); this._nextRadio(); }, dur * 1000);
   },
   clearRadio() {
     clearTimeout(this._radioTimer);
-    Voice.stop();
-    this.speaking = null;
     if (this._radioCur && this._radioCur.done) this._radioCur.done();
     for (const q of this._radioQ) if (q.done) q.done();
     this._radioQ.length = 0; this._radioBusy = false; this._radioCur = null; $('radio').hidden = true;
@@ -1240,7 +983,7 @@ const HUD = {
     }
     strip.innerHTML = html;
   },
-  letterbox(on) { $('letterbox').classList.toggle('on', !!on); document.body.classList.toggle('cine', !!on); },
+  letterbox(on) { $('letterbox').classList.toggle('on', !!on); },
   fade(to, dur = 1) {
     const f = $('fade');
     f.style.transition = `opacity ${dur}s ease`;
@@ -1341,7 +1084,6 @@ const Journal = {
     if (!silent) {
       HUD.toast(`ЖУРНАЛ · ${SPECIES[sp].name} <b style="color:var(--amber)">+${item[2]}%</b> · ${item[1]}`);
       Sound.sfx('ping', 0.35);
-      setTimeout(() => Tutorial.show('journal', IS_TOUCH ? 'Кнопка <kbd>Журнал</kbd> — всё, что вы узнали о видах' : '<kbd>J</kbd> — полевой журнал: всё, что вы узнали о видах', () => !$('journal').hidden, { max: 10 }), 2600);
     }
     HUD.journalChip(sp);
     Game.lastSpecies = sp;
@@ -1412,203 +1154,6 @@ const DNA = {
   },
 };
 
-// ---- 16-guide.js ----
-// ============================================================
-// 16-guide.js — objectives, player guidance, contextual tutorials
-//
-// Guidance escalates only while the player makes no progress toward the
-// current goal: first the world (lights, paths, companions walking there),
-// then a companion's line (~25 s), then a small waypoint (~50 s).
-// A chapter marks its goal in markers() with { goal: true }, optional
-// { near } (arrival radius), { nudge } (a hand-written first hint) and
-// { patient: true } (standing still is the task, e.g. observing).
-// ============================================================
-const _wpV = new THREE.Vector3();
-const baseTitle = (t) => (t || '').replace(/\s*·\s*\d+\/\d+\s*$/, '').trim();
-
-// companion hints by speaker; the direction is relative to the camera
-const NUDGES = {
-  lena: {
-    ahead: [{ who: 'Лена', text: 'Итан, нам прямо. Не сворачивайте.' }, { who: 'Лена', text: 'Всё верно, Итан, идём дальше вперёд.' }],
-    left: [{ who: 'Лена', text: 'Итан, левее. Нам туда.' }, { who: 'Лена', text: 'Возьмите левее, Итан.' }],
-    right: [{ who: 'Лена', text: 'Итан, правее. Нам туда.' }, { who: 'Лена', text: 'Правее, Итан. Смотрите на компас.' }],
-    behind: [{ who: 'Лена', text: 'Итан, мы уходим не туда. Разворачивайтесь.' }, { who: 'Лена', text: 'Нам в обратную сторону, Итан.' }],
-  },
-  halm: {
-    ahead: [{ who: 'Хальм', text: 'Прямо, мистер Рид. Не тратьте время.' }],
-    left: [{ who: 'Хальм', text: 'Левее, мистер Рид.' }],
-    right: [{ who: 'Хальм', text: 'Правее, мистер Рид.' }],
-    behind: [{ who: 'Хальм', text: 'Мистер Рид, вы идёте не туда.' }],
-  },
-  diego: {
-    ahead: [{ who: 'Диего', text: 'Следопыт, прямо. Не зевай.' }],
-    left: [{ who: 'Диего', text: 'Левее, Следопыт.' }],
-    right: [{ who: 'Диего', text: 'Правее, Следопыт.' }],
-    behind: [{ who: 'Диего', text: 'Эй, Следопыт. Нам в другую сторону.' }],
-  },
-  lucas: {
-    ahead: [{ who: 'Лукас', text: 'Следопыт, прямо по курсу.' }],
-    left: [{ who: 'Лукас', text: 'Левее, Следопыт. Штурман из тебя так себе.' }],
-    right: [{ who: 'Лукас', text: 'Правее, Следопыт.' }],
-    behind: [{ who: 'Лукас', text: 'Следопыт, разворот на сто восемьдесят.' }],
-  },
-  nora: {
-    ahead: [{ who: 'Нора (интерком)', text: 'Мистер Рид, прямо перед вами.' }],
-    left: [{ who: 'Нора (интерком)', text: 'Мистер Рид, левее.' }],
-    right: [{ who: 'Нора (интерком)', text: 'Мистер Рид, правее.' }],
-    behind: [{ who: 'Нора (интерком)', text: 'Мистер Рид, вам в другую сторону.' }],
-  },
-};
-
-const Guide = {
-  title: '', hint: '', setAt: 0, bestD: Infinity, stall: 0, nudges: 0, wpForce: 0, wpAuto: false, pending: null,
-  goal: null, lastNudgeAt: -99, _bannerTimer: null,
-  reset() {
-    this.title = ''; this.hint = ''; this.pending = null; this.goal = null; this.wpForce = 0; this.wpAuto = false;
-    this.bestD = Infinity; this.stall = 0; this.nudges = 0;
-    $('objBanner').hidden = true; $('waypoint').hidden = true;
-  },
-  // HUD.objective(title, hint) routes here
-  onObjective(title, hint) {
-    const prev = this.title;
-    const status = title === '…' || /^DNA COLLECTION/.test(title);
-    const same = !!prev && baseTitle(prev) === baseTitle(title);
-    const changed = title !== prev || (hint || '') !== this.hint;
-    this.title = title; this.hint = hint || '';
-    this.setAt = Game.time; this.bestD = Infinity; this.stall = 0; this.nudges = 0; this.wpAuto = false;
-    $('objective').classList.remove('collapsed');
-    if (status || !changed) return;
-    this.banner(same ? 'Цель обновлена' : 'Новая цель', title);
-    if (!same) this.wpForce = 5;
-    if (Game.currentId === 'prologue' && !same && prev && prev !== '…') setTimeout(() => Tutorial.show('objective', IS_TOUCH ? 'Кнопка <kbd>Цель</kbd> — напомнить задачу' : '<kbd>Tab</kbd> — напомнить текущую цель', () => this._recalled, { max: 9 }), 3500);
-  },
-  banner(kind, title) {
-    if (Cine.active || Game.loading || $('hud').hidden) { this.pending = [kind, title]; return; }
-    this.pending = null;
-    const b = $('objBanner');
-    $('obKind').textContent = kind; $('obTitle').textContent = title;
-    b.hidden = false; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
-    Sound.sfx('ping', kind === 'Новая цель' ? 0.7 : 0.4);
-    clearTimeout(this._bannerTimer);
-    this._bannerTimer = setTimeout(() => { b.hidden = true; }, 3400);
-  },
-  recall() {
-    if (!this.title || this.title === '…') return;
-    this._recalled = true;
-    $('objective').classList.remove('collapsed');
-    const o = $('objective'); o.classList.remove('fresh'); void o.offsetWidth; o.classList.add('fresh');
-    this.setAt = Game.time;
-    this.wpForce = 6;
-    Sound.sfx('ping', 0.3);
-  },
-  _speaker() {
-    const g = Game.ctx && Game.ctx.guide;
-    if (g === null) return null;
-    const key = (g && g.key) || { prologue: 'nora', valley: 'lena', k4: 'lena', river: 'lena', peaks: 'lena', truth: 'lena', queen: 'lena', lighthouse: 'lena' }[Game.currentId];
-    if (!key) return null;
-    // in person when that character is close by, otherwise over the radio
-    const w = Game.world, p = Game.player;
-    let near = false;
-    if (w && w.cast && p) for (const m of w.cast) if (m.userData.castKey === key && m.visible && dist2d(m.position.x, m.position.z, p.pos.x, p.pos.z) < 22) near = true;
-    return { key, near, member: near ? w.cast.find((m) => m.userData.castKey === key) : null };
-  },
-  nudge(goal) {
-    const sp = this._speaker();
-    if (!sp || HUD.radioBusy()) return false;
-    const p = Game.player;
-    const bearing = Math.atan2(goal.x - p.pos.x, -(goal.z - p.pos.z));
-    const rel = wrapAngle(bearing - Cam.heading());
-    const dir = Math.abs(rel) < 0.45 ? 'ahead' : Math.abs(rel) > 2.3 ? 'behind' : rel < 0 ? 'left' : 'right';
-    let line;
-    if (goal.nudge && this.nudges === 0) line = { who: goal.nudgeWho || (sp.key === 'nora' ? 'Нора (интерком)' : CHARACTERS[sp.key] ? CHARACTERS[sp.key].short : ''), text: goal.nudge };
-    else {
-      const set = (NUDGES[sp.key] || NUDGES.lena)[dir];
-      line = { ...set[this.nudges % set.length] };
-    }
-    if (!sp.near && sp.key !== 'nora' && !/\(/.test(line.who)) line.who += ' (рация)';
-    HUD.say([line]);
-    if (sp.member && sp.member.userData.companion) sp.member.userData.companion.gesture('point', goal);
-    this.lastNudgeAt = Game.time;
-    return true;
-  },
-  update(dt, markers) {
-    if (this.pending && !Cine.active && !Game.loading && !$('hud').hidden) this.banner(...this.pending);
-    if (Game.time - this.setAt > 16 && this.hint) $('objective').classList.add('collapsed');
-    this.wpForce = Math.max(0, this.wpForce - dt);
-    // current goal: nearest marker flagged as the goal
-    const p = Game.player;
-    let goal = null, gd = Infinity;
-    for (const m of markers || []) if (m.goal) { const d = dist2d(p.pos.x, p.pos.z, m.x, m.z); if (d < gd) { gd = d; goal = m; } }
-    this.goal = goal;
-    const wp = $('waypoint');
-    if (!goal) { wp.hidden = true; return; }
-    const near = goal.near ?? 9;
-    const busy = Cine.active || !Input.enabled || Cam.mode !== 'third' || DNA.busy || Interact.cur;
-    if (gd < this.bestD - 5) { this.bestD = gd; this.stall = 0; this.wpAuto = false; }
-    else if (gd < near || goal.patient) { this.stall = 0; this.wpAuto = false; }
-    else if (!busy && !HUD.radioBusy()) this.stall += dt;
-    if (this.stall > 25 && this.nudges === 0 && this.nudge(goal)) this.nudges = 1;
-    if (this.stall > 50) { this.wpAuto = true; if (this.nudges === 1 && this.nudge(goal)) this.nudges = 2; }
-    if (this.stall > 110 && this.nudges === 2 && this.nudge(goal)) this.nudges = 3;
-    const show = (this.wpForce > 0 || this.wpAuto) && !Cine.active && Cam.mode === 'third' && gd > near * 0.6 && !$('hud').hidden;
-    if (!show) { wp.hidden = true; return; }
-    const gy = goal.y ?? (Game.world.groundH(goal.x, goal.z) + 2.2);
-    _wpV.set(goal.x, gy, goal.z).project(camera);
-    const W = window.innerWidth, H = window.innerHeight;
-    let x = (_wpV.x * 0.5 + 0.5) * W, y = (-_wpV.y * 0.5 + 0.5) * H;
-    const behind = _wpV.z > 1;
-    if (behind) { x = W - x; y = H - 40; }
-    const m = 36;
-    const off = behind || x < m || x > W - m || y < m || y > H - m;
-    x = clamp(x, m, W - m); y = clamp(y, m + 30, H - m - 60);
-    wp.hidden = false;
-    wp.classList.toggle('edge', off);
-    wp.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px)`;
-    $('wpDist').textContent = `${Math.round(gd)} м`;
-  },
-};
-
-// ---------- contextual tutorials: one line, shown once per playthrough ----------
-const Tutorial = {
-  cur: null, queue: [],
-  seen(id) { return !!(Game.state.flags.tut && Game.state.flags.tut[id]); },
-  show(id, html, done, o = {}) {
-    if (this.seen(id) || (this.cur && this.cur.id === id) || this.queue.some((q) => q.id === id)) return;
-    const t = { id, html, done, t: 0, okT: 0, min: o.min ?? 1.4, max: o.max ?? 16 };
-    if (this.cur) { this.queue.push(t); return; }
-    this._open(t);
-  },
-  _open(t) {
-    this.cur = t;
-    const el = $('tutorial');
-    el.innerHTML = t.html;
-    el.hidden = false; el.classList.remove('done'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-  },
-  _close() {
-    const t = this.cur;
-    if (!t) return;
-    (Game.state.flags.tut ||= {})[t.id] = true;
-    writeSave();
-    const el = $('tutorial');
-    el.classList.add('done');
-    this.cur = null;
-    setTimeout(() => { if (!this.cur) el.hidden = true; }, 450);
-  },
-  update(dt) {
-    const el = $('tutorial');
-    if (!this.cur) { if (this.queue.length && !Cine.active) this._open(this.queue.shift()); return; }
-    if (Cine.active || Game.paused) { el.style.visibility = 'hidden'; return; }
-    el.style.visibility = '';
-    const t = this.cur;
-    t.t += dt;
-    let ok = false;
-    try { ok = !!(t.done && t.done()); } catch (e) { ok = false; }
-    if (ok) t.okT += dt;
-    if ((t.okT > 0.35 && t.t > t.min) || t.t > t.max) this._close();
-  },
-  reset() { this.cur = null; this.queue = []; $('tutorial').hidden = true; },
-};
-
 // ---- 20-world.js ----
 // ============================================================
 // 20-world.js — world container, sky, terrain, vegetation, fx
@@ -1629,11 +1174,7 @@ class World {
     this.wind = new THREE.Vector2(1, 0);
     this.noiseListeners = [];
   }
-  add(o) {
-    this.scene.add(o);
-    if (o.userData && o.userData.castKey && !o.userData.isPlayer) { this.cast ||= []; if (!this.cast.includes(o)) this.cast.push(o); }
-    return o;
-  }
+  add(o) { this.scene.add(o); return o; }
   onUpdate(fn) { this.updaters.push(fn); return fn; }
   update(dt) { for (let i = 0; i < this.updaters.length; i++) this.updaters[i](dt); }
   groundH(x, z) {
@@ -2133,7 +1674,35 @@ function makeCrate(world, x, z, s = 1, color = '#4f5a3c', ry = 0) {
   world.circles.push({ x, z, r: 0.75 * s });
   return c;
 }
-// makeHelicopter: see 28-heli.js
+function makeHelicopter(o = {}) {
+  const g = new THREE.Group();
+  const body = o.color || '#2f3833';
+  mesh(G.capsule(1.25, 3.4, 6, 12), mat(body, { rough: 0.6, metal: 0.3 }), { parent: g, rot: [Math.PI / 2, 0, 0], pos: [0, 1.6, 0], scale: [1, 1, 0.9] });
+  mesh(G.sphere(1.05, 12, 8), mat('#1a2a33', { rough: 0.1, metal: 0.6 }), { parent: g, pos: [0, 1.95, 2.25], scale: [1, 0.7, 0.9] });
+  mesh(G.cyl(0.32, 0.5, 5.6, 8), mat(body, { rough: 0.6, metal: 0.3 }), { parent: g, rot: [Math.PI / 2, 0, 0], pos: [0, 2.0, -4.6] });
+  mesh(G.box(0.12, 1.4, 1.0), mat(body), { parent: g, pos: [0, 2.6, -7.2] });
+  const rotor = new THREE.Group(); rotor.position.set(0, 3.25, 0.1); g.add(rotor);
+  mesh(G.cyl(0.2, 0.2, 0.5, 8), mat('#222'), { parent: rotor });
+  for (let i = 0; i < 4; i++) mesh(G.box(0.34, 0.05, 7.2), mat('#1c1f1d'), { parent: rotor, rot: [0, (i / 4) * Math.PI, 0], pos: [0, 0.2, 0] });
+  const tail = new THREE.Group(); tail.position.set(0.18, 2.6, -7.3); g.add(tail);
+  for (let i = 0; i < 2; i++) mesh(G.box(0.05, 1.5, 0.16), mat('#1c1f1d'), { parent: tail, rot: [(i / 2) * Math.PI, 0, 0] });
+  for (const s of [-1, 1]) {
+    mesh(G.box(0.1, 0.1, 4.2), mat('#222'), { parent: g, pos: [s * 1.1, 0.1, 0.3] });
+    mesh(G.box(0.08, 0.7, 0.08), mat('#222'), { parent: g, pos: [s * 1.0, 0.45, 1.3] });
+    mesh(G.box(0.08, 0.7, 0.08), mat('#222'), { parent: g, pos: [s * 1.0, 0.45, -0.8] });
+  }
+  const navR = mesh(G.sphere(0.08, 6, 4), mat('#ff3030', { emissive: '#ff2020', ei: 3 }), { parent: g, pos: [-1.3, 1.6, 0.5], cast: false });
+  const navG = mesh(G.sphere(0.08, 6, 4), mat('#30ff60', { emissive: '#20ff40', ei: 3 }), { parent: g, pos: [1.3, 1.6, 0.5], cast: false });
+  g.userData = { rotor, tail, spin: 0, navR, navG };
+  g.userData.update = (dt, speed = 1) => {
+    g.userData.spin += dt * 24 * speed;
+    rotor.rotation.y = g.userData.spin;
+    tail.rotation.x = g.userData.spin * 1.6;
+    const blink = (Game.time % 1.2) < 0.15;
+    navR.visible = navG.visible = blink || speed < 0.1;
+  };
+  return g;
+}
 
 // ---- 25-creatures.js ----
 // ============================================================
@@ -2503,804 +2072,71 @@ function makeEva() {
   return g;
 }
 
-// humans: see 26-people.js (makeHuman) and 27-cast.js (characters, NPCs, companions)
-
-// ---- 26-people.js ----
-// ============================================================
-// 26-people.js — procedural human figure
-//
-// A small bone hierarchy (hips → spine → neck, shoulders → elbows,
-// thighs → knees). Every bone's pieces are merged into one vertex-coloured
-// mesh, so a person costs ~12 draw calls. The look is data (see
-// CHARACTERS in 27-cast.js): outfit layers, hair, headwear and gear give
-// each character a different silhouette, not just a different tint.
-//
-// Interface shared with any replacement model (e.g. a rigged glTF):
-//   g.userData.anim(dt, speed, state)  state: crouch, sit, talk, point,
-//     wave, hold, lookY, lookX
-//   g.userData.caseLights (optional), g.userData.height
-// ============================================================
-let _humanMat = null;
-function humanMaterial() {
-  return (_humanMat ||= new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0.0 }));
-}
-
-// merge geometries keeping their smooth normals; parts: [{geo, color, m}]
-function mergeColored(parts) {
-  let nv = 0, ni = 0;
-  const gs = parts.map((p) => {
-    const g = p.geo;
-    g.applyMatrix4(p.m);
-    if (!g.index) { const idx = new Array(g.attributes.position.count); for (let i = 0; i < idx.length; i++) idx[i] = i; g.setIndex(idx); }
-    nv += g.attributes.position.count; ni += g.index.count;
-    return { g, c: new THREE.Color(p.color) };
-  });
-  const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), C = new Float32Array(nv * 3);
-  const I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
-  let vo = 0, io = 0;
-  for (const { g, c } of gs) {
-    const pa = g.attributes.position, na = g.attributes.normal, idx = g.index;
-    for (let i = 0; i < pa.count; i++) {
-      const k = (vo + i) * 3;
-      P[k] = pa.getX(i); P[k + 1] = pa.getY(i); P[k + 2] = pa.getZ(i);
-      N[k] = na.getX(i); N[k + 1] = na.getY(i); N[k + 2] = na.getZ(i);
-      C[k] = c.r; C[k + 1] = c.g; C[k + 2] = c.b;
-    }
-    for (let k = 0; k < idx.count; k++) I[io + k] = idx.getX(k) + vo;
-    vo += pa.count; io += idx.count;
-    g.dispose();
-  }
-  const out = new THREE.BufferGeometry();
-  out.setAttribute('position', new THREE.BufferAttribute(P, 3));
-  out.setAttribute('normal', new THREE.BufferAttribute(N, 3));
-  out.setAttribute('color', new THREE.BufferAttribute(C, 3));
-  out.setIndex(new THREE.BufferAttribute(I, 1));
-  out.computeBoundingSphere();
-  return out;
-}
-const _shade = (hex, k) => '#' + new THREE.Color(hex).multiplyScalar(k).getHexString();
-
+// ---------- humans ----------
 function makeHuman(o = {}) {
   const g = new THREE.Group();
-  const fem = !!o.female;
-  const sw = (o.bulk ?? 1) * (fem ? 0.9 : 1); // shoulder width
-  const hw = fem ? 1.06 : 1; // hip width
-  const skin = o.skin || '#c49a76', hair = o.hair || '#2a211a';
-  const top = o.top || o.outfit || '#4b5238', pants = o.pants || '#3b3f2e', boots = o.boots || '#2a2219';
-  const sleeve = o.sleeve || top, hands = o.gloves || skin;
-  const bones = {}, parts = {};
-  const bone = (name, parent, x, y, z) => { const b = new THREE.Group(); b.position.set(x, y, z); (parent ? bones[parent] : g).add(b); bones[name] = b; parts[name] = []; return b; };
-  const P = (name, geo, color, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) => parts[name].push({ geo, color, m: M4(x, y, z, rx, ry, rz, sx, sy, sz) });
-  const S = (r = 1, w = 14, h = 10) => new THREE.SphereGeometry(r, w, h);
-  const Cy = (rt, rb, h, s = 12, open = false) => new THREE.CylinderGeometry(rt, rb, h, s, 1, open);
-  const Bx = (w, h, d) => new THREE.BoxGeometry(w, h, d);
-
-  bone('hips', null, 0, 0.94, 0);
-  bone('spine', 'hips', 0, 0.02, 0);
-  bone('neck', 'spine', 0, 0.6, 0);
-  for (const s of [1, -1]) {
-    const L = s > 0 ? 'L' : 'R'; // the figure faces +Z, so its left is +X
-    bone('sh' + L, 'spine', s * 0.19 * sw, 0.5, 0);
-    bone('el' + L, 'sh' + L, 0, -0.29, 0);
-    bone('th' + L, 'hips', s * 0.095 * hw, -0.02, 0);
-    bone('kn' + L, 'th' + L, 0, -0.44, 0);
+  const outfit = mat(o.outfit || '#4b5238'), pants = mat(o.pants || '#3b3f2e'), skin = mat(o.skin || '#c49a76'), hair = mat(o.hair || '#2a211a');
+  const hips = new THREE.Group(); hips.position.y = 0.95; g.add(hips);
+  const torso = new THREE.Group(); hips.add(torso);
+  mesh(G.capsule(0.22, 0.42, 3, 8), outfit, { parent: torso, pos: [0, 0.38, 0], scale: [1.05, 1, 0.75] });
+  const headG = new THREE.Group(); headG.position.set(0, 0.92, 0); torso.add(headG);
+  mesh(G.sphere(0.15, 10, 8), skin, { parent: headG, pos: [0, 0, 0.01], scale: [0.9, 1.05, 0.95] });
+  mesh(G.sphere(0.155, 10, 6), hair, { parent: headG, pos: [0, 0.05, -0.02], scale: [0.95, 0.8, 0.95] });
+  if (o.hat) mesh(G.cyl(0.26, 0.26, 0.05, 12), mat(o.hat), { parent: headG, pos: [0, 0.12, 0] });
+  if (o.helmet) mesh(G.sphere(0.18, 10, 6), mat(o.helmet), { parent: headG, pos: [0, 0.06, -0.01], scale: [1, 0.8, 1.05] });
+  if (o.glasses) mesh(G.box(0.2, 0.04, 0.02), mat('#222'), { parent: headG, pos: [0, 0.02, 0.14], cast: false });
+  const arms = [], legs = [];
+  for (const sx of [-1, 1]) {
+    const sh = new THREE.Group(); sh.position.set(sx * 0.29, 0.66, 0); torso.add(sh);
+    mesh(G.capsule(0.065, 0.42, 2, 6), outfit, { parent: sh, pos: [0, -0.26, 0] });
+    mesh(G.sphere(0.06, 6, 4), skin, { parent: sh, pos: [0, -0.56, 0.02] });
+    arms.push(sh);
+    const hp = new THREE.Group(); hp.position.set(sx * 0.12, 0, 0); hips.add(hp);
+    mesh(G.capsule(0.085, 0.62, 2, 6), pants, { parent: hp, pos: [0, -0.42, 0] });
+    mesh(G.box(0.13, 0.09, 0.26), mat('#231d17'), { parent: hp, pos: [0, -0.88, 0.05] });
+    legs.push(hp);
   }
-
-  // ---- torso ----
-  P('hips', S(1, 16, 10), pants, 0, 0.0, 0, 0, 0, 0, 0.165 * hw, 0.12, 0.115);
-  P('spine', Cy(0.15 * sw, 0.155 * hw, 0.22, 16), top, 0, 0.14, 0);
-  P('spine', S(1, 16, 12), top, 0, 0.36, fem ? 0.005 : 0, 0, 0, 0, 0.19 * sw, 0.2, 0.125);
-  if (fem) for (const s of [1, -1]) P('spine', S(0.06, 12, 8), top, s * 0.062, 0.335, 0.085);
-  P('spine', S(1, 16, 10), top, 0, 0.49, 0, 0, 0, 0, 0.215 * sw, 0.075, 0.11);
-  P('spine', Cy(0.047, 0.052, 0.14, 12), skin, 0, 0.58, 0.005);
-  if (o.belt) P('spine', Cy(0.158 * hw, 0.16 * hw, 0.04, 16), o.belt, 0, 0.04, 0);
-  if (o.collar) P('spine', new THREE.TorusGeometry(0.058, 0.022, 8, 16), o.collar, 0, 0.555, 0.005, Math.PI / 2 - 0.25, 0, 0);
-  if (o.scarf) P('spine', new THREE.TorusGeometry(0.062, 0.03, 8, 16), o.scarf, 0, 0.56, 0.008, Math.PI / 2 - 0.2, 0, 0);
-  // long coat / lab coat: a skirt hanging from the hips, open at the front
-  if (o.coat) {
-    const len = o.coatLen ?? 0.58;
-    P('hips', Cy(0.18 * hw, 0.225 * hw, len, 18, true), o.coat, 0, -len / 2 + 0.06, -0.005);
-    P('spine', Bx(0.02, 0.5, 0.01), _shade(o.coat, 0.72), 0, 0.28, 0.128); // front edge / placket
-    if (o.lapel) for (const s of [1, -1]) P('spine', Bx(0.06, 0.2, 0.012), o.lapel, s * 0.05, 0.42, 0.121, 0.08, 0, s * 0.35);
-    for (const s of [1, -1]) P('hips', Bx(0.1, 0.1, 0.012), _shade(o.coat, 0.9), s * 0.12, -0.16, 0.21, 0.15, 0, 0);
-  }
-  // vests
-  if (o.vest === 'tactical') {
-    const vc = o.vestColor || '#4a4a3a';
-    P('spine', Bx(0.36 * sw, 0.34, 0.07), vc, 0, 0.32, 0.105);
-    P('spine', Bx(0.36 * sw, 0.34, 0.07), vc, 0, 0.32, -0.105);
-    for (const s of [1, -1]) P('spine', Bx(0.06, 0.28, 0.2), _shade(vc, 0.85), s * 0.17 * sw, 0.3, 0);
-    for (let i = 0; i < 3; i++) P('spine', Bx(0.075, 0.1, 0.05), _shade(vc, 1.12), -0.085 + i * 0.085, 0.22, 0.155);
-    P('spine', Bx(0.09, 0.06, 0.04), _shade(vc, 1.12), 0.08, 0.37, 0.15);
-    P('spine', Bx(0.035, 0.09, 0.03), '#1c1c1a', -0.1, 0.4, 0.15); // radio
-    P('spine', Cy(0.005, 0.005, 0.16, 5), '#141414', -0.1, 0.5, 0.15);
-  } else if (o.vest === 'field') {
-    const vc = o.vestColor || '#3f6f6e';
-    for (const s of [1, -1]) P('spine', Bx(0.13, 0.32, 0.035), vc, s * 0.09, 0.32, 0.112, 0, 0, 0);
-    P('spine', Bx(0.34 * sw, 0.34, 0.035), vc, 0, 0.32, -0.112);
-    for (const s of [1, -1]) P('spine', Bx(0.07, 0.07, 0.03), _shade(vc, 1.15), s * 0.09, 0.25, 0.135);
-  }
-  if (o.flightsuit) { // zipper and chest pockets on a one-piece suit
-    P('spine', Bx(0.012, 0.46, 0.01), _shade(top, 0.7), 0, 0.3, 0.124);
-    for (const s of [1, -1]) P('spine', Bx(0.07, 0.08, 0.012), _shade(top, 0.9), s * 0.085, 0.38, 0.12);
-    if (o.patch) P('spine', Bx(0.05, 0.03, 0.012), o.patch, 0.085, 0.43, 0.125);
-  }
-  // back gear
   let caseLights = null;
   if (o.pack) {
-    const pc = o.packColor || '#3f3a2c';
-    P('spine', Bx(0.32, 0.42, 0.17), pc, 0, 0.32, -0.2);
-    P('spine', Bx(0.34, 0.1, 0.2), _shade(pc, 0.8), 0, 0.53, -0.2);
-    P('spine', Cy(0.07, 0.07, 0.36, 10), _shade(pc, 1.25), 0, 0.08, -0.2, 0, 0, Math.PI / 2);
-    for (const s of [1, -1]) P('spine', Bx(0.035, 0.34, 0.012), _shade(pc, 0.7), s * 0.1, 0.36, 0.123);
+    const pack = new THREE.Group(); pack.position.set(0, 0.4, -0.2); torso.add(pack);
+    mesh(G.box(0.42, 0.55, 0.22), mat('#3f3a2c'), { parent: pack, pos: [0, 0, -0.08] });
+    mesh(G.box(0.46, 0.14, 0.28), mat('#2c2a22'), { parent: pack, pos: [0, 0.32, -0.08] });
     if (o.caseLights) {
-      P('spine', Bx(0.36, 0.13, 0.08), '#1a1e20', 0, 0.2, -0.305);
+      mesh(G.box(0.5, 0.2, 0.12), mat('#15191a', { rough: 0.4, metal: 0.4 }), { parent: pack, pos: [0, -0.1, -0.25] });
       caseLights = [];
       for (let i = 0; i < 6; i++) {
         const lm = new THREE.MeshStandardMaterial({ color: '#333', emissive: new THREE.Color('#e3a33b'), emissiveIntensity: 0.25 });
-        caseLights.push(mesh(G.sphere(0.017, 8, 6), lm, { parent: bones.spine, pos: [-0.125 + i * 0.05, 0.2, -0.348], cast: false }));
+        const l = mesh(G.sphere(0.028, 6, 4), lm, { parent: pack, pos: [-0.19 + i * 0.076, -0.07, -0.32], cast: false });
+        caseLights.push(l);
       }
     }
   }
-  if (o.rifle) {
-    P('spine', Bx(0.045, 0.86, 0.06), '#1d1f1c', 0.0, 0.3, -0.16, 0, 0, 0.78);
-    P('spine', Bx(0.04, 0.1, 0.05), '#26281f', 0.07, 0.24, -0.19, 0, 0, 0.78);
-    P('spine', Bx(0.03, 0.5, 0.01), '#2a2a24', 0, 0.33, 0.13, 0, 0, -0.78); // sling across the chest
-  }
-  if (o.bag) {
-    P('spine', Bx(0.028, 0.6, 0.012), _shade(o.bag, 0.75), 0, 0.3, 0.128, 0, 0, 0.72);
-    P('spine', Bx(0.028, 0.6, 0.012), _shade(o.bag, 0.75), 0, 0.3, -0.128, 0, 0, -0.72);
-    P('spine', Bx(0.2, 0.16, 0.07), o.bag, 0.19, 0.02, 0.04, 0, 0.3, 0);
-  }
-  if (o.holster) P('th' + (o.holster === 'L' ? 'L' : 'R'), Bx(0.05, 0.14, 0.09), '#1e1e1c', (o.holster === 'L' ? 1 : -1) * 0.08, -0.1, 0);
-
-  // ---- head ----
-  P('neck', S(1, 18, 14), skin, 0, 0.115, 0, 0, 0, 0, 0.094 * (fem ? 0.96 : 1), 0.113, 0.103);
-  P('neck', S(1, 14, 10), skin, 0, 0.05, 0.028, 0, 0, 0, 0.068 * (fem ? 0.9 : 1), 0.05, 0.066);
-  P('neck', S(1, 10, 8), _shade(skin, 0.94), 0, 0.103, 0.098, 0.2, 0, 0, 0.016, 0.026, 0.02);
-  for (const s of [1, -1]) {
-    P('neck', S(0.014, 10, 8), '#ece6da', s * 0.035, 0.126, 0.083);
-    P('neck', S(0.008, 8, 6), o.eyes || '#2a1d14', s * 0.035, 0.126, 0.095);
-    P('neck', Bx(0.034, 0.008, 0.012), o.brows || hair, s * 0.036, 0.148, 0.094, 0, 0, s * -0.12);
-    P('neck', S(1, 10, 8), skin, s * 0.093, 0.112, -0.004, 0, 0, 0, 0.012, 0.024, 0.018);
-  }
-  P('neck', Bx(0.034, 0.007, 0.012), _shade(skin, 0.72), 0, 0.068, 0.089);
-  const hs = o.hairStyle || 'short';
-  if (hs === 'short' || hs === 'grey' || hs === 'buzz') {
-    const k = hs === 'buzz' ? 0.985 : 1;
-    P('neck', S(1, 16, 10), hair, 0, 0.158, -0.012, 0, 0, 0, 0.1 * k, 0.078 * k, 0.108 * k);
-    P('neck', S(1, 14, 10), hair, 0, 0.108, -0.045, 0, 0, 0, 0.092 * k, 0.085 * k, 0.07 * k);
-    if (hs === 'short') P('neck', Bx(0.1, 0.02, 0.04), hair, 0.012, 0.19, 0.075, 0.5, 0, -0.15); // fringe
-  } else if (hs === 'ponytail') {
-    P('neck', S(1, 16, 10), hair, 0, 0.16, -0.01, 0, 0, 0, 0.102, 0.082, 0.11);
-    P('neck', S(1, 14, 10), hair, 0, 0.108, -0.045, 0, 0, 0, 0.095, 0.09, 0.072);
-    P('neck', S(0.03, 10, 8), _shade(hair, 0.8), 0, 0.15, -0.112);
-    P('neck', Cy(0.032, 0.012, 0.22, 10), hair, 0, 0.05, -0.14, 0.32, 0, 0);
-  }
-  if (o.stubble) P('neck', S(1, 14, 10), o.stubble, 0, 0.048, 0.03, 0, 0, 0, 0.07, 0.052, 0.067);
-  if (o.moustache) P('neck', Bx(0.05, 0.012, 0.014), o.moustache, 0, 0.082, 0.097);
-  if (o.beard) P('neck', S(1, 14, 10), o.beard, 0, 0.042, 0.035, 0, 0, 0, 0.074, 0.058, 0.07);
-  if (o.glasses) {
-    const gc = o.glasses === true ? '#2a2420' : o.glasses;
-    P('neck', Bx(0.13, 0.006, 0.006), gc, 0, 0.136, 0.1);
-    for (const s of [1, -1]) { P('neck', Bx(0.042, 0.03, 0.004), o.lens || '#a8c0c8', s * 0.035, 0.126, 0.101); P('neck', Bx(0.004, 0.005, 0.1), gc, s * 0.066, 0.134, 0.05); }
-  }
-  if (o.sunglasses) for (const s of [1, -1]) P('neck', Bx(0.044, 0.026, 0.006), '#141414', s * 0.035, 0.127, 0.102);
-  if (o.cap) {
-    P('neck', S(1, 16, 8), o.cap, 0, 0.17, 0, 0, 0, 0, 0.106, 0.06, 0.112);
-    P('neck', Bx(0.13, 0.012, 0.085), _shade(o.cap, 0.85), 0, 0.172, 0.105, -0.12, 0, 0);
-  }
-  if (o.beanie) P('neck', S(1, 16, 10), o.beanie, 0, 0.17, -0.005, 0, 0, 0, 0.106, 0.075, 0.112);
-  if (o.hat) { P('neck', Cy(0.16, 0.16, 0.012, 20), o.hat, 0, 0.19, 0); P('neck', Cy(0.085, 0.1, 0.08, 16), o.hat, 0, 0.22, 0); }
-  if (o.helmet) {
-    P('neck', S(1, 18, 12), o.helmet, 0, 0.15, -0.006, 0, 0, 0, 0.122, 0.1, 0.13);
-    P('neck', Cy(0.125, 0.128, 0.03, 18), _shade(o.helmet, 0.8), 0, 0.12, -0.006);
-    if (o.goggles) { P('neck', Bx(0.19, 0.03, 0.05), '#1a1a18', 0, 0.2, 0.085, -0.4, 0, 0); for (const s of [1, -1]) P('neck', Bx(0.055, 0.035, 0.02), '#2e4450', s * 0.04, 0.205, 0.11, -0.4, 0, 0); }
-  }
-  if (o.pilotHelmet) {
-    P('neck', S(1, 18, 12), o.pilotHelmet, 0, 0.14, -0.004, 0, 0, 0, 0.128, 0.12, 0.13);
-    P('neck', new THREE.SphereGeometry(1, 16, 6, 0, Math.PI, Math.PI * 0.34, Math.PI * 0.28), '#241a12', 0, 0.13, 0.006, 0, 0, 0, 0.132, 0.125, 0.136); // tinted visor band
-    P('neck', Cy(0.004, 0.004, 0.12, 5), '#141414', 0.07, 0.065, 0.08, 0, 0.6, Math.PI / 2 + 0.3);
-  }
-  if (o.headset) { for (const s of [1, -1]) P('neck', S(0.034, 10, 8), '#1e1e1e', s * 0.075, -0.02, 0.0); P('neck', new THREE.TorusGeometry(0.08, 0.008, 6, 16, Math.PI), '#1e1e1e', 0, -0.02, 0, 0, 0, Math.PI); }
-
-  // ---- limbs ----
-  for (const s of [1, -1]) {
-    const L = s > 0 ? 'L' : 'R';
-    P('sh' + L, S(0.056, 12, 8), sleeve, 0, 0, 0);
-    P('sh' + L, Cy(0.052, 0.045, 0.29, 12), sleeve, 0, -0.145, 0);
-    if (o.patch && o.flightsuit) P('sh' + L, Bx(0.012, 0.05, 0.05), o.patch, s * 0.052, -0.08, 0);
-    const rolled = o.sleeves === 'rolled';
-    P('el' + L, S(0.045, 12, 8), rolled ? skin : sleeve, 0, 0, 0);
-    if (rolled) P('el' + L, Cy(0.052, 0.05, 0.05, 12), _shade(sleeve, 1.08), 0, 0.012, 0);
-    P('el' + L, Cy(0.043, 0.034, 0.25, 12), rolled ? skin : sleeve, 0, -0.125, 0);
-    if (!rolled) P('el' + L, Cy(0.038, 0.038, 0.035, 12), _shade(sleeve, 0.85), 0, -0.235, 0);
-    P('el' + L, S(1, 12, 10), hands, 0, -0.3, 0.004, 0, 0, 0, 0.033, 0.07, 0.042);
-    P('el' + L, S(1, 8, 6), hands, s * 0.028, -0.275, 0.028, 0.3, 0, 0, 0.014, 0.032, 0.014);
-    P('th' + L, Cy(0.078 * hw, 0.058, 0.44, 12), pants, 0, -0.22, 0);
-    if (o.cargo) P('th' + L, Bx(0.03, 0.12, 0.1), _shade(pants, 0.9), s * 0.072, -0.24, 0);
-    P('kn' + L, S(0.057, 12, 8), pants, 0, 0, 0);
-    if (o.kneepads) P('kn' + L, S(1, 10, 8), '#252622', 0, 0, 0.035, 0, 0, 0, 0.055, 0.06, 0.035);
-    P('kn' + L, Cy(0.055, 0.043, 0.36, 12), pants, 0, -0.18, 0);
-    P('kn' + L, Cy(0.05, 0.052, 0.12, 12), boots, 0, -0.36, 0.004);
-    P('kn' + L, S(1, 12, 8), boots, 0, -0.418, 0.045, 0, 0, 0, 0.052, 0.045, 0.12);
-    P('kn' + L, Bx(0.105, 0.022, 0.25), _shade(boots, 0.55), 0, -0.458, 0.045);
-  }
-
-  const M = humanMaterial();
-  for (const name in parts) {
-    if (!parts[name].length) continue;
-    const m = new THREE.Mesh(mergeColored(parts[name]), M);
-    m.castShadow = true; m.receiveShadow = false;
-    bones[name].add(m);
-  }
-  const H = o.height ?? 1.78;
-  g.scale.setScalar(H / 1.78);
-
-  // ---- animation ----
-  const B = bones;
-  let ph = 0, t = rnd(0, 10), crouch = 0, sit = 0, talk = 0, point = 0, wave = 0, hold = 0;
-  const pointDir = { y: 0 };
+  let ph = 0;
   g.userData = {
-    bones, caseLights, headG: B.neck, height: H, look: o,
+    headG, torso, hips, arms, legs, caseLights,
     anim(dt, speed, st = {}) {
-      t += dt;
-      const moving = speed > 0.25;
-      const run = speed > 4.8;
-      const stride = clamp(speed / 3.5, 0, 1.2);
-      ph += dt * (moving ? 2.4 + speed * 1.45 : 0);
-      const sn = Math.sin(ph), cs = Math.cos(ph);
-      crouch = damp(crouch, st.crouch ? 1 : 0, 8, dt);
-      sit = damp(sit, st.sit ? 1 : 0, 6, dt);
-      talk = damp(talk, st.talk ? 1 : 0, 5, dt);
-      point = damp(point, st.point ? 1 : 0, 6, dt);
-      wave = damp(wave, st.wave ? 1 : 0, 5, dt);
-      hold = damp(hold, st.hold ? 1 : 0, 5, dt);
-      const free = 1 - sit;
-      const legA = (run ? 0.78 : 0.48) * stride * free;
-      const armA = (run ? 0.85 : 0.38) * stride * free * (1 - hold);
-      // legs: thigh swing, knee flex on the recovery half of the stride
-      B.thL.rotation.x = -sn * legA - crouch * 1.05 - sit * 1.52;
-      B.thR.rotation.x = sn * legA - crouch * 1.05 - sit * 1.52;
-      B.knL.rotation.x = Math.max(0, Math.sin(ph + 1.25)) * legA * 1.45 + crouch * 1.95 + sit * 1.5;
-      B.knR.rotation.x = Math.max(0, Math.sin(ph + 1.25 + Math.PI)) * legA * 1.45 + crouch * 1.95 + sit * 1.5;
-      B.thL.rotation.z = 0.02 + sit * 0.06; B.thR.rotation.z = -0.02 - sit * 0.06;
-      // hips: bob twice per stride, weight shift when idle
-      const idleShift = moving ? 0 : Math.sin(t * 0.45) * 0.012;
-      B.hips.position.y = 0.94 - crouch * 0.37 - sit * 0.43 + (moving ? Math.abs(cs) * 0.032 * stride : 0);
-      B.hips.position.x = idleShift;
-      B.hips.rotation.z = moving ? sn * 0.03 * stride : idleShift * 1.5;
-      // spine: lean with speed, counter-twist, breathing
-      const breathe = Math.sin(t * 1.65) * 0.012;
-      B.spine.rotation.x = crouch * 0.4 + (run ? 0.17 : 0.04 * stride) + breathe - sit * 0.04 + hold * 0.05;
-      B.spine.rotation.y = damp(B.spine.rotation.y, sn * 0.09 * stride + point * clamp(pointDir.y, -0.6, 0.6), 8, dt);
-      // arms
-      const bend = run ? 1.0 : 0.22 + 0.2 * stride;
-      B.shL.rotation.x = sn * armA - crouch * 0.35 - sit * 0.38 - hold * 0.45 + Math.sin(t * 1.1) * 0.015;
-      B.shR.rotation.x = -sn * armA - crouch * 0.35 - sit * 0.38 - hold * 0.45 + Math.sin(t * 1.1 + 1) * 0.015;
-      B.shL.rotation.z = 0.07 + sit * 0.05; B.shR.rotation.z = -0.07 - sit * 0.05;
-      B.elL.rotation.x = -bend - crouch * 0.5 - sit * 0.85 - hold * 1.1;
-      B.elR.rotation.x = -bend - crouch * 0.5 - sit * 0.85 - hold * 1.1;
-      // right-hand gestures: talking, pointing, waving
-      if (talk > 0.01) {
-        B.shR.rotation.x = lerp(B.shR.rotation.x, -0.5 + Math.sin(t * 2.3) * 0.16, talk);
-        B.elR.rotation.x = lerp(B.elR.rotation.x, -1.15 + Math.sin(t * 3.4) * 0.22, talk);
-        B.shR.rotation.z = lerp(B.shR.rotation.z, -0.22, talk);
-        B.shL.rotation.x = lerp(B.shL.rotation.x, -0.12 + Math.sin(t * 1.7) * 0.06, talk * 0.6);
-      }
-      if (point > 0.01) { B.shR.rotation.x = lerp(B.shR.rotation.x, -1.5, point); B.elR.rotation.x = lerp(B.elR.rotation.x, -0.08, point); B.shR.rotation.z = lerp(B.shR.rotation.z, -0.1, point); }
-      if (wave > 0.01) { B.shR.rotation.x = lerp(B.shR.rotation.x, -0.25, wave); B.shR.rotation.z = lerp(B.shR.rotation.z, -2.5, wave); B.elR.rotation.x = lerp(B.elR.rotation.x, -0.5 + Math.sin(t * 7) * 0.35, wave); }
-      // head: look target, small nods while talking
-      const ly = clamp(st.lookY ?? 0, -1.1, 1.1), lx = clamp(st.lookX ?? 0, -0.5, 0.5);
-      B.neck.rotation.y = damp(B.neck.rotation.y, ly, 4, dt);
-      B.neck.rotation.x = damp(B.neck.rotation.x, lx + talk * Math.sin(t * 4.2) * 0.04 - crouch * 0.25 + (run ? -0.1 : 0), 5, dt);
-      if (st.pointYaw !== undefined) pointDir.y = st.pointYaw;
+      ph += dt * (2 + speed * 2.2);
+      const a = clamp(speed / 4, 0, 1) * (st.crouch ? 0.5 : 0.75);
+      legs[0].rotation.x = Math.sin(ph) * a; legs[1].rotation.x = -Math.sin(ph) * a;
+      arms[0].rotation.x = -Math.sin(ph) * a * 0.8; arms[1].rotation.x = Math.sin(ph) * a * 0.8;
+      if (st.point) arms[1].rotation.x = -1.4;
+      const crouch = st.crouch ? 1 : 0;
+      hips.position.y = damp(hips.position.y, 0.95 - crouch * 0.35 + Math.abs(Math.sin(ph)) * 0.035 * clamp(speed, 0, 1), 12, dt);
+      torso.rotation.x = damp(torso.rotation.x, crouch * 0.45 + (speed > 5 ? 0.18 : 0), 8, dt);
+      legs.forEach((l) => { l.rotation.x -= crouch * 0.6; });
+      headG.rotation.y = damp(headG.rotation.y, st.lookY ?? 0, 5, dt);
     },
   };
   return g;
 }
-
-// ---- 27-cast.js ----
-// ============================================================
-// 27-cast.js — characters, NPC presentation, companion AI
-//
-// CHARACTERS is the single source of who looks like what. Swapping in a
-// finished model is a registry change, not an AI change:
-//   CHARACTER_MODELS.lena = (look, key) => group  // must provide
-//   group.userData.anim(dt, speed, state) like makeHuman does.
-// ============================================================
-const CHARACTERS = {
-  ethan: { name: 'Итан Рид', short: 'Итан', role: 'следопыт',
-    look: { skin: '#b98d6a', hair: '#3b2a1c', hairStyle: 'short', stubble: '#8e6c52', top: '#5b6a45', sleeves: 'rolled', pants: '#6b5e48', cargo: true, boots: '#4a3524', belt: '#2a241c', pack: true, packColor: '#4a4634', caseLights: true, height: 1.8 } },
-  halm: { name: 'Виктор Хальм', short: 'Хальм', role: 'руководитель экспедиции',
-    look: { skin: '#c9a489', hair: '#cbc7bf', hairStyle: 'grey', brows: '#a8a49c', moustache: '#bab6ae', top: '#3b3833', coat: '#3b3833', lapel: '#2c2925', collar: '#c2b9a4', pants: '#34312c', boots: '#1d1915', height: 1.84 } },
-  lena: { name: 'Лена Арден', short: 'Лена', role: 'генетик',
-    look: { female: true, skin: '#e2b89a', hair: '#7a3e22', hairStyle: 'ponytail', glasses: true, top: '#dcd6c6', vest: 'field', vestColor: '#3e6e6b', scarf: '#b04a2e', pants: '#4b4a3d', boots: '#5a4030', bag: '#6a4a2e', height: 1.68 },
-    variants: { lab: { vest: null, scarf: null, bag: null, coat: '#e9e9e3', top: '#e9e9e3', sleeve: '#e9e9e3', lapel: '#d6d6cf', coatLen: 0.52, pants: '#3a3d44' } } },
-  diego: { name: 'Диего Рамос', short: 'Диего', role: 'охрана',
-    look: { skin: '#9c7250', hair: '#171210', hairStyle: 'buzz', stubble: '#4a3628', top: '#2b2d29', vest: 'tactical', vestColor: '#4a4b3a', pants: '#3b3c33', kneepads: true, gloves: '#1c1c1a', boots: '#3a3226', helmet: '#3d4033', goggles: true, rifle: true, holster: 'R', bulk: 1.1, height: 1.86 } },
-  lucas: { name: 'Лукас Ортис', short: 'Лукас', role: 'пилот',
-    look: { skin: '#b58b68', hair: '#241a12', hairStyle: 'short', top: '#7a846c', pants: '#7a846c', flightsuit: true, patch: '#d0662e', headset: true, sunglasses: true, gloves: '#3a3028', boots: '#1e1c1a', height: 1.78 },
-    variants: { flight: { headset: false, sunglasses: false, pilotHelmet: '#dcdad2' } } },
-  yusuf: { name: 'Юсуф', short: 'Юсуф', role: 'техник', look: { skin: '#a87a58', hair: '#2a1e16', beard: '#2a1e16', top: '#2f5f8a', pants: '#2f5f8a', flightsuit: true, beanie: '#6a2a2a', boots: '#222222', height: 1.76 } },
-  tech: { name: 'Техник ORIGO', short: 'Техник', role: 'станция «Порог»', look: { skin: '#d0a888', hair: '#3a2a1e', top: '#4a5a66', pants: '#3a4650', flightsuit: true, cap: '#2a3440', boots: '#222222' } },
+const NPC_LOOK = {
+  lena: { outfit: '#d9d6cc', pants: '#4a4c3e', skin: '#e0b89a', hair: '#5a3a26', glasses: true },
+  halm: { outfit: '#6e5f45', pants: '#4b4436', skin: '#c9a489', hair: '#b9b6ae' },
+  diego: { outfit: '#2d302a', pants: '#2a2c26', skin: '#a8805e', hair: '#1a1410', helmet: '#34372f' },
+  lucas: { outfit: '#4d5a45', pants: '#4d5a45', skin: '#b58b68', hair: '#2a1d15' },
+  tech: { outfit: '#39505d', pants: '#2e3a40', skin: '#d0a888', hair: '#3a2a1e' },
 };
-const CHARACTER_MODELS = {};
-function makeCharacter(key, variant) {
-  const k = CHARACTERS[key] ? key : 'tech';
-  const c = CHARACTERS[k];
-  const look = { ...c.look, ...((variant && c.variants && c.variants[variant]) || {}) };
-  const g = (CHARACTER_MODELS[k] || makeHuman)(look, k);
-  g.userData.castKey = k;
-  return g;
-}
-function makeNPC(key, variant) { return makeCharacter(key, variant); }
-function lookYaw(obj, target) {
-  const a = Math.atan2(target.x - obj.position.x, target.z - obj.position.z);
-  return clamp(wrapAngle(a - obj.rotation.y), -1.1, 1.1);
-}
-
-// ---------- idle presentation, look-at, nameplates ----------
-const _tagV = new THREE.Vector3();
-const Cast = {
-  trail: [], pool: [],
-  reset() { this.trail.length = 0; this.pool.forEach((el) => { el.hidden = true; }); },
-  get(world, key) { return world && world.cast ? world.cast.find((m) => m.userData.castKey === key) : null; },
-  update(world, dt) {
-    const P = Game.player;
-    if (P) { const l = this.trail[this.trail.length - 1]; if (!l || dist2d(l.x, l.z, P.pos.x, P.pos.z) > 2.5) { this.trail.push({ x: P.pos.x, z: P.pos.z }); if (this.trail.length > 60) this.trail.shift(); } }
-    if (world.companions) for (const c of world.companions) c.update(dt);
-    if (!world.cast) return;
-    const sp = HUD.speaking;
-    let speaker = null;
-    if (sp && sp.key && !sp.radio) speaker = (sp.key === 'ethan' && P) ? P.model : world.cast.find((m) => m.userData.castKey === sp.key && m.visible) || null;
-    this.speakerObj = speaker;
-    for (const m of world.cast) {
-      const u = m.userData;
-      if (!m.visible || u.scripted || u.companion) continue;
-      const talk = !!(sp && !sp.radio && sp.key === u.castKey);
-      let target = null;
-      if (speaker && speaker !== m && m.position.distanceTo(speaker.position) < 14) target = speaker.position;
-      else if (P && dist2d(m.position.x, m.position.z, P.pos.x, P.pos.z) < 7) target = P.pos;
-      const posed = u.pose && u.pose.lookY !== undefined;
-      u.anim(dt, 0, { ...(u.pose || {}), talk, lookY: posed ? u.pose.lookY : target ? lookYaw(m, target) : 0 });
-    }
-  },
-  tags(world) {
-    const root = $('tags');
-    let i = 0;
-    const P = Game.player;
-    const show = world && world.cast && P && !Cine.active && !$('hud').hidden && Cam.mode === 'third';
-    if (show) {
-      const sp = HUD.speaking;
-      for (const m of world.cast) {
-        if (!m.visible || m.userData.noTag) continue;
-        const d = dist2d(m.position.x, m.position.z, P.pos.x, P.pos.z);
-        if (d > 10) continue;
-        m.getWorldPosition(_tagV);
-        _tagV.y += (m.userData.height || 1.78) * (m.userData.pose && m.userData.pose.sit ? 0.78 : 1.13);
-        _tagV.project(camera);
-        if (_tagV.z > 1 || Math.abs(_tagV.x) > 0.95 || Math.abs(_tagV.y) > 0.95) continue;
-        let el = this.pool[i];
-        if (!el) { el = document.createElement('div'); el.className = 'tag'; root.appendChild(el); this.pool[i] = el; }
-        i++;
-        const key = m.userData.castKey, c = CHARACTERS[key];
-        if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = `<b>${c.name}</b>${c.role ? `<small>${c.role}</small>` : ''}`; }
-        const x = (_tagV.x * 0.5 + 0.5) * window.innerWidth, y = (-_tagV.y * 0.5 + 0.5) * window.innerHeight;
-        el.hidden = false;
-        el.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px)`;
-        el.style.opacity = clamp((10 - d) / 3, 0, 1).toFixed(2);
-        el.classList.toggle('talk', world.interactables.some((it) => it.npc === key && it.enabled()));
-        el.classList.toggle('speaking', !!(sp && !sp.radio && sp.key === key));
-      }
-    }
-    for (; i < this.pool.length; i++) this.pool[i].hidden = true;
-  },
-  // a spot near the player that the camera cannot see — for recovery teleports only
-  hiddenSpot(world) {
-    const P = Game.player;
-    camera.getWorldDirection(_tagV);
-    for (let k = this.trail.length - 1; k >= 0; k--) {
-      const c = this.trail[k], d = dist2d(c.x, c.z, P.pos.x, P.pos.z);
-      if (d < 7 || d > 24) continue;
-      const vx = c.x - camera.position.x, vz = c.z - camera.position.z;
-      if (vx * _tagV.x + vz * _tagV.z < 0 && companionFree(world, c.x, c.z, 0.4)) return c;
-    }
-    for (let k = this.trail.length - 1; k >= 0; k--) { const c = this.trail[k]; if (dist2d(c.x, c.z, P.pos.x, P.pos.z) >= 7 && companionFree(world, c.x, c.z, 0.4)) return c; }
-    return null;
-  },
-};
-
-function companionFree(w, x, z, r) {
-  for (const c of w.circles) { if (c.comp) continue; if (Math.hypot(x - c.x, z - c.z) < c.r + r) return false; }
-  for (const b of w.boxes) { if (b.off) continue; if (x > b.x0 - r && x < b.x1 + r && z > b.z0 - r && z < b.z1 + r) return false; }
-  if (w.bounds && dist2d(x, z, w.bounds.x, w.bounds.z) > w.bounds.r - 0.5) return false;
-  const g = w.groundH(x, z);
-  if (w.blocked && w.blocked(x, z, g)) return false;
-  if (w.waterY - g > 0.65) return false; // companions wade but never swim
-  return true;
-}
-
-// ---------- companion AI ----------
-// modes: hold (stand at a spot), follow (keep beside the player),
-// lead (walk a path ahead, wait for the player), script (goTo for staging)
-class Companion {
-  constructor(world, g, o = {}) {
-    this.world = world; this.g = g; this.key = g.userData.castKey;
-    g.userData.companion = this;
-    this.pos = new THREE.Vector2(g.position.x, g.position.z);
-    this.yaw = g.rotation.y; this.speed = 0; this.vel = 0;
-    this.mode = 'hold'; this.hold = { x: this.pos.x, z: this.pos.y, yaw: this.yaw };
-    this.path = []; this.side = o.side ?? 1; this.dist = o.dist ?? 2.6;
-    this.stuck = 0; this.sidestep = 0; this.sideDir = 1; this.progT = 0; this.progD = Infinity;
-    this.waitT = 0; this.callT = 0; this.gestureT = 0; this.gestureKind = null; this.pointYaw = 0;
-    this.col = { x: this.pos.x, z: this.pos.y, r: 0.35, comp: true };
-    world.circles.push(this.col);
-    (world.companions ||= []).push(this);
-    this.st = {};
-  }
-  place(x, z, yaw = this.yaw) { this.pos.set(x, z); this.yaw = yaw; this.g.position.set(x, this.world.groundH(x, z), z); this.g.rotation.y = yaw; this.col.x = x; this.col.z = z; }
-  setHold(x = this.pos.x, z = this.pos.y, yaw = null) { this.mode = 'hold'; this.hold = { x, z, yaw }; this._resolve(); }
-  follow(o = {}) { this.mode = 'follow'; if (o.dist) this.dist = o.dist; this._resolve(); }
-  lead(points, o = {}) {
-    this.mode = 'lead'; this.path = points.map(([x, z]) => ({ x, z }));
-    this.onArrive = o.onArrive || null; this.calls = o.calls || null; this.waitDist = o.wait ?? 12; this.waitT = 0; this.callT = 6;
-    this._resolve();
-  }
-  goTo(x, z, o = {}) {
-    this._resolve();
-    return new Promise((res) => { this.mode = 'script'; this.path = [{ x, z }]; this.run = !!o.run; this.face = o.face ?? null; this.scriptT = 0; this.scriptMax = o.timeout ?? 25; this._res = res; });
-  }
-  _resolve() { const r = this._res; this._res = null; if (r) r(); }
-  // walk a list of points in order (doorways, corners); resolves at the last one
-  async walk(points, o = {}) { for (const [x, z] of points) { await this.goTo(x, z, o); if (this.detached) return; } }
-  // swap the visual (costume change, a finished model) without touching the AI state
-  swapModel(ng) {
-    const og = this.g, w = this.world;
-    ng.position.copy(og.position); ng.rotation.copy(og.rotation);
-    if (og.parent) og.parent.remove(og);
-    if (w.cast) { const i = w.cast.indexOf(og); if (i >= 0) w.cast.splice(i, 1); }
-    w.add(ng);
-    ng.userData.companion = this; og.userData.companion = null;
-    this.g = ng;
-    return ng;
-  }
-  // hand the figure back to plain scene control (seated in a vehicle, cutscene staging)
-  detach() {
-    this._resolve();
-    this.detached = true;
-    const w = this.world;
-    const i = w.companions.indexOf(this); if (i >= 0) w.companions.splice(i, 1);
-    const j = w.circles.indexOf(this.col); if (j >= 0) w.circles.splice(j, 1);
-    this.g.userData.companion = null;
-  }
-  gesture(kind, target, dur = 1.8) {
-    this.gestureKind = kind; this.gestureT = dur;
-    if (target) this.pointYaw = wrapAngle(Math.atan2(target.x - this.pos.x, target.z - this.pos.y) - this.yaw);
-  }
-  update(dt) {
-    const w = this.world, P = Game.player;
-    if (!this.g.visible) return;
-    const pp = P ? P.pos : null;
-    const dP = pp ? dist2d(this.pos.x, this.pos.y, pp.x, pp.z) : 99;
-    let tx = null, tz = null, want = 0, faceTo = null, crouch = false;
-    if (this.mode === 'hold') {
-      if (dist2d(this.pos.x, this.pos.y, this.hold.x, this.hold.z) > 0.5) { tx = this.hold.x; tz = this.hold.z; want = 3.0; }
-      faceTo = this.hold.yaw !== null && this.hold.yaw !== undefined ? null : pp && dP < 9 ? pp : null;
-    } else if (this.mode === 'follow' && pp) {
-      // slot beside the player and slightly behind them: never between the camera and the player
-      const fx = Math.sin(P.yaw), fz = Math.cos(P.yaw), rx = fz, rz = -fx;
-      const side = Math.sign((this.pos.x - pp.x) * rx + (this.pos.y - pp.z) * rz) || this.side;
-      let sx = pp.x + rx * side * this.dist - fx * 0.9, sz = pp.z + rz * side * this.dist - fz * 0.9;
-      if (!companionFree(w, sx, sz, 0.4)) { const ox = pp.x - rx * side * this.dist - fx * 0.9, oz = pp.z - rz * side * this.dist - fz * 0.9; if (companionFree(w, ox, oz, 0.4)) { sx = ox; sz = oz; } else { sx = pp.x - fx * 2.6; sz = pp.z - fz * 2.6; } }
-      const ds = dist2d(this.pos.x, this.pos.y, sx, sz);
-      const settled = !P.moving && dP < 5.5 && dP > 1.3 && !this._inCameraLine();
-      if (!settled && ds > 0.7) {
-        tx = sx; tz = sz;
-        want = ds > 10 || (P.speed > 5 && ds > 2) ? 6.4 : ds > 4 ? 4.6 : 3.3 * Math.min(1, ds / 1.4);
-        if (P.crouch && ds < 12) { crouch = true; want = Math.min(want, 2.0); }
-      } else { faceTo = pp; crouch = P.crouch; }
-      if (dP > 55) this._recover();
-    } else if (this.mode === 'lead' && pp) {
-      const n = this.path[0];
-      if (!n) {
-        this.mode = 'hold'; this.hold = { x: this.pos.x, z: this.pos.y, yaw: null };
-        const cb = this.onArrive; this.onArrive = null; if (cb) cb();
-      } else if (dP > this.waitDist || (this.waitT > 0 && dP > this.waitDist * 0.65)) {
-        // wait for the player, face them, wave, then call out
-        this.waitT += dt; faceTo = pp;
-        if (this.waitT > 3 && this.waitT < 4.6) this.gesture('wave', null, 0.2);
-        this.callT -= dt;
-        if (this.waitT > 7 && this.callT <= 0 && this.calls && !HUD.radioBusy()) { HUD.say([this.calls[(this._ci = ((this._ci ?? -1) + 1)) % this.calls.length]]); this.callT = 22; }
-      } else {
-        this.waitT = 0;
-        tx = n.x; tz = n.z;
-        want = (P.speed > 5 && dP < 7) ? 5.4 : 3.0;
-        if (dist2d(this.pos.x, this.pos.y, n.x, n.z) < 1.4) this.path.shift();
-      }
-    } else if (this.mode === 'script') {
-      const n = this.path[0];
-      this.scriptT += dt;
-      if (n && this.scriptT > this.scriptMax) this.place(n.x, n.z);
-      if (!n || dist2d(this.pos.x, this.pos.y, n.x, n.z) < 0.45) {
-        this.path.length = 0; this.mode = 'hold'; this.hold = { x: this.pos.x, z: this.pos.y, yaw: this.face };
-        this._resolve();
-      } else { tx = n.x; tz = n.z; want = this.run ? 5.6 : 2.9; }
-    }
-    // ---- steering ----
-    let moved = 0;
-    if (tx !== null && want > 0.05) {
-      let dx = tx - this.pos.x, dz = tz - this.pos.y;
-      const d = Math.hypot(dx, dz);
-      dx /= d; dz /= d;
-      if (this.sidestep > 0) { this.sidestep -= dt; const sx = -dz * this.sideDir, sz = dx * this.sideDir; dx = dx * 0.3 + sx; dz = dz * 0.3 + sz; const l = Math.hypot(dx, dz); dx /= l; dz /= l; }
-      // look ahead and bend around obstacles
-      const probe = 1.3;
-      if (!companionFree(w, this.pos.x + dx * probe, this.pos.y + dz * probe, 0.35)) {
-        let found = false;
-        for (const a of [0.5, -0.5, 1.0, -1.0, 1.5, -1.5, 2.1, -2.1]) {
-          const aa = a * this.sideDir, c = Math.cos(aa), s = Math.sin(aa);
-          const ex = dx * c - dz * s, ez = dx * s + dz * c;
-          if (companionFree(w, this.pos.x + ex * probe, this.pos.y + ez * probe, 0.35)) { dx = ex; dz = ez; found = true; break; }
-        }
-        if (!found) this.sideDir *= -1;
-      }
-      // personal space: never walk into the player (so they are never pushed)
-      if (pp && this.mode !== 'script') {
-        const ax = this.pos.x - pp.x, az = this.pos.y - pp.z, al = Math.hypot(ax, az);
-        if (al < 1.4 && al > 0.01) { const k = (1.4 - al) * 2.5; dx += (ax / al) * k; dz += (az / al) * k; const l = Math.hypot(dx, dz); dx /= l; dz /= l; }
-      }
-      const v = Math.min(want, d * 2.4);
-      const nx = this.pos.x + dx * v * dt, nz = this.pos.y + dz * v * dt;
-      if (companionFree(w, nx, nz, 0.3)) { this.pos.set(nx, nz); moved = v; }
-      else if (companionFree(w, nx, this.pos.y, 0.3)) { this.pos.x = nx; moved = v * 0.7; }
-      else if (companionFree(w, this.pos.x, nz, 0.3)) { this.pos.y = nz; moved = v * 0.7; }
-      if (moved > 0.2) this.yaw = dampAngle(this.yaw, Math.atan2(dx, dz), 9, dt);
-      // stuck detection: no progress toward the target for 2.5 s
-      this.progT += dt;
-      if (d < this.progD - 0.6) { this.progD = d; this.progT = 0; this.stuck = 0; }
-      if (this.progT > 2.5) { this.progT = 0; this.progD = d; this.stuck++; this.sidestep = 1.1; this.sideDir *= -1; if (this.stuck > 3 && (this.mode === 'follow' || this.mode === 'lead') && dP > 14) this._recover(); }
-    } else { this.progD = Infinity; this.progT = 0; }
-    // keep out of the camera's view line when standing close
-    if (this.mode === 'follow' && moved < 0.1 && this._inCameraLine()) { const fx = Math.sin(P.yaw), fz = Math.cos(P.yaw); const s = this.side; const nx = this.pos.x + fz * s * 1.2 * dt, nz = this.pos.y - fx * s * 1.2 * dt; if (companionFree(w, nx, nz, 0.3)) { this.pos.set(nx, nz); moved = 1.2; } }
-    this.speed = damp(this.speed, moved, 8, dt);
-    if (faceTo && moved < 0.3) this.yaw = dampAngle(this.yaw, Math.atan2(faceTo.x - this.pos.x, faceTo.z - this.pos.y), 3, dt);
-    else if (moved < 0.3 && this.mode === 'hold' && this.hold.yaw !== null && this.hold.yaw !== undefined) this.yaw = dampAngle(this.yaw, this.hold.yaw, 3, dt);
-    this.col.x = this.pos.x; this.col.z = this.pos.y;
-    this.g.position.set(this.pos.x, w.groundH(this.pos.x, this.pos.y), this.pos.y);
-    this.g.rotation.y = this.yaw;
-    // ---- animation ----
-    this.gestureT -= dt;
-    const sp = HUD.speaking, talk = !!(sp && !sp.radio && sp.key === this.key);
-    let lookY = 0;
-    const spk = Cast.speakerObj;
-    if (spk && spk !== this.g) lookY = lookYaw(this.g, spk.position);
-    else if (pp && dP < 8) lookY = lookYaw(this.g, pp);
-    const g = this.gestureT > 0 ? this.gestureKind : null;
-    this.g.userData.anim(dt, this.speed, { ...(this.g.userData.pose || {}), crouch, talk, lookY, point: g === 'point', wave: g === 'wave', pointYaw: this.pointYaw });
-  }
-  _inCameraLine() {
-    const P = Game.player; if (!P) return false;
-    const ax = camera.position.x, az = camera.position.z, bx = P.pos.x, bz = P.pos.z;
-    const vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz;
-    if (l2 < 0.01) return false;
-    const t = ((this.pos.x - ax) * vx + (this.pos.y - az) * vz) / l2;
-    if (t < 0.05 || t > 0.95) return false;
-    return Math.hypot(ax + vx * t - this.pos.x, az + vz * t - this.pos.y) < 0.8;
-  }
-  _recover() {
-    const s = Cast.hiddenSpot(this.world);
-    if (!s) return;
-    this.place(s.x, s.z, this.yaw);
-    this.stuck = 0; this.sidestep = 0;
-  }
-}
-
-// ---- 28-heli.js ----
-// ============================================================
-// 28-heli.js — the expedition helicopter: model, engine, rotor, audio
-//
-// Engine model: rpm eases toward a target (spool-up ~7 s, spin-down ~20 s).
-// Blades are drawn while slow; above ~70 % a translucent blur disc takes
-// over, which is how a fast rotor reads on camera (no strobing).
-// The engine is a positional Sound.emitter: loudness and brightness fall
-// off with distance, and it is stopped when the rotor stops or the world
-// is torn down.
-// ============================================================
-
-// superellipse loft along Z: sections [z, cy, halfW, halfH, n]; optional angle range for patches (glass)
-function loftGeo(sections, seg = 20, a0 = 0, a1 = TAU, cap = true) {
-  const pos = [], idx = [];
-  const full = a1 - a0 >= TAU - 1e-6;
-  const cols = full ? seg : seg + 1;
-  for (const [z, cy, w, h, n = 2.4] of sections) {
-    for (let k = 0; k < cols; k++) {
-      const a = a0 + (a1 - a0) * (k / seg);
-      const ca = Math.cos(a), sa = Math.sin(a);
-      pos.push(w * Math.sign(ca) * Math.pow(Math.abs(ca), 2 / n), cy + h * Math.sign(sa) * Math.pow(Math.abs(sa), 2 / n), z);
-    }
-  }
-  for (let i = 0; i < sections.length - 1; i++) {
-    for (let k = 0; k < seg; k++) {
-      const k2 = full ? (k + 1) % seg : k + 1;
-      const a = i * cols + k, b = i * cols + k2, c = (i + 1) * cols + k, d = (i + 1) * cols + k2;
-      idx.push(a, c, b, b, c, d);
-    }
-  }
-  if (cap && full) {
-    for (const [si, flip] of [[0, true], [sections.length - 1, false]]) {
-      const [z, cy] = sections[si];
-      const ci = pos.length / 3; pos.push(0, cy, z);
-      for (let k = 0; k < seg; k++) { const a = si * cols + k, b = si * cols + (k + 1) % seg; if (flip) idx.push(ci, b, a); else idx.push(ci, a, b); }
-    }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setIndex(idx);
-  g.computeVertexNormals();
-  return g;
-}
-
-let _blurTex = null;
-function rotorBlurTexture() {
-  if (_blurTex) return _blurTex;
-  _blurTex = canvasTex(256, 256, (g, w, h) => {
-    const cx = w / 2, cy = h / 2;
-    g.clearRect(0, 0, w, h);
-    for (let i = 0; i < 4; i++) {
-      const a0 = (i / 4) * TAU;
-      const gr = g.createRadialGradient(cx, cy, 8, cx, cy, w / 2);
-      gr.addColorStop(0, 'rgba(20,22,22,0.0)'); gr.addColorStop(0.15, 'rgba(20,22,22,0.55)'); gr.addColorStop(0.9, 'rgba(20,22,22,0.35)'); gr.addColorStop(1, 'rgba(20,22,22,0)');
-      g.fillStyle = gr;
-      g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, w / 2, a0, a0 + 0.9); g.closePath(); g.fill();
-    }
-    g.fillStyle = 'rgba(20,22,22,0.12)'; g.beginPath(); g.arc(cx, cy, w / 2 - 2, 0, TAU); g.fill();
-  });
-  return _blurTex;
-}
-
-function makeHelicopter(o = {}) {
-  const g = new THREE.Group();
-  const body = new THREE.Group(); g.add(body);
-  const paint = new THREE.MeshStandardMaterial({ color: o.color || '#3a4640', roughness: 0.48, metalness: 0.35 });
-  const dark = new THREE.MeshStandardMaterial({ color: '#1c1f1e', roughness: 0.6, metalness: 0.3 });
-  const glass = new THREE.MeshStandardMaterial({ color: '#16222a', roughness: 0.06, metalness: 0.7, transparent: true, opacity: o.wreck ? 0.5 : 0.62, side: THREE.DoubleSide });
-  const stripe = new THREE.MeshStandardMaterial({ color: o.stripe || '#c8642a', roughness: 0.5, metalness: 0.2 });
-  const inner = new THREE.MeshStandardMaterial({ color: '#2a2e2c', roughness: 0.85 });
-  const secs = [[3.95, 1.5, 0.08, 0.1, 2], [3.7, 1.48, 0.5, 0.55, 2.2], [3.1, 1.56, 0.95, 0.95, 2.4], [2.1, 1.7, 1.2, 1.12, 2.8], [0.5, 1.75, 1.26, 1.18, 3.2], [-1.4, 1.75, 1.22, 1.14, 3.0], [-2.5, 1.92, 0.86, 0.88, 2.6], [-3.4, 2.1, 0.44, 0.48, 2.2]];
-  const hull = new THREE.Mesh(loftGeo(secs, 28), paint); hull.castShadow = true; hull.receiveShadow = true; body.add(hull);
-  // cockpit glass: a patch over the upper front, slightly proud of the hull
-  const gsecs = [[3.82, 1.5, 0.36, 0.42, 2.2], [3.5, 1.5, 0.66, 0.72, 2.3], [3.0, 1.57, 0.99, 0.99, 2.4], [2.35, 1.66, 1.18, 1.12, 2.7]].map(([z, cy, w, h, n]) => [z, cy, w + 0.02, h + 0.02, n]);
-  body.add(new THREE.Mesh(loftGeo(gsecs, 20, -0.35, Math.PI + 0.35, false), glass));
-  // cabin windows and the sliding door (right side, +X)
-  for (const s of [1, -1]) {
-    for (const [z, len] of [[1.35, 0.9], [-0.25, 0.9]]) mesh(G.box(0.03, 0.62, len), glass, { parent: body, pos: [s * 1.245, 2.02, z], cast: false });
-    mesh(G.box(0.02, 0.1, 5.2), stripe, { parent: body, pos: [s * 1.262, 1.32, 0.3], cast: false });
-  }
-  const door = new THREE.Group(); body.add(door);
-  mesh(G.box(0.05, 1.5, 1.7), paint, { parent: door, pos: [1.27, 1.62, 0.55] });
-  mesh(G.box(0.02, 0.55, 0.8), glass, { parent: door, pos: [1.3, 2.02, 0.55], cast: false });
-  mesh(G.box(0.02, 0.1, 1.7), stripe, { parent: door, pos: [1.3, 1.32, 0.55], cast: false });
-  // markings: D-05 on both sides of the boom
-  const mark = canvasTex(256, 64, (c, w, h) => { c.clearRect(0, 0, w, h); c.fillStyle = '#e8e6de'; c.font = 'bold 44px "IBM Plex Mono", monospace'; c.textAlign = 'center'; c.fillText(o.label || 'D-05', w / 2, 46); });
-  for (const s of [1, -1]) mesh(new THREE.PlaneGeometry(1.6, 0.4), new THREE.MeshStandardMaterial({ map: mark, transparent: true, roughness: 0.6, depthWrite: false }), { parent: body, pos: [s * 0.36, 2.2, -4.6], rot: [0, s * Math.PI / 2, 0], cast: false });
-  // tail boom, fin, stabiliser
-  mesh(G.cyl(0.2, 0.42, 5.4, 12), paint, { parent: body, pos: [0, 2.22, -5.9], rot: [Math.PI / 2 + 0.05, 0, 0] });
-  const fin = new THREE.Shape(); fin.moveTo(0, 0); fin.lineTo(-0.9, 0); fin.lineTo(-1.4, 1.6); fin.lineTo(-0.7, 1.6); fin.lineTo(0, 0.3);
-  const finGeo = new THREE.ExtrudeGeometry(fin, { depth: 0.1, bevelEnabled: false }); finGeo.rotateY(Math.PI / 2); finGeo.translate(-0.05, 2.25, -8.1);
-  body.add(new THREE.Mesh(finGeo, paint));
-  mesh(G.box(2.3, 0.06, 0.55), paint, { parent: body, pos: [0, 2.28, -7.3] });
-  // engine cowling & exhausts
-  const cowl = new THREE.Mesh(loftGeo([[1.3, 2.78, 0.2, 0.12, 2], [0.9, 2.82, 0.55, 0.3, 2.6], [-1.6, 2.82, 0.58, 0.32, 2.6], [-2.6, 2.6, 0.35, 0.22, 2.4]], 18), paint);
-  cowl.castShadow = true; body.add(cowl);
-  for (const s of [1, -1]) mesh(G.cyl(0.13, 0.16, 0.5, 10), dark, { parent: body, pos: [s * 0.32, 2.85, -2.3], rot: [Math.PI / 2 - 0.3, 0, 0] });
-  // skids
-  for (const s of [1, -1]) {
-    mesh(G.cyl(0.06, 0.06, 4.8, 8), dark, { parent: body, pos: [s * 1.25, 0.08, 0.2], rot: [Math.PI / 2, 0, 0] });
-    mesh(G.cyl(0.06, 0.06, 0.6, 8), dark, { parent: body, pos: [s * 1.25, 0.2, 2.78], rot: [Math.PI / 2 - 0.7, 0, 0] });
-    for (const z of [1.3, -0.9]) mesh(G.cyl(0.05, 0.05, 1.0, 8), dark, { parent: body, pos: [s * 1.05, 0.5, z], rot: [0, 0, s * 0.45] });
-  }
-  // interior: floor, seats, instrument panel with lit screens
-  const cabin = new THREE.Group(); body.add(cabin);
-  mesh(G.box(2.2, 0.06, 4.6), inner, { parent: cabin, pos: [0, 0.9, 0.5], cast: false, receive: true });
-  const seatM = new THREE.MeshStandardMaterial({ color: '#3a3f3b', roughness: 0.9 });
-  const seats = [
-    { x: 0.45, z: 2.25, ry: 0 }, { x: -0.45, z: 2.25, ry: 0 },
-    { x: 0.82, z: 0.85, ry: -Math.PI / 2 }, { x: 0.82, z: -0.3, ry: -Math.PI / 2 }, { x: -0.82, z: 0.85, ry: Math.PI / 2 }, { x: -0.82, z: -0.3, ry: Math.PI / 2 },
-  ];
-  seats.forEach((s) => {
-    const sg = new THREE.Group(); sg.position.set(s.x, 0.93, s.z); sg.rotation.y = s.ry; cabin.add(sg);
-    mesh(G.box(0.5, 0.1, 0.5), seatM, { parent: sg, pos: [0, 0.42, 0], cast: false });
-    mesh(G.box(0.5, 0.7, 0.08), seatM, { parent: sg, pos: [0, 0.8, -0.26], cast: false });
-    s.y = 0.93 + 0.47; // seat surface, heli-local
-  });
-  const innerM = new THREE.MeshStandardMaterial({ color: '#343a37', roughness: 0.9, side: THREE.DoubleSide });
-  const panel = (x, y, z, w, h, d) => mesh(G.box(w, h, d), innerM, { parent: cabin, pos: [x, y, z], cast: false });
-  for (const s of [1, -1]) {
-    const spans = s > 0 ? [[-1.6, -0.3], [1.45, 2.0]] : [[-1.6, 2.0]]; // right side leaves the door opening free
-    for (const [z0, z1] of spans) { panel(s * 1.16, 1.3, (z0 + z1) / 2, 0.04, 0.8, z1 - z0); panel(s * 1.16, 2.6, (z0 + z1) / 2, 0.04, 0.42, z1 - z0); }
-    for (const z of [-0.85, 0.55, 1.95]) if (s < 0 || z < -0.3 || z > 1.4) panel(s * 1.16, 2.02, z, 0.04, 0.66, 0.16);
-  }
-  panel(0, 2.84, 0.3, 2.3, 0.04, 4.3);
-  panel(0, 1.86, -1.72, 2.3, 1.9, 0.04);
-  const panelM = new THREE.MeshStandardMaterial({ color: '#141716', roughness: 0.7 });
-  mesh(G.box(1.5, 0.35, 0.25), panelM, { parent: cabin, pos: [0, 1.62, 2.95], rot: [-0.4, 0, 0], cast: false });
-  const screenM = new THREE.MeshBasicMaterial({ color: '#4fb8d8', toneMapped: false });
-  for (const x of [-0.45, -0.15, 0.15, 0.45]) mesh(G.box(0.22, 0.14, 0.01), screenM, { parent: cabin, pos: [x, 1.7, 2.84], rot: [-0.4, 0, 0], cast: false });
-  const cabinLight = new THREE.PointLight('#ffb070', 0, 5, 2); cabinLight.position.set(0, 2.2, 0.4); cabin.add(cabinLight);
-  // rotor
-  const rotor = new THREE.Group(); rotor.position.set(0, 3.25, 0.1); g.add(rotor);
-  mesh(G.cyl(0.14, 0.2, 0.55, 10), dark, { parent: rotor, pos: [0, -0.1, 0] });
-  mesh(G.cyl(0.26, 0.26, 0.16, 12), dark, { parent: rotor, pos: [0, 0.16, 0] });
-  const blades = new THREE.Group(); rotor.add(blades);
-  for (let i = 0; i < 4; i++) { const b = mesh(G.box(0.34, 0.045, 7.0), dark, { parent: blades, rot: [0, (i / 4) * Math.PI, 0], pos: [0, 0.18, 0] }); b.geometry.translate(0, 0, 0); }
-  const blurM = new THREE.MeshBasicMaterial({ map: rotorBlurTexture(), transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
-  const disc = mesh(new THREE.CircleGeometry(7.1, 48), blurM, { parent: rotor, pos: [0, 0.19, 0], rot: [-Math.PI / 2, 0, 0], cast: false });
-  const tail = new THREE.Group(); tail.position.set(0.2, 2.95, -8.05); g.add(tail);
-  const tblades = new THREE.Group(); tail.add(tblades);
-  for (let i = 0; i < 2; i++) mesh(G.box(0.04, 1.7, 0.15), dark, { parent: tblades, rot: [(i / 2) * Math.PI, 0, 0] });
-  const tdiscM = blurM.clone(); tdiscM.opacity = 0;
-  const tdisc = mesh(new THREE.CircleGeometry(0.86, 24), tdiscM, { parent: tail, rot: [0, Math.PI / 2, 0], cast: false });
-  // lights
-  const navR = mesh(G.sphere(0.07, 8, 6), mat('#ff3030', { emissive: '#ff2020', ei: 3 }), { parent: body, pos: [-1.28, 1.55, 1.9], cast: false });
-  const navG = mesh(G.sphere(0.07, 8, 6), mat('#30ff60', { emissive: '#20ff40', ei: 3 }), { parent: body, pos: [1.28, 1.55, 1.9], cast: false });
-  const beacon = mesh(G.sphere(0.09, 8, 6), mat('#ff3a2a', { emissive: '#ff2a1a', ei: 4 }), { parent: body, pos: [0, 3.0, -2.2], cast: false });
-  if (o.wreck) { disc.visible = false; tdisc.visible = false; }
-
-  const E = { rpm: o.rpm ?? 0, target: o.rpm ?? 0, t: rnd(0, 10), emitter: null, doorOpen: 0, doorTarget: 0 };
-  g.userData = {
-    body, rotor, tail, blades, disc, door, cabin, cabinLight, seats, engine: E, navR, navG, beacon,
-    start() { E.target = 1; },
-    stop() { E.target = 0; },
-    idle() { E.target = 0.62; },
-    setRpm(r) { E.rpm = E.target = r; },
-    openDoor(open = true) { E.doorTarget = open ? 1 : 0; },
-    // seat a character: g.userData.seat(npcGroup, seatIndex)
-    seat(npc, i) {
-      const s = seats[i];
-      cabin.add(npc);
-      npc.position.set(s.x, s.y - 0.4 * (npc.userData.height || 1.78) / 1.78, s.z);
-      npc.rotation.set(0, s.ry, 0);
-      npc.userData.pose = { sit: true };
-      npc.userData.seated = true;
-    },
-    update(dt, legacy) {
-      if (typeof legacy === 'number' && !E.managed) E.target = legacy;
-      const up = E.target > E.rpm;
-      E.rpm = damp(E.rpm, E.target, up ? 0.45 : 0.16, dt);
-      if (Math.abs(E.rpm - E.target) < 0.004) E.rpm = E.target;
-      E.t += dt;
-      const r = E.rpm;
-      rotor.rotation.y += dt * r * 30;
-      tblades.rotation.x += dt * r * 140;
-      tdisc.rotation.x = 0;
-      const blur = smoothstep(0.4, 0.78, r);
-      blades.visible = r < 0.8;
-      blurM.opacity = blur * 0.5; disc.rotation.z += dt * r * 3;
-      tdiscM.opacity = smoothstep(0.3, 0.6, r) * 0.45;
-      tblades.visible = r < 0.55;
-      body.position.y = Math.sin(E.t * 41) * 0.006 * r * (o.onGround === false ? 0.3 : 1);
-      body.position.x = Math.sin(E.t * 37 + 1) * 0.003 * r;
-      E.doorOpen = damp(E.doorOpen, E.doorTarget, 3, dt);
-      door.position.z = -E.doorOpen * 1.55; door.position.x = E.doorOpen * 0.08;
-      const blink = (Game.time % 1.2) < 0.12;
-      beacon.visible = r > 0.05 ? blink : false;
-      navR.visible = navG.visible = !o.wreck;
-      // positional engine sound
-      if (!o.silent && Sound.ctx) {
-        if (r > 0.02 && !E.emitter) E.emitter = Sound.emitter('heli', { ref: 9, rolloff: 1.15, gain: 1.1, rate: r });
-        if (E.emitter) {
-          g.getWorldPosition(_heliV); _heliV.y += 2.6;
-          E.emitter.setPos(_heliV); E.emitter.setRate(r);
-          if (r <= 0.02 && E.target === 0) { E.emitter.stop(1.5); E.emitter = null; }
-        }
-      }
-    },
-    dispose() { if (E.emitter) { E.emitter.stop(0.3); E.emitter = null; } },
-  };
-  return g;
-}
-const _heliV = new THREE.Vector3();
+function makeNPC(key) { return makeHuman({ ...NPC_LOOK[key], pack: key !== 'tech' && key !== 'lena' }); }
 
 // ---- 30-player.js ----
 // ============================================================
@@ -3310,8 +2146,7 @@ const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vect
 
 class Player {
   constructor() {
-    this.model = makeCharacter('ethan');
-    this.model.userData.isPlayer = true;
+    this.model = makeHuman({ pack: true, caseLights: true, outfit: '#56603f', pants: '#3d3f30', hair: '#3b2a1c', skin: '#b98d6a' });
     this.pos = new THREE.Vector3();
     this.yaw = 0;
     this.crouch = false;
@@ -3427,8 +2262,7 @@ class Player {
     if (this.inWater > 0) this.model.position.y = Math.max(this.pos.y, w.waterY - 0.9);
     this.model.rotation.y = this.yaw;
     this.model.visible = Cam.mode === 'third' || Cam.mode === 'cine';
-    const sp = HUD.speaking;
-    this.model.userData.anim(dt, this.speed, { crouch: this.crouch, talk: !!(sp && sp.key === 'ethan' && !sp.radio) });
+    this.model.userData.anim(dt, this.speed, { crouch: this.crouch });
   }
   eye() { return _v3.set(this.pos.x, this.pos.y + (this.crouch ? 1.05 : 1.62), this.pos.z); }
 }
@@ -3660,10 +2494,7 @@ const VALLEY = {
   carcass: { x: 58, z: -34 },
   pastures: [[128, -118], [150, -62], [92, -150]],
   brachio: [[-66, -22], [-58, 6]],
-  // the track D-04 walked from camp Echo to the lake shore
-  track: [[-10, 150], [-10, 122], [-6, 94], [-2, 64], [2, 34], [4, 4], [5, -24]],
 };
-const LEAD_PATH = VALLEY.track.slice(1);
 const _tmpC = new THREE.Color();
 function valleyHeight(x, z) {
   const r = Math.hypot(x - VALLEY.center.x, z - VALLEY.center.z);
@@ -3679,16 +2510,6 @@ function valleyHeight(x, z) {
   h = lerp(h, 2.4, Math.exp(-(dc * dc) / (2 * 22 * 22)));
   return h;
 }
-function trackDist(x, z) {
-  let best = 1e9;
-  const t = VALLEY.track;
-  for (let i = 0; i < t.length - 1; i++) {
-    const [ax, az] = t[i], [bx, bz] = t[i + 1], dx = bx - ax, dz = bz - az;
-    const k = clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1);
-    best = Math.min(best, Math.hypot(x - ax - dx * k, z - az - dz * k));
-  }
-  return best;
-}
 function valleyColor(x, z, y, slope, c) {
   const n = fbm(x * 0.05, z * 0.05, 3) * 0.5 + 0.5;
   if (y < -1.4) c.set('#3d3b2f');
@@ -3699,9 +2520,6 @@ function valleyColor(x, z, y, slope, c) {
     if (m < -0.35) c.lerp(_tmpC.set('#5a5236'), 0.3);
   }
   if (slope > 0.3) c.lerp(_tmpC.set('#66665a'), smoothstep(0.3, 0.55, slope));
-  // worn track from camp Echo to the lake: bare earth that breaks up at the edges
-  const td = trackDist(x, z) + fbm(x * 0.4, z * 0.4, 2) * 0.9;
-  if (td < 2.2 && y > 0.3) c.lerp(_tmpC.set('#6e5d40'), (1 - smoothstep(0.9, 2.2, td)) * 0.75);
   if (y > 70) c.lerp(_tmpC.set('#4f5048'), smoothstep(70, 150, y));
   if (y > 150) c.lerp(_tmpC.set('#3a3530'), 0.6);
 }
@@ -3785,25 +2603,6 @@ function buildValleyWorld(o = {}) {
     world.circles.push({ x, z, r: s * 1.1 });
   });
 
-  // D-04 survey stakes with orange ribbon along the track: a line the eye follows to the lake
-  {
-    const parts = [];
-    const t = VALLEY.track;
-    let acc = 8;
-    for (let i = 0; i < t.length - 1; i++) {
-      const [ax, az] = t[i], [bx, bz] = t[i + 1], len = Math.hypot(bx - ax, bz - az);
-      for (; acc < len; acc += 15) {
-        const k = acc / len, side = (Math.floor(acc / 15) % 2 ? 1 : -1) * 2.4;
-        const x = lerp(ax, bx, k) + (bz - az) / len * side, z = lerp(az, bz, k) - (bx - ax) / len * side;
-        const y = H(x, z), lean = rnd(-0.08, 0.08);
-        parts.push({ geo: G.cyl(0.035, 0.045, 1.5, 5), color: '#b8a888', m: M4(x, y + 0.72, z, lean, 0, lean) });
-        parts.push({ geo: G.box(0.03, 0.14, 0.42), color: '#e0662a', m: M4(x, y + 1.35, z + 0.2, 0, rnd(0, TAU), 0.2) });
-      }
-      acc -= len;
-    }
-    const stakes = new THREE.Mesh(mergeParts(parts), new THREE.MeshLambertMaterial({ vertexColors: true }));
-    stakes.castShadow = true; world.add(stakes);
-  }
   // camp Echo (D-04 forward camp)
   const cx = VALLEY.camp.x, cz = VALLEY.camp.z;
   makeTent(world, cx - 7, cz - 4, 0.3);
@@ -3939,39 +2738,25 @@ function makeCaseModel() {
   return g;
 }
 
-// corrugated metal for the hangar walls
-let _corrTex = null;
-function corrugatedTexture() {
-  if (_corrTex) return _corrTex;
-  _corrTex = canvasTex(128, 128, (g, w, h) => {
-    for (let x = 0; x < w; x++) { const v = 96 + Math.round(26 * Math.sin((x / w) * TAU * 8)); g.fillStyle = `rgb(${v},${v + 4},${v + 2})`; g.fillRect(x, 0, 1, h); }
-    for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(60,40,25,${rnd(0.04, 0.12)})`; g.fillRect(rnd(0, w), rnd(0, h), rnd(2, 8), rnd(10, 60)); }
-  }, { repeat: 1 });
-  _corrTex.wrapS = _corrTex.wrapT = THREE.RepeatWrapping;
-  return _corrTex;
-}
-
 CHAPTERS.prologue = {
   create() {
     const world = new World();
     world.floor = () => 0;
     world.ceiling = 3.6;
     world.scene.background = new THREE.Color('#07090a');
-    const fog = world.scene.fog = new THREE.Fog('#07090a', 18, 40);
-    makeSky(world, { top: '#0a111c', horizon: '#26323c', low: '#090d11', sunDir: new THREE.Vector3(0.7, 0.1, -0.3), sunColor: '#44546a', sunSize: 0 });
+    world.scene.fog = new THREE.Fog('#07090a', 18, 40);
     const hemi = new THREE.HemisphereLight('#9fbcd2', '#2a302a', 0.9); world.add(hemi);
     world.hemi = hemi; world.baseHemi = 0.9;
     const warm = new THREE.PointLight('#ffd49a', 22, 18, 1.5); warm.position.set(0, 3.2, 3.5); warm.castShadow = true; world.add(warm);
     const blue = new THREE.PointLight('#6ab8e8', 10, 12, 1.8); blue.position.set(0, 2.4, -1.6); world.add(blue);
     const side = new THREE.PointLight('#ffe0b0', 8, 10, 1.6); side.position.set(7, 2.8, 1); world.add(side);
-    // ---------- command room ----------
+    // room
     const W = 9, D = 7;
     mesh(G.box(W * 2, 0.1, D * 2), mat('#2a2f2d', { rough: 0.7 }), { parent: world.scene, pos: [0, -0.05, 0], receive: true, cast: false });
     mesh(G.box(W * 2, 0.1, D * 2), mat('#1a1d1c'), { parent: world.scene, pos: [0, 3.65, 0], cast: false });
     const wallM = mat('#3a403c', { rough: 0.8 });
-    const wall = (x0, x1, z0, z1, h = 3.7, y0 = 0, m = wallM) => { mesh(G.box(x1 - x0, h, z1 - z0), m, { parent: world.scene, pos: [(x0 + x1) / 2, y0 + h / 2, (z0 + z1) / 2], receive: true }); if (y0 < 2) world.boxes.push({ x0, x1, z0, z1 }); };
-    wall(-W, W, -D - 0.3, -D); wall(-W, W, D, D + 0.3); wall(-W - 0.3, -W, -D, D);
-    wall(W, W + 0.3, -D, 3.6); wall(W, W + 0.3, 5.4, D); wall(W, W + 0.3, 3.6, 5.4, 1.1, 2.6);
+    const wall = (x0, x1, z0, z1) => { mesh(G.box(x1 - x0, 3.7, z1 - z0), wallM, { parent: world.scene, pos: [(x0 + x1) / 2, 1.85, (z0 + z1) / 2], receive: true }); world.boxes.push({ x0, x1, z0, z1 }); };
+    wall(-W, W, -D - 0.3, -D); wall(-W, W, D, D + 0.3); wall(-W - 0.3, -W, -D, D); wall(W, W + 0.3, -D, D);
     // screen
     const scr = { n: 0, veil: true, title: false };
     const scrCanvas = document.createElement('canvas'); scrCanvas.width = 1024; scrCanvas.height = 512;
@@ -3993,11 +2778,10 @@ CHAPTERS.prologue = {
       mesh(G.box(0.9, 0.55, 0.05), monM, { parent: world.scene, pos: [x + 0.7, 1.1, z - 0.3], cast: false });
       world.boxes.push({ x0: x - 1.6, x1: x + 1.6, z0: z - 0.5, z1: z + 0.5, low: true });
     });
-    // case table, lit so it reads as the next stop
+    // case table
     mesh(G.box(2, 0.9, 1.2), mat('#dfe2dd', { rough: 0.5 }), { parent: world.scene, pos: [7.3, 0.45, 0.8] });
     world.boxes.push({ x0: 6.3, x1: 8.3, z0: 0.2, z1: 1.4, low: true });
     const caseM = makeCaseModel(); caseM.position.set(7.3, 0.9, 0.8); caseM.rotation.y = -Math.PI / 2; world.add(caseM);
-    const caseSpot = new THREE.SpotLight('#dff2ff', 0, 7, 0.5, 0.6, 1.4); caseSpot.position.set(7.3, 3.4, 0.8); caseSpot.target.position.set(7.3, 0.9, 0.8); world.add(caseSpot); world.add(caseSpot.target);
     // storage crate: D-04 personal effects
     const boxTex = canvasTex(256, 128, (g, w, h) => { g.fillStyle = '#6a6448'; g.fillRect(0, 0, w, h); g.fillStyle = '#1d1a12'; g.font = 'bold 22px Arial'; g.fillText('D-04 — PERSONAL EFFECTS', 12, 50); g.font = 'bold 26px Arial'; g.fillText('UNCLAIMED', 12, 92); });
     mesh(G.box(1.1, 0.7, 0.8), new THREE.MeshLambertMaterial({ map: boxTex }), { parent: world.scene, pos: [-7.8, 0.35, 5.6], rot: [0, 0.3, 0] });
@@ -4006,143 +2790,43 @@ CHAPTERS.prologue = {
     const arkTex = canvasTex(256, 64, (g, w, h) => { g.fillStyle = '#b8281e'; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.font = 'bold 24px Arial'; g.textAlign = 'center'; g.fillText('ARK MIRROR — RESTRICTED', w / 2, 40); });
     mesh(G.box(0.08, 2.4, 1.4), mat('#2b3033', { metal: 0.4 }), { parent: world.scene, pos: [-8.95, 1.2, -1], cast: false });
     mesh(new THREE.PlaneGeometry(1.4, 0.35), new THREE.MeshBasicMaterial({ map: arkTex }), { parent: world.scene, pos: [-8.9, 2.6, -1], rot: [0, Math.PI / 2, 0], cast: false });
-    // hangar door (east wall): a real sliding door, plus the yellow sign
+    // hangar door (east wall)
     const hangTex = canvasTex(256, 64, (g, w, h) => { g.fillStyle = '#e3a33b'; g.fillRect(0, 0, w, h); g.fillStyle = '#111'; g.font = 'bold 30px Arial'; g.textAlign = 'center'; g.fillText('HANGAR →', w / 2, 44); });
-    mesh(new THREE.PlaneGeometry(1.5, 0.38), new THREE.MeshBasicMaterial({ map: hangTex }), { parent: world.scene, pos: [8.84, 2.95, 4.5], rot: [0, -Math.PI / 2, 0], cast: false });
-    const hDoor = new Door(world, { x0: 9.15, z0: 3.6, x1: 9.15, z1: 5.4, h: 2.6, color: '#39403a', stripe: true, speed: 3 });
-    const doorLamp = new THREE.PointLight('#ffb040', 0, 6, 1.6); doorLamp.position.set(8.3, 2.9, 4.5); world.add(doorLamp);
+    mesh(G.box(0.08, 2.5, 1.6), mat('#39403a', { metal: 0.3 }), { parent: world.scene, pos: [8.95, 1.25, 4.5], cast: false });
+    mesh(new THREE.PlaneGeometry(1.5, 0.38), new THREE.MeshBasicMaterial({ map: hangTex }), { parent: world.scene, pos: [8.9, 2.75, 4.5], rot: [0, -Math.PI / 2, 0], cast: false });
 
-    // ---------- hangar ----------
-    const HX0 = 9.3, HX1 = 30, HZ0 = -6, HZ1 = 14, HH = 8;
-    const conc = new THREE.MeshStandardMaterial({ color: '#3b3e3c', roughness: 0.62, metalness: 0.05 });
-    mesh(G.box(HX1 - W, 0.1, HZ1 - HZ0), conc, { parent: world.scene, pos: [(W + HX1) / 2, -0.05, (HZ0 + HZ1) / 2], receive: true, cast: false });
-    mesh(G.box(HX1 - HX0, 0.2, HZ1 - HZ0), mat('#1d2021'), { parent: world.scene, pos: [(HX0 + HX1) / 2, HH, (HZ0 + HZ1) / 2], cast: false });
-    const ct = corrugatedTexture().clone(); ct.needsUpdate = true; ct.repeat.set(6, 1);
-    const corr = new THREE.MeshStandardMaterial({ map: ct, color: '#8a9088', roughness: 0.55, metalness: 0.45 });
-    wall(HX0, HX1, HZ0 - 0.3, HZ0, HH, 0, corr); wall(HX0, HX1, HZ1, HZ1 + 0.3, HH, 0, corr);
-    wall(W, HX0, D, HZ1, HH, 0, corr);
-    mesh(G.box(0.3, HH - 3.7, HZ1 - HZ0), corr, { parent: world.scene, pos: [W + 0.15, 3.7 + (HH - 3.7) / 2, (HZ0 + HZ1) / 2], cast: false });
-    wall(HX1, HX1 + 0.3, HZ0, -3, HH, 0, corr); wall(HX1, HX1 + 0.3, 11, HZ1, HH, 0, corr);
-    mesh(G.box(0.3, 2, 14), corr, { parent: world.scene, pos: [HX1 + 0.15, HH - 1, 4], cast: false });
-    // big door leaves slid open
-    for (const z of [-4.6, 12.6]) { mesh(G.box(0.25, 6, 3.2), mat('#4a4f4a', { metal: 0.5, rough: 0.5 }), { parent: world.scene, pos: [HX1 + 0.5, 3, z] }); world.boxes.push({ x0: HX1 + 0.35, x1: HX1 + 0.65, z0: z - 1.6, z1: z + 1.6 }); }
-    for (let i = 0; i < 6; i++) mesh(G.box(0.3, 0.35, HZ1 - HZ0), mat('#262a2a', { metal: 0.6 }), { parent: world.scene, pos: [HX0 + 2 + i * 3.6, HH - 0.5, (HZ0 + HZ1) / 2], cast: false });
-    // painted guide line from the door to the pad
-    const lineM = new THREE.MeshStandardMaterial({ color: '#d8a52a', roughness: 0.6, emissive: new THREE.Color('#3a2a06'), emissiveIntensity: 0.6 });
-    mesh(G.box(HX1 - HX0 + 12, 0.012, 0.18), lineM, { parent: world.scene, pos: [HX0 + (HX1 - HX0 + 12) / 2, 0.01, 4.5], cast: false });
-    for (let x = HX0 + 3; x < HX1 + 10; x += 4) mesh(G.box(1.1, 0.012, 0.14), lineM, { parent: world.scene, pos: [x, 0.012, 4.5], rot: [0, 0.6, 0], cast: false });
-    // pendant lamps
-    const lamps = [[14, 4], [21, 0], [21, 9], [27, 4]].map(([x, z]) => {
-      mesh(G.cyl(0.2, 0.55, 0.35, 12), mat('#2a2e2c', { metal: 0.6 }), { parent: world.scene, pos: [x, HH - 1.4, z], cast: false });
-      mesh(G.sphere(0.16, 10, 6), new THREE.MeshBasicMaterial({ color: '#ffe6b8' }), { parent: world.scene, pos: [x, HH - 1.6, z], cast: false });
-      mesh(G.cyl(0.02, 0.02, 1.2, 4), mat('#111'), { parent: world.scene, pos: [x, HH - 0.7, z], cast: false });
-      const l = new THREE.PointLight('#ffd9a0', 16, 15, 1.6); l.position.set(x, HH - 1.8, z); world.add(l); return l;
-    });
-    // hangar props: crates, drums, tow tug, workbench
-    const crateM = mat('#4f5a3c'), drumM = mat('#6a2f24', { metal: 0.3, rough: 0.6 });
-    [[12, -4.5, 1.2], [13.4, -4.2, 0.9], [12.6, -4.3, 0.8, 1.05], [26, 12.2, 1.1], [24.6, 12.4, 0.9]].forEach(([x, z, s, y = 0]) => { mesh(G.box(1.2 * s, 0.8 * s, 1 * s), crateM, { parent: world.scene, pos: [x, y + 0.4 * s, z], rot: [0, rnd(-0.2, 0.2), 0], receive: true }); if (!y) world.circles.push({ x, z, r: 0.8 * s }); });
-    for (let i = 0; i < 5; i++) { const x = 17 + (i % 3) * 0.7, z = 12.6 - Math.floor(i / 3) * 0.7; mesh(G.cyl(0.3, 0.3, 0.9, 12), drumM, { parent: world.scene, pos: [x, 0.45, z] }); }
-    world.circles.push({ x: 17.7, z: 12.3, r: 1.3 });
-    mesh(G.box(3, 0.9, 0.9), mat('#3e4240', { metal: 0.4 }), { parent: world.scene, pos: [20, 0.45, -5.3], receive: true }); world.boxes.push({ x0: 18.5, x1: 21.5, z0: -5.75, z1: -4.85, low: true });
-    const tug = new THREE.Group(); mesh(G.box(1.6, 0.8, 2.6), mat('#b8952a'), { parent: tug, pos: [0, 0.6, 0] }); mesh(G.box(1.4, 0.7, 1), mat('#2a2a2a'), { parent: tug, pos: [0, 1.3, -0.6] }); for (const [a, b] of [[-0.8, 0.9], [0.8, 0.9], [-0.8, -0.9], [0.8, -0.9]]) mesh(G.cyl(0.32, 0.32, 0.28, 12), mat('#141414'), { parent: tug, pos: [a, 0.32, b], rot: [0, 0, Math.PI / 2] });
-    tug.position.set(15, 0, 10.5); tug.rotation.y = 0.3; world.add(tug); world.circles.push({ x: 15, z: 10.5, r: 1.6 });
-
-    // ---------- helipad outside ----------
-    const PX1 = 60, PZ0 = -14, PZ1 = 22, HPX = 44, HPZ = 4;
-    const wet = new THREE.MeshStandardMaterial({ color: '#23282b', roughness: 0.22, metalness: 0.25 });
-    mesh(G.box(PX1 - HX1, 0.1, PZ1 - PZ0), wet, { parent: world.scene, pos: [(HX1 + PX1) / 2, -0.05, (PZ0 + PZ1) / 2], receive: true, cast: false });
-    const padM = new THREE.MeshStandardMaterial({ color: '#d8a52a', roughness: 0.4, emissive: new THREE.Color('#2a1e04'), emissiveIntensity: 0.5 });
-    mesh(new THREE.RingGeometry(9.3, 9.8, 64).rotateX(-Math.PI / 2), padM, { parent: world.scene, pos: [HPX, 0.012, HPZ], cast: false });
-    const hM = new THREE.MeshStandardMaterial({ color: '#e8e6de', roughness: 0.4 });
-    for (const dz of [-1.6, 1.6]) mesh(G.box(0.6, 0.012, 4.6), hM, { parent: world.scene, pos: [HPX + dz * 0 + (dz < 0 ? -1.8 : 1.8), 0.013, HPZ], cast: false });
-    mesh(G.box(3.0, 0.012, 0.6), hM, { parent: world.scene, pos: [HPX, 0.013, HPZ], cast: false });
-    const edgeM = new THREE.MeshBasicMaterial({ color: '#7fd0ff' });
-    for (let i = 0; i < 20; i++) { const a = (i / 20) * TAU; mesh(G.cyl(0.07, 0.09, 0.14, 8), edgeM, { parent: world.scene, pos: [HPX + Math.cos(a) * 11, 0.07, HPZ + Math.sin(a) * 11], cast: false }); }
-    // railings round the pad; the sea beyond
-    const railM = mat('#5a5f5a', { metal: 0.5 });
-    const rail = (x0, x1, z0, z1) => { mesh(G.box(Math.max(0.08, x1 - x0), 1.1, Math.max(0.08, z1 - z0)), railM, { parent: world.scene, pos: [(x0 + x1) / 2, 0.55, (z0 + z1) / 2], cast: false }); world.boxes.push({ x0: x0 - 0.1, x1: x1 + 0.1, z0: z0 - 0.1, z1: z1 + 0.1, low: true }); };
-    rail(PX1, PX1 + 0.1, PZ0, PZ1); rail(HX1, PX1, PZ0 - 0.1, PZ0); rail(HX1, PX1, PZ1, PZ1 + 0.1);
-    const sea = new THREE.Mesh(new THREE.PlaneGeometry(1600, 1600).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#0c1a22', roughness: 0.25, metalness: 0.4 }));
-    sea.position.set(0, -7, 0); world.add(sea);
-    // floodlights & mast
-    const floods = [[33, -11, 0], [56, 19, 1]].map(([x, z, i]) => {
-      mesh(G.cyl(0.12, 0.16, 9, 8), railM, { parent: world.scene, pos: [x, 4.5, z] }); world.circles.push({ x, z, r: 0.4 });
-      mesh(G.box(0.9, 0.5, 0.4), mat('#222'), { parent: world.scene, pos: [x, 9, z], cast: false });
-      mesh(G.box(0.8, 0.4, 0.05), new THREE.MeshBasicMaterial({ color: '#fff4dc' }), { parent: world.scene, pos: [x + (i ? -0.2 : 0.2), 8.95, z + (i ? -0.2 : 0.2)], cast: false });
-      const s = new THREE.SpotLight('#fff0d8', 120, 70, 0.45, 0.5, 1.2); s.position.set(x, 9, z); s.target.position.set(HPX, 0, HPZ); s.castShadow = i === 0 && QUALITY > 0; if (s.castShadow) { s.shadow.mapSize.set(1024, 1024); s.shadow.bias = -0.0006; } world.add(s); world.add(s.target); return s;
-    });
-    const mast = new THREE.Group(); mesh(G.cyl(0.18, 0.4, 30, 6), mat('#3a3e40', { metal: 0.5 }), { parent: mast, pos: [0, 15, 0], cast: false }); const mastLed = mesh(G.sphere(0.35, 8, 6), new THREE.MeshBasicMaterial({ color: '#ff3020' }), { parent: mast, pos: [0, 30.3, 0], cast: false }); mast.position.set(52, 0, -32); world.add(mast);
-    world.onUpdate(() => { mastLed.visible = (Game.time % 1.6) < 0.5; });
-    const rain = makeRain(world); rain.visible = false;
-    // the helicopter: nose north, cabin door facing the hangar
-    const heli = makeHelicopter({ label: 'D-05' });
-    heli.rotation.order = 'YXZ';
-    heli.position.set(HPX, 0, HPZ); heli.rotation.y = Math.PI; world.add(heli);
-    [[HPX, 1.5, 1.4], [HPX, 3.8, 1.5], [HPX, 6.2, 1.3], [HPX, 9.4, 0.6], [HPX, 11.8, 0.6]].forEach(([x, z, r]) => world.circles.push({ x, z, r }));
-    world.onUpdate((dt) => heli.userData.update(dt));
-    const DOOR_OUT = { x: 41.7, z: 3.4 };
-
-    // ---------- people ----------
+    // people
     const npc = {};
-    const put = (key, x, z, ry, look = key, variant) => { const n = makeNPC(look, variant); n.position.set(x, 0, z); n.rotation.y = ry; world.add(n); npc[key] = n; return n; };
-    put('halm', 0.3, -4.6, 0.1); put('lena', -3.6, -2.2, 0.9, 'lena', 'lab'); put('diego', 5.4, -2.2, -0.7); put('lucas', 3.6, 1.6, -2.6);
-    put('yusuf', 8.1, 1.9, -2.2); put('tech1', -4.6, 3.9, Math.PI, 'tech');
-    world.circles.push({ x: 8.1, z: 1.9, r: 0.45 }, { x: -4.6, z: 3.9, r: 0.45 });
-    const comp = {};
-    for (const k of ['halm', 'lena', 'diego', 'lucas']) { comp[k] = new Companion(world, npc[k]); comp[k].setHold(npc[k].position.x, npc[k].position.z, k === 'halm' ? null : npc[k].rotation.y); }
-    const board = (k, seat) => { if (!npc[k].userData.seated) { if (comp[k] && !comp[k].detached) comp[k].detach(); heli.userData.seat(npc[k], seat); } };
+    const put = (key, x, z, ry, look = key) => { const n = makeNPC(look); n.position.set(x, 0, z); n.rotation.y = ry; world.add(n); world.circles.push({ x, z, r: 0.45 }); npc[key] = n; return n; };
+    put('halm', 0.3, -4.6, 0.1);
+    put('lena', -3.6, -2.2, 0.9);
+    put('diego', 5.4, -2.2, -0.7);
+    put('lucas', 3.6, 1.6, -2.6);
+    put('yusuf', 8.1, 1.9, -2.2, 'tech');
+    put('tech1', -4.6, 3.9, Math.PI, 'tech');
+    world.onUpdate((dt) => { Object.values(npc).forEach((n) => n.userData.anim(dt, 0, {})); });
 
     Sound.bed('rain', 0.04); Sound.bed('hum', 0.035);
-    const S = { stage: 0, moved: 0, engine: false };
-    const spawn = { x: 0, z: 3.2 };
+    const S = { stage: 0 };
     const ctx = {
       world, spawn: { x: 0, z: 3.2, yaw: Math.PI }, allowPhoto: false,
-      get guide() { return { key: S.stage === 0 ? 'nora' : 'lena' }; },
       markers() {
-        if (S.stage === 0) return [{ x: 0.3, z: -4.6, label: 'Хальм', goal: true, near: 3.4, nudge: 'Мистер Рид, Хальм ждёт вас у большого экрана — в центре зала.', nudgeWho: 'Нора (интерком)' }];
-        if (S.stage === 1) return [{ x: 7.3, z: 0.8, label: 'кейс', goal: true, near: 2.6 }];
-        if (S.stage === 2) return [{ x: 8.9, z: 4.5, label: 'ангар', goal: true, near: 2.2 }];
-        if (S.stage === 3) return [{ x: DOOR_OUT.x, z: DOOR_OUT.z, label: 'вертолёт', goal: true, near: 2.8 }];
+        if (S.stage === 0) return [{ x: 0, z: -4.6, label: 'Хальм' }];
+        if (S.stage === 1) return [{ x: 7.3, z: 0.8, label: 'кейс' }];
+        if (S.stage === 2) return [{ x: 8.9, z: 4.5, label: 'ангар' }];
         return [];
       },
       subjects() { return []; },
       async start() {
-        HUD.objective('Доложите Хальму о прибытии', 'Командный центр. Хальм — седой, в длинном тёмном пальто, у большого экрана.');
-        Tutorial.show('move', IS_TOUCH ? 'Левый палец — идти, правый — осмотреться' : '<kbd>W A S D</kbd> — идти · <kbd>мышь</kbd> — осмотреться (клик захватывает курсор)', () => S.moved > 2.5, { max: 14 });
+        HUD.objective('Доложите Хальму о прибытии', 'Командный центр. Подойдите к руководителю экспедиции и нажмите E.');
         await wait(1.2);
         HUD.say([{ who: 'Нора (интерком)', text: 'Мистер Рид, брифинг начинается. Командный центр, у большого экрана.' }]);
       },
-      update(dt) {
-        const P = Game.player, x = P.pos.x;
-        S.moved = Math.max(S.moved, dist2d(P.pos.x, P.pos.z, spawn.x, spawn.z));
-        const outside = x > HX1 - 0.5, hangar = x > HX0 - 0.2;
-        world.ceiling = outside ? null : hangar ? HH - 0.3 : 3.6;
-        fog.near = outside ? 22 : hangar ? 24 : 18; fog.far = outside ? 120 : hangar ? 80 : 40;
-        fog.color.set(outside || hangar ? '#0b1116' : '#07090a');
-        rain.visible = camera.position.x > HX1 - 2;
-        Sound.bed('rain', outside ? 0.17 : hangar ? 0.09 : 0.04);
-        Sound.bed('hum', hangar ? 0.01 : 0.035);
-        caseSpot.intensity = damp(caseSpot.intensity, S.stage === 1 ? 26 : 0, 2, dt);
-        doorLamp.intensity = S.stage === 2 ? 4 + Math.sin(Game.time * 4) * 2 : 0;
-        if (S.stage === 2 && x > HX0 + 0.4) {
-          S.stage = 3;
-          HUD.objective('Садитесь в вертолёт', 'Площадка за воротами ангара. Диего ждёт у двери вертолёта.');
-          HUD.say([{ who: 'Диего', text: 'Следопыт! Сюда, к двери. И голову ниже — винт крутится.' }]);
-        }
-        // Diego beckons from the helicopter door
-        if (S.stage === 3 && comp.diego && !comp.diego.detached && dist2d(P.pos.x, P.pos.z, DOOR_OUT.x, DOOR_OUT.z) < 30 && dist2d(P.pos.x, P.pos.z, DOOR_OUT.x, DOOR_OUT.z) > 5 && (Game.time % 6) < 0.05) comp.diego.gesture('wave', null, 1.6);
-      },
-      restore() { const at = S.stage >= 3 ? [12, 4.5, -Math.PI / 2] : [0, 3.2, Math.PI]; Game.player.place(at[0], at[1], at[2]); },
+      update(dt) {},
     };
-    function startEngine() {
-      if (S.engine) return;
-      S.engine = true;
-      board('lucas', 0);
-      heli.userData.start();
-    }
-    // ---------- briefing ----------
+    // briefing
     world.interact({
-      x: 0.3, z: -3.6, r: 2.4, label: 'Поговорить с Хальмом', npc: 'halm', enabled: () => S.stage === 0,
+      x: 0.3, z: -3.6, r: 2.4, label: 'Слушать брифинг', enabled: () => S.stage === 0,
       onUse: async () => {
         S.stage = -1;
         const P = Game.player;
@@ -4174,13 +2858,11 @@ CHAPTERS.prologue = {
         else if (ans === 'prev') await HUD.say([{ who: 'Хальм', text: '<em>(пауза)</em> Они приняли неверные решения. Вы примете верные.' }]);
         else await HUD.say([{ who: '', text: '<em>Хальм смотрит на Итана дольше, чем на остальных, и кивает.</em>', dur: 2.6 }]);
         warm.intensity = 14; side.intensity = 8;
+        HUD.say([{ who: 'Хальм', text: 'Вылет в шесть десять. Доктор Арден, выдайте мистеру Риду комплект.' }]);
         S.stage = 1;
-        HUD.objective('Получите кейс у Лены', 'Идите за Леной к столу ДНК-лаборатории у восточной стены.');
-        HUD.say([{ who: 'Хальм', text: 'Вылет в шесть десять. Доктор Арден, выдайте мистеру Риду комплект.' }, { who: 'Лена', text: 'Идёмте, Итан. Кейс у меня в лаборатории.' }]);
-        comp.lena.lead([[-2.4, 0.6], [2.6, 0.9], [5.3, 1.7]], { wait: 8, onArrive: () => comp.lena.setHold(5.3, 1.7, Math.PI / 2), calls: [{ who: 'Лена', text: 'Итан, сюда. Стол у восточной стены.' }] });
+        HUD.objective('Получите кейс для образцов', 'Стол ДНК-лаборатории у восточной стены.');
       },
     });
-    // ---------- the case ----------
     world.interact({
       x: 6.4, z: 0.8, r: 2.0, label: 'Взять кейс', enabled: () => S.stage === 1,
       onUse: async () => {
@@ -4189,10 +2871,7 @@ CHAPTERS.prologue = {
         caps.forEach((c) => { c.ring.material.emissiveIntensity = 0; });
         await Cine.play([
           { from: V(6.3, 1.9, 0.8), to: V(6.55, 1.7, 0.8), look: V(7.3, 0.95, 0.8), dur: 3.6, cut: true, fov: 45, onStart: () => { Sound.sfx('lever'); HUD.say([{ who: 'Юсуф', text: 'Пять капсул. Каждая держит клетки живыми до двух недель.', dur: 3.4 }]); caps.forEach((c, i) => setTimeout(() => { c.ring.material.emissiveIntensity = 1.6; Sound.sfx('ping', 0.6); }, 400 + i * 450)); } },
-          { from: V(7.3, 1.75, 0.2), to: V(7.3, 1.6, 0.55), look: V(7.3, 0.95, 1.28), dur: 4.6, cut: true, fov: 40, onStart: () => {
-            HUD.say([{ who: 'Лена', text: 'Главное правило, Итан. Нам нужна <b>живая</b> ткань. Кровь, перо, биопсия. Мёртвое не подойдёт — клетки должны дышать.', dur: 4.6 }]);
-            npc.lena = comp.lena.swapModel(makeNPC('lena')); // off camera: the lab coat comes off for the field kit
-          } },
+          { from: V(7.3, 1.75, 0.2), to: V(7.3, 1.6, 0.55), look: V(7.3, 0.95, 1.28), dur: 4.6, cut: true, fov: 40, onStart: () => HUD.say([{ who: 'Лена', text: 'Главное правило, Итан. Нам нужна <b>живая</b> ткань. Кровь, перо, биопсия. Мёртвое не подойдёт — клетки должны дышать.', dur: 4.6 }]) },
           { from: V(7.3, 1.5, 0.8), to: V(7.25, 1.35, 1.0), look: V(7.3, 0.95, 1.28), dur: 3.4, fov: 34, onStart: () => HUD.say([{ who: 'Лена', text: 'А шестое?', dur: 1.6 }, { who: 'Юсуф', text: 'Старый чертёж. Кейсы делают по спецификации восьмидесятых. Не обращайте внимания.', dur: 3.2 }]) },
           { from: V(5.6, 1.9, 2.2), look: V(7.3, 1.0, 0.8), dur: 2.6, cut: true, fov: 50, onStart: () => HUD.say([{ who: 'Лена', text: '<em>(тихо)</em> В восьмидесятых…', dur: 2.2 }]) },
         ]);
@@ -4202,43 +2881,10 @@ CHAPTERS.prologue = {
         HUD.big('GENETIC SAMPLES: 0/5', 'КЕЙС НА РЮКЗАКЕ · ОГОНЬКИ ПОКАЗЫВАЮТ ПРОГРЕСС', '', 3.8);
         S.stage = 2;
         HUD.objective('Идите в ангар', 'Дверь с жёлтой табличкой у восточной стены. Вертолёт уже прогревают.');
-        HUD.say([{ who: 'Хальм', text: 'Мистер Рид. Первое правило острова: там тихо, если тихо вы сами.' }, { who: 'Лукас', text: 'Всё, пошёл греть машину. Следопыт, не отставай!' }]);
-        hDoor.set(true);
-        comp.lena.follow({ dist: 2.4 });
-        // the team heads out ahead of the player: people walking somewhere are the clearest signpost
-        setTimeout(() => comp.lucas.walk([[8.2, 4.5], [11, 4.5], [29, 4.5], [DOOR_OUT.x, DOOR_OUT.z]], { run: true }).then(startEngine), 900);
-        setTimeout(() => comp.diego.walk([[8.2, 4.2], [11, 3.8], [29, 3.6], [40.4, 1.4]]).then(() => comp.diego.setHold(40.4, 1.4, -Math.PI / 2)), 2200);
-        setTimeout(() => comp.halm.walk([[3, 4.2], [8.2, 4.8], [11, 5.2], [29, 5.4], [DOOR_OUT.x, DOOR_OUT.z + 0.3]]).then(() => board('halm', 1)), 3800);
+        HUD.say([{ who: 'Хальм', text: 'Мистер Рид. Первое правило острова: там тихо, если тихо вы сами.' }]);
       },
     });
-    // ---------- boarding ----------
-    world.interact({ x: DOOR_OUT.x, z: DOOR_OUT.z, r: 2.6, label: 'Сесть в вертолёт', enabled: () => S.stage === 3, onUse: () => boardAndFly() });
-    async function boardAndFly() {
-      S.stage = 4;
-      const P = Game.player, pm = P.model;
-      startEngine(); board('halm', 1); board('lena', 2); board('diego', 4);
-      heli.userData.openDoor(true);
-      const loc = (x, y, z) => () => heli.localToWorld(V(x, y, z));
-      const from = pm.position.clone(), doorW = V(DOOR_OUT.x + 0.4, 0, DOOR_OUT.z);
-      await Cine.play([
-        { from: V(31.5, 2.4, 9.5), to: V(32.8, 2.6, 8.8), look: V(42.5, 1.9, 3.6), dur: 3.4, cut: true, fov: 50,
-          onStart: () => { pm.visible = true; HUD.say([{ who: 'Лукас', text: 'Все на борту? Отлично. Пристёгиваемся!', dur: 2.8 }]); },
-          onUpdate: (k, dt) => { pm.position.lerpVectors(from, doorW, clamp(k * 1.3, 0, 1)); pm.rotation.y = Math.atan2(doorW.x - from.x, doorW.z - from.z); pm.userData.anim(dt, k < 0.75 ? 3.2 : 0, {}); } },
-        { from: loc(-0.25, 2.3, -1.55), to: loc(-0.2, 2.28, -1.35), look: loc(0.25, 1.85, 2.6), dur: 5.6, cut: true, fov: 56,
-          onStart: () => { heli.userData.seat(pm, 3); heli.userData.cabinLight.intensity = 0.6; HUD.say([{ who: 'Хальм', text: '«Порог», Дельта-пять к вылету готова.', dur: 2.6 }, { who: 'Нора (радио)', text: 'Дельта-пять, «Порог». Взлёт разрешаю. Удачи вам.', dur: 2.8 }]); },
-          onUpdate: (k, dt) => pm.userData.anim(dt, 0, { sit: true }) },
-        { from: loc(0.1, 2.12, 1.8), look: loc(0.6, 2.02, 0.85), dur: 3.4, cut: true, fov: 42,
-          onStart: () => HUD.say([{ who: 'Лена', text: '<em>(тихо)</em> Пять видов. Пять образцов. Ничего сложного.', dur: 3.2 }]),
-          onUpdate: (k, dt) => pm.userData.anim(dt, 0, { sit: true }) },
-        { from: V(37.5, 1.6, -1.5), look: loc(1.3, 1.7, 0.4), dur: 2.4, cut: true, fov: 48, onStart: () => { heli.userData.openDoor(false); Sound.sfx('door', 0.8); } },
-        { from: V(31.5, 3.2, 12.5), to: V(32.2, 3.8, 11.6), look: () => heli.position.clone().add(V(0, 2, 0)), dur: 7, cut: true, fov: 50,
-          onStart: () => { Cam.shake = 0.15; HUD.say([{ who: 'Лукас', text: 'Дельта-пять, взлёт.', dur: 2 }]); },
-          onUpdate: (k) => { const e = ease(k); heli.position.set(HPX + k * k * 36, e * 14 + k * k * 12, HPZ - k * k * 18); heli.rotation.set(-0.12 * smoothstep(0.2, 0.7, k), Math.PI - smoothstep(0.1, 0.9, k) * 1.25, Math.sin(k * 3) * 0.03); } },
-      ], { skippable: true });
-      await HUD.fade(1, 1.0);
-      Game.complete('valley', { flight: true });
-    }
-    // ---------- optional conversations and clues ----------
+    world.interact({ x: 8.3, z: 4.5, r: 1.8, label: 'Выйти в ангар', enabled: () => S.stage === 2, onUse: () => { S.stage = 3; Game.complete('valley', { flight: true, noCard: false }); } });
     world.interact({
       x: -7.8, z: 5.6, r: 1.9, label: 'Осмотреть ящик', enabled: () => !S.box,
       onUse: () => { S.box = true; HUD.say([{ who: '[Ящик]', text: '«D-04 — PERSONAL EFFECTS — UNCLAIMED». Внутри шляпа и детский рисунок: остров и подпись «Маме».', dur: 5 }, { who: 'Итан', text: 'D-04. Значит, были и D-01, D-02, D-03.', dur: 3 }]); Game.state.flags.clueBox = true; },
@@ -4247,10 +2893,10 @@ CHAPTERS.prologue = {
       x: -8.2, z: -1, r: 1.8, label: 'Осмотреть дверь', enabled: () => !S.ark,
       onUse: () => { S.ark = true; HUD.say([{ who: '[Дверь]', text: 'Заперто. «ARK MIRROR — RESTRICTED». Сквозь стекло видны серверные стойки. Кто-то изнутри опускает жалюзи.', dur: 5 }]); Game.state.flags.clueArk = true; },
     });
-    world.interact({ x: 3.6, z: 2.4, r: 1.7, label: 'Поговорить с Лукасом', npc: 'lucas', enabled: () => !S.lucas && S.stage >= 0 && S.stage <= 1, onUse: () => { S.lucas = true; HUD.say([{ who: 'Лукас', text: 'Следопыт! Над этим островом никто не летал. Вокруг — сколько угодно, там приборы сходят с ума.', dur: 4.2 }, { who: 'Лукас', text: 'Так что, если что, я просто очень уверенно поверну обратно.', dur: 3.2 }]); } });
-    world.interact({ x: -3.6, z: -1.3, r: 1.7, label: 'Поговорить с Леной', npc: 'lena', enabled: () => !S.lena && S.stage === 0, onUse: () => { S.lena = true; HUD.say([{ who: 'Лена', text: 'Я всю жизнь собирала ДНК из костей. Это как читать книгу по обгоревшим страницам.', dur: 4 }, { who: 'Лена', text: 'А там… там книги живые.', dur: 2.6 }]); } });
-    world.interact({ x: 5.4, z: -1.3, r: 1.7, label: 'Поговорить с Диего', npc: 'diego', enabled: () => !S.diego && S.stage >= 0 && S.stage <= 1, onUse: () => { S.diego = true; HUD.say([{ who: 'Диего', text: 'Двенадцать патронов. Больше не дам — там патроны не растут.', dur: 3.2 }, { who: 'Диего', text: 'Ракеты — твой лучший друг. Пули только злят то, что больше тебя.', dur: 3.6 }]); } });
-    world.interact({ x: 8.1, z: 2.7, r: 1.6, label: 'Поговорить с Юсуфом', npc: 'yusuf', enabled: () => !S.yusuf && S.stage >= 0 && S.stage <= 1, onUse: () => { S.yusuf = true; HUD.say([{ who: 'Юсуф', text: 'Кейс проверен трижды. Если огонёк зелёный — образец живой. Если жёлтый — ищите дальше.', dur: 4.4 }]); } });
+    world.interact({ x: 3.6, z: 2.4, r: 1.7, label: 'Поговорить с Лукасом', enabled: () => !S.lucas && S.stage >= 1, onUse: () => { S.lucas = true; HUD.say([{ who: 'Лукас', text: 'Следопыт! Над этим островом никто не летал. Вокруг — сколько угодно, там приборы сходят с ума.', dur: 4.2 }, { who: 'Лукас', text: 'Так что, если что, я просто очень уверенно поверну обратно.', dur: 3.2 }]); } });
+    world.interact({ x: -3.6, z: -1.3, r: 1.7, label: 'Поговорить с Леной', enabled: () => !S.lena && S.stage >= 1, onUse: () => { S.lena = true; HUD.say([{ who: 'Лена', text: 'Я всю жизнь собирала ДНК из костей. Это как читать книгу по обгоревшим страницам.', dur: 4 }, { who: 'Лена', text: 'А там… там книги живые.', dur: 2.6 }]); } });
+    world.interact({ x: 5.4, z: -1.3, r: 1.7, label: 'Поговорить с Диего', enabled: () => !S.diego, onUse: () => { S.diego = true; HUD.say([{ who: 'Диего', text: 'Двенадцать патронов. Больше не дам — там патроны не растут.', dur: 3.2 }, { who: 'Диего', text: 'Ракеты — твой лучший друг. Пули только злят то, что больше тебя.', dur: 3.6 }]); } });
+    ctx.restore = () => Game.player.place(0, 3.2, Math.PI);
     return ctx;
   },
 };
@@ -4422,86 +3068,52 @@ function makeCarcass(world, x, z) {
   return g;
 }
 
-// the flight in: crew in the cabin, the Veil, the reveal, landing and disembarking
 function flightIntro(world, herd) {
-  const heli = makeHelicopter({ label: 'D-05', onGround: false, rpm: 1 });
-  heli.rotation.order = 'YXZ';
+  const heli = makeHelicopter();
   world.add(heli);
-  heli.userData.engine.managed = true;
-  const crew = {};
-  [['lucas', 0, 'flight'], ['halm', 1], ['lena', 2], ['diego', 4]].forEach(([k, seat, v]) => { const n = makeNPC(k, v); world.add(n); heli.userData.seat(n, seat); crew[k] = n; });
-  heli.userData.cabinLight.intensity = 0.45;
-  const pts = [V(0, 72, 980), V(0, 68, 760), V(4, 62, 560), V(12, 52, 360), V(46, 46, 200), V(112, 42, 40), V(138, 36, -58), V(100, 34, -128), V(24, 34, -92), V(-48, 30, -34), V(-46, 22, 78), V(-14, 10, 150), V(VALLEY.pad.x, valleyHeight(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z)];
+  const pts = [V(0, 72, 980), V(0, 68, 760), V(4, 62, 560), V(12, 52, 360), V(46, 46, 200), V(112, 42, 40), V(138, 36, -58), V(100, 34, -128), V(24, 34, -92), V(-48, 30, -34), V(-46, 22, 78), V(-14, 10, 150), V(VALLEY.pad.x, 1.4 + valleyHeight(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z)];
   const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
-  const T = 52; let t = 0; let active = true; let heading = 0, bank = 0;
+  const T = 50; let t = 0; let active = true; let heading = 0;
   const fog = world.scene.fog, baseNear = fog.near, baseFar = fog.far;
   const loc = (x, y, z) => () => heli.localToWorld(new THREE.Vector3(x, y, z));
   const uOf = (k) => (k < 0.85 ? (k / 0.85) * 0.955 : 0.955 + (1 - Math.pow(1 - (k - 0.85) / 0.15, 2)) * 0.045);
   herd.goal.set(VALLEY.pastures[1][0], VALLEY.pastures[1][1]); herd.state = 'flee';
-  const pm = () => Game.player.model;
-  let shake = 0;
+  let lastRotor = 0;
   world.onUpdate((dt) => {
-    heli.userData.update(dt);
-    if (!active) return;
+    if (!active) { heli.userData.update(dt, Math.max(0, heli.userData.rs = (heli.userData.rs ?? 1) - dt * 0.12)); return; }
     t += dt * Cine.speed;
     const k = clamp(t / T, 0, 1), u = uOf(k);
     const p = curve.getPointAt(u), p2 = curve.getPointAt(Math.min(1, u + 0.004));
     heli.position.copy(p);
-    if (Math.hypot(p2.x - p.x, p2.z - p.z) > 0.25) { const nh = Math.atan2(p2.x - p.x, p2.z - p.z); bank = damp(bank, clamp(wrapAngle(nh - heading) * 18, -0.35, 0.35), 2, dt); heading = nh; }
-    const flare = smoothstep(0.9, 1, k);
-    heli.rotation.set(-0.08 * (1 - flare) + flare * 0.1, heading, -bank * (1 - flare));
-    // the Veil: fog closes in while crossing the cloud wall, opens on the island side
-    const inVeil = smoothstep(11, 15, t) * (1 - smoothstep(23.5, 26.5, t));
+    if (Math.hypot(p2.x - p.x, p2.z - p.z) > 0.25) heading = Math.atan2(p2.x - p.x, p2.z - p.z);
+    heli.rotation.set(0, heading, 0);
+    heli.userData.update(dt, 1);
+    if (Game.time - lastRotor > 0.09) { lastRotor = Game.time; Sound.sfx('rotor', k < 0.1 ? 0.5 : 0.25); }
+    // the Veil: fog closes in between 9 s and 17 s, opens by 20 s
+    const inVeil = smoothstep(7, 11, t) * (1 - smoothstep(17.5, 20, t));
     fog.near = lerp(baseNear, 2, inVeil); fog.far = lerp(baseFar + 300, 38, inVeil);
     fog.color.set(inVeil > 0.5 ? '#5a6168' : TIME_PRESETS[world.timeKey].fog);
     if (world.rain) world.rain.visible = inVeil > 0.2;
-    heli.userData.body.rotation.z = Math.sin(t * 7) * 0.02 * inVeil;
-    if (k >= 1) { active = false; heli.position.y = valleyHeight(heli.position.x, heli.position.z); heli.rotation.set(0, heading, 0); }
+    if (k >= 1) active = false;
   });
-  const sit = (k, dt) => pm().userData.anim(dt || 0.016, 0, { sit: true });
   const shots = [
-    { from: () => heli.position.clone().add(V(22, 2, -34)), to: () => heli.position.clone().add(V(16, 3, -20)), look: () => heli.position.clone().add(V(0, 2, 0)), dur: 6, cut: true, fov: 46, rigid: true,
+    { from: () => heli.position.clone().add(V(18, 3, 12)), to: () => heli.position.clone().add(V(14, 2, 4)), look: () => heli.position, dur: 6, cut: true, fov: 50, rigid: true,
       onStart: () => { Sound.bed('wind', 0.12); HUD.say([{ who: 'Лукас', text: 'Дамы и господа, говорит ваш капитан. Напитков не будет, парашютов тоже.', dur: 3.6 }, { who: 'Нора (радио)', text: 'Дельта-пять, «Порог». Курс подтверждаю. Удачи вам.', dur: 2.6 }]); } },
-    { from: loc(-0.2, 2.28, -1.5), look: loc(0.2, 2.0, 5), dur: 6, cut: true, fov: 60, rigid: true, onUpdate: sit,
-      onStart: () => { crew.lena.userData.pose = { sit: true, lookY: 0.9 }; HUD.say([{ who: 'Лена', text: 'Это она? Вуаль?', dur: 2.2 }, { who: 'Хальм', text: 'Сорок лет облаков на одном месте. Погода так не умеет.', dur: 3.4 }]); } },
-    { from: loc(0.05, 2.05, 1.7), look: loc(0.1, 1.62, 3.0), dur: 5, cut: true, fov: 52, rigid: true, onUpdate: sit,
-      onStart: () => { HUD.say([{ who: 'Лукас', text: 'У меня компас пляшет. Да все приборы пляшут.', dur: 2.8 }, { who: 'Нора (радио)', text: 'Дельта-пять… вас не… повто…', dur: 2.4 }]); setTimeout(() => lightning(world, 1, 0.6), 2500); } },
-    { from: loc(-8, 3, -14), to: loc(-5, 2.6, -11), look: loc(0, 1.5, 4), dur: 5, cut: true, fov: 58, rigid: true,
+    { from: loc(0, 1.75, 3.7), look: loc(0, 0.2, 40), dur: 6, cut: true, fov: 64, rigid: true,
+      onStart: () => { HUD.say([{ who: 'Лукас', text: 'У меня компас пляшет. Да все приборы пляшут.', dur: 2.8 }, { who: 'Нора (радио)', text: 'Дельта-пять… вас не… повто…', dur: 2.4 }]); setTimeout(() => lightning(world, 1, 0.6), 2500); setTimeout(() => lightning(world, 0.8, 0.3), 4600); } },
+    { from: loc(-6, 3, -13), to: loc(-4, 2.6, -11), look: loc(0, 1.5, 4), dur: 5, cut: true, fov: 58, rigid: true,
       onStart: () => { Cam.shake = 0.5; Sound.bed('rain', 0.14); HUD.say([{ who: 'Хальм', text: 'Это нормально. Держите курс на ноль-восемь-пять.', dur: 2.6 }, { who: 'Лукас', text: 'Нормально? Откуда вы знаете, что нормально?', dur: 2.4 }]); setTimeout(() => lightning(world, 1, 0.2), 1800); },
       onUpdate: () => { Cam.shake = Math.max(Cam.shake, 0.25); } },
-    { from: loc(-0.3, 2.25, -1.4), look: loc(0.3, 1.9, 3), dur: 4.5, cut: true, fov: 62, rigid: true,
-      onStart: () => { crew.lena.userData.pose = { sit: true, hold: true }; crew.diego.userData.pose = { sit: true, hold: true }; Sound.sfx('thud', 0.5); setTimeout(() => lightning(world, 1.2, 0.1), 900); },
-      onUpdate: (k, dt) => { sit(k, dt); Cam.shake = Math.max(Cam.shake, 0.35 * (1 - k)); if (k > 0.85 && !shake) { shake = 1; HUD.flash(0.9, 1.2); Sound.silenceAll(0.6); } } },
+    { from: loc(0, 1.75, 3.7), look: loc(0, -2, 40), dur: 4.5, cut: true, fov: 64, rigid: true,
+      onStart: () => { Sound.silenceAll(0.6); } },
     { from: V(170, 9, -40), to: V(166, 11, -62), look: () => V(herd.center.x, 3, herd.center.y).lerp(heli.position, 0.28), dur: 11, cut: true, fov: 52,
-      onStart: () => { heli.userData.cabinLight.intensity = 0.3; Sound.bed('wind', 0.08); Sound.theme(0.1); setTimeout(() => HUD.big('UMBRA', 'Expedition D-05', 'title', 5), 2500); setTimeout(() => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Они живые. Они настоящие.', dur: 3 }]), 7500); } },
-    { from: loc(0.1, 2.1, 1.75), look: loc(0.62, 2.02, 0.85), dur: 5, cut: true, fov: 42, rigid: true, onUpdate: sit,
-      onStart: () => { crew.lena.userData.pose = { sit: true, lookY: 1.05 }; crew.diego.userData.pose = { sit: true }; HUD.say([{ who: 'Диего', text: 'Скажи это ещё раз, когда будем внизу.', dur: 2.6 }, { who: 'Лена', text: 'Они живые, Диего.', dur: 2 }]); } },
-    { from: V(-30, 14, -44), to: V(-32, 15, -36), look: () => V(-62, 15, -18).lerp(heli.position, 0.35), dur: 6, cut: true, fov: 50 },
-    { from: () => V(-26, valleyHeight(-26, 184) + 1.8, 184), to: () => V(-22, valleyHeight(-22, 181) + 1.7, 181), look: () => heli.position.clone().add(V(0, 1.5, 0)), dur: 8.5, cut: true, fov: 50,
+      onStart: () => { Sound.bed('wind', 0.08); Sound.theme(0.1); setTimeout(() => HUD.big('UMBRA', 'Expedition D-05', 'title', 5), 2500); setTimeout(() => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Они живые. Они настоящие.', dur: 3 }]), 7500); } },
+    { from: V(-30, 14, -44), to: V(-32, 15, -36), look: () => V(-62, 15, -18).lerp(heli.position, 0.35), dur: 7, cut: true, fov: 50,
+      onStart: () => HUD.say([{ who: 'Диего', text: 'Скажи это ещё раз, когда будем внизу.', dur: 2.6 }]) },
+    { from: () => V(-26, valleyHeight(-26, 184) + 1.8, 184), to: () => V(-22, valleyHeight(-22, 181) + 1.7, 181), look: () => heli.position, dur: 8.5, cut: true, fov: 50,
       onStart: () => { Sound.bed('insects', 0.05); Sound.bed('wind', 0.06); } },
-    // touchdown: door slides open, the team steps out
-    { from: loc(7, 1.7, 5), to: loc(6.2, 1.6, 4.2), look: loc(1.6, 1.3, 0.2), dur: 7, cut: true, fov: 48,
-      onStart: () => { heli.userData.openDoor(true); heli.userData.idle(); setTimeout(() => heli.userData.stop(), 3500); disembark(); } },
   ];
-  const door = () => { const d = heli.localToWorld(V(2.4, 0, 0.7)); d.y = valleyHeight(d.x, d.z); return d; };
-  const walkers = {};
-  function disembark() {
-    const d = door();
-    const out = [['halm', 0, [[-14, 152]], null], ['diego', 0.9, [[-11, 143]], null], ['lena', 1.8, [[d.x + 2.2, d.z - 1.2]], null]];
-    for (const [k, delay] of out) {
-      setTimeout(() => {
-        const n = crew[k];
-        world.scene.attach(n);
-        n.userData.pose = null; n.userData.seated = false;
-        n.position.set(d.x, d.y, d.z);
-        const c = new Companion(world, n);
-        walkers[k] = c;
-        const tgt = out.find((o) => o[0] === k)[2];
-        c.walk(tgt);
-      }, delay * 1000 / Math.max(1, Cine.speed));
-    }
-  }
-  return { heli, crew, walkers, shots, door, done: () => !active };
+  return { heli, shots, done: () => !active };
 }
 
 CHAPTERS.valley = {
@@ -4510,7 +3122,7 @@ CHAPTERS.valley = {
     makeRain(world).visible = false;
     const herd = new TriHerd(world, VALLEY.pastures[0][0], VALLEY.pastures[0][1]);
     herd.reset(VALLEY.pastures[0][0], VALLEY.pastures[0][1]);
-    const S = { phase: 'arrive', leadLine: 0, traces: 0, seen: false, observe: 0, duel: 'none', dna: false, braSeen: false, silence: 'none', carcass: false, herdSeenT: 0, fleeCount: 0, bloodPos: null };
+    const S = { traces: 0, seen: false, observe: 0, duel: 'none', dna: false, braSeen: false, silence: 'none', carcass: false, herdSeenT: 0, fleeCount: 0, bloodPos: null };
     // footprints along the trail
     const tr = VALLEY.trail;
     for (let i = 0; i < tr.length - 1; i++) {
@@ -4547,18 +3159,15 @@ CHAPTERS.valley = {
       const a = rnd(0, TAU);
       compies.push({ g: c, home: new THREE.Vector2(VALLEY.carcass.x + Math.cos(a) * 2.6, VALLEY.carcass.z + Math.sin(a) * 2.6), pos: new THREE.Vector2(VALLEY.carcass.x + Math.cos(a) * 2.6, VALLEY.carcass.z + Math.sin(a) * 2.6), yaw: a, flee: 0 });
     }
-    // the team: in the flight version they arrive in the helicopter, from chapter select they are already at camp
+    // NPCs at camp
+    const npcs = {};
+    [['halm', -16, 150, 2.5], ['lucas', -6, 162, -2], ['diego', -12, 142, 3.1]].forEach(([k, x, z, ry]) => { const n = makeNPC(k); n.position.set(x, world.groundH(x, z), z); n.rotation.y = ry; world.add(n); world.circles.push({ x, z, r: 0.5 }); npcs[k] = n; });
+    world.onUpdate((dt) => Object.values(npcs).forEach((n) => n.userData.anim(dt, 0)));
+    // parked helicopter (replaced by the flight one if the intro plays)
     let flight = null;
-    const team = {};
-    const HEAD = 0.51; // landing heading: the cabin door faces the camp side
     if (o.flight) flight = flightIntro(world, herd);
-    else {
-      const h = makeHelicopter({ label: 'D-05' }); h.position.set(VALLEY.pad.x, world.groundH(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z); h.rotation.y = HEAD; world.add(h); world.onUpdate((dt) => h.userData.update(dt));
-      const pilot = makeNPC('lucas'); world.add(pilot); h.userData.seat(pilot, 0);
-      [['halm', -14, 152], ['diego', -11, 143], ['lena', -10, 158]].forEach(([k, x, z]) => { const n = makeNPC(k); n.position.set(x, world.groundH(x, z), z); world.add(n); team[k] = new Companion(world, n); });
-    }
-    for (const z of [2.2, 0, -2.2, -5]) world.circles.push({ x: VALLEY.pad.x + Math.sin(HEAD) * z, z: VALLEY.pad.z + Math.cos(HEAD) * z, r: z < -3 ? 0.7 : 1.45 });
-    const lena = () => (flight ? flight.walkers.lena : team.lena);
+    else { const h = makeHelicopter(); h.position.set(VALLEY.pad.x, world.groundH(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z); h.rotation.y = 2.4; world.add(h); world.onUpdate((dt) => h.userData.update(dt, 0)); }
+    world.circles.push({ x: VALLEY.pad.x, z: VALLEY.pad.z, r: 3.2 });
     // raptor silhouette for the insect-silence lesson
     const shadowRaptor = makeRaptor({ skin: '#3d3d34' }); shadowRaptor.visible = false; world.add(shadowRaptor);
 
@@ -4590,7 +3199,6 @@ CHAPTERS.valley = {
           Sound.sfx('ping');
           HUD.say([{ who: traceText[key][0], text: traceText[key][1], dur: 4 }, { who: 'Лена', text: lenaAfter[key] }]);
           Journal.add('tri', journalId[key]);
-          if (S.phase !== 'hunt') { S.phase = 'hunt'; lena().follow({ dist: 2.8 }); }
           traceObjective();
           S.lastCp = { x, z };
         },
@@ -4619,7 +3227,7 @@ CHAPTERS.valley = {
           await wait(1.2);
           await HUD.say([{ who: 'Лена', text: 'Первый. Итан… у нас первый. Осталось четыре.' }, { who: 'Хальм (рация)', text: 'Хорошая работа, мистер Рид. Возвращайтесь в лагерь до темноты.' }]);
           await wait(1.5);
-          await HUD.say([{ who: 'Лукас (рация)', text: 'У меня в эфире маяк. Зациклен. Код… D-01.' }, { who: 'Хальм (рация)', text: 'Старое оборудование. Игнорируем.' }, { who: 'Лена', text: 'Зона рапторов — в той же стороне, Виктор.' }]);
+          await HUD.say([{ who: 'Лукас (рация)', text: 'У меня в эфире маяк. Зациклен. Код… D-01.' }, { who: 'Хальм (рация)', text: 'Старое оборудование. Игнорируем.' }, { who: 'Лена (рация)', text: 'Зона рапторов — в той же стороне, Виктор.' }]);
           await wait(1);
           Game.complete('k4');
         }
@@ -4695,47 +3303,29 @@ CHAPTERS.valley = {
 
     const ctx = {
       world,
-      spawn: o.flight ? { x: -11, z: 159, yaw: Math.PI * 0.95 } : { x: -12, z: 154, yaw: Math.PI * 0.95 },
+      spawn: o.flight ? { x: -11, z: 159, yaw: Math.PI * 0.95 } : { x: -12, z: 156, yaw: Math.PI * 0.95 },
       async start(opts = {}) {
         Sound.bed('wind', 0.06); Sound.bed('insects', 0.05);
-        const P = Game.player;
         if (flight) {
           HUD.show(false);
-          flight.heli.userData.seat(P.model, 3);
           await Cine.play(flight.shots, { skippable: true });
-          // step out of the cabin
-          const d = flight.door();
-          world.scene.attach(P.model);
-          P.model.userData.pose = null; P.model.userData.seated = false;
-          P.place(d.x + 1.2, d.z + 0.4, -2.6);
-          Cam.yaw = P.yaw + Math.PI; Cam.pitch = 0.18; Cam.curPos.copy(camera.position);
           HUD.show(true);
           herd.reset(VALLEY.pastures[0][0], VALLEY.pastures[0][1]);
           Sound.bed('wind', 0.06); Sound.bed('insects', 0.05);
-          await HUD.say([{ who: 'Хальм', text: 'Лагерь «Эхо» — за палатками. Здесь стояла передовая группа D-04. Разбиваем базу и выходим на связь с «Порогом».' }, { who: 'Лена', text: 'Здесь кто-то был. Лет пять-десять назад.' }, { who: 'Лукас', text: '<em>(вдыхает)</em> Пахнет… как в оранжерее, где кто-то умер.' }]);
+          HUD.say([{ who: 'Лена', text: 'Здесь кто-то был. Лет пять-десять назад.' }, { who: 'Хальм', text: 'Старые изыскатели. Разгружаемся.' }, { who: 'Лукас', text: '<em>(вдыхает)</em> Пахнет… как в оранжерее, где кто-то умер.' }]);
+          await wait(8);
         }
-        S.phase = 'lead';
-        HUD.objective('Идите с Леной к озеру', 'Лена покажет, где начинать поиск. Трицератопсы пасутся за озером, на северо-востоке.');
-        HUD.say([{ who: 'Лена', text: 'Итан, трицератопсы пасутся за озером. Идёмте со мной — начнём со следов у берега.' }]);
-        const c = lena();
-        c.lead(LEAD_PATH, { wait: 13, calls: [{ who: 'Лена', text: 'Итан! Сюда, к озеру. Не отставайте.' }, { who: 'Лена', text: 'Итан, я здесь. Идём по тропе на север.' }],
-          onArrive: () => {
-            if (S.phase !== 'lead') return;
-            S.phase = 'print';
-            c.setHold(c.pos.x, c.pos.y, null);
-            HUD.objective('Изучите отпечатки', 'Следы у берега прямо перед Леной. Подойдите и удерживайте E.');
-            HUD.say([{ who: 'Лена', text: 'Стойте. Видите? Отпечатки. Свежие. Изучите их — удерживайте E.' }]);
-          } });
-        setTimeout(() => Tutorial.show('sprint', IS_TOUCH ? 'Джойстик до упора — бег. Лена побежит следом' : 'Удерживайте <kbd>Shift</kbd>, чтобы бежать. Лена побежит следом', () => Input.running() && P.speed > 5, { max: 14 }), 5000);
+        HUD.objective('Найдите следы у озера', 'Озеро к северу от лагеря. Подойдите к следам и удерживайте E, чтобы изучить их.');
+        HUD.say([{ who: 'Лена (рация)', text: 'Итан, трицератопсы пасутся на северо-востоке долины, если верить карте. Но карта старая. Верьте следам — начните с берега озера.' }]);
+        if (IS_TOUCH) HUD.toast('Кнопка «Камера» — фото для журнала', 4);
+        else HUD.toast('F — камера · J — журнал · C — присесть', 4.5);
       },
       markers() {
         const m = [{ x: VALLEY.camp.x, z: VALLEY.camp.z, label: 'лагерь' }];
-        if (S.phase === 'lead') { const l = lena().pos; m.push({ x: l.x, z: l.y, label: 'Лена', goal: true, near: 9 }); return m; }
         const n = nextTrace();
-        if (n && !S.seen) m.push({ x: VALLEY.traces[n][0], z: VALLEY.traces[n][1], label: 'след', goal: true, near: 4 });
-        if (S.traces >= 3 && !S.seen) m.push({ x: herd.center.x + 15, z: herd.center.y - 10, label: 'стадо?', goal: true, near: 70 });
-        if (S.seen && S.duel !== 'done') m.push({ x: herd.center.x, z: herd.center.y, label: 'стадо', goal: true, near: 85, patient: true });
-        if (S.duel === 'done' && !S.dna && S.bloodPos) m.push({ x: S.bloodPos.x, z: S.bloodPos.y, label: 'кровь', cls: 'bad', goal: true, near: 3 });
+        if (n && !S.seen) m.push({ x: VALLEY.traces[n][0], z: VALLEY.traces[n][1], label: 'след' });
+        if (S.traces >= 3 && !S.seen) m.push({ x: herd.center.x + 15, z: herd.center.y - 10, label: 'стадо?' });
+        if (S.duel === 'done' && !S.dna && S.bloodPos) m.push({ x: S.bloodPos.x, z: S.bloodPos.y, label: 'кровь', cls: 'bad' });
         return m;
       },
       subjects() {
@@ -4753,12 +3343,6 @@ CHAPTERS.valley = {
       update(dt) {
         const p = P();
         herd.update(dt, p, world);
-        // Lena's commentary on the walk to the lake: the island's first rules, taught on the move
-        if (S.phase === 'lead') {
-          const left = lena().path.length;
-          if (S.leadLine === 0 && left <= 5) { S.leadLine = 1; HUD.say([{ who: 'Лена', text: 'Смотрите под ноги, не только по сторонам. Трава примята — здесь что-то проходило.' }]); }
-          if (S.leadLine === 1 && left <= 3) { S.leadLine = 2; HUD.say([{ who: 'Лена', text: 'Карте D-04 два года. Стадо могло уйти. Поэтому — следы.' }]); }
-        }
         // compies
         for (const c of compies) {
           const d = dist2d(p.pos.x, p.pos.z, c.pos.x, c.pos.y);
@@ -4777,9 +3361,7 @@ CHAPTERS.valley = {
           S.braSeen = true;
           Journal.add('bra', 'seen');
           Cam.pull = { x: brachios[0].position.x, z: brachios[0].position.z, strength: 2.2, time: 2.2 };
-          HUD.say([{ who: 'Лена', text: 'Итан… не двигайтесь. Просто смотрите.', dur: 3 }, { who: 'Лена', text: 'Слышите насекомых? Они не замолчали. Значит, это не охотник. Запомните это.' }, { who: 'Лена', text: 'Камера. Сфотографируйте его. Пожалуйста.' }]).then(() => {
-            Tutorial.show('photo', IS_TOUCH ? 'Кнопка <kbd>Камера</kbd> — снимок для журнала' : '<kbd>F</kbd> — камера, клик или <kbd>Пробел</kbd> — снимок', () => Cam.mode === 'photo', { max: 14 });
-          });
+          HUD.say([{ who: 'Лена', text: 'Итан… не двигайтесь. Просто смотрите.', dur: 3 }, { who: 'Лена', text: 'Слышите насекомых? Они не замолчали. Значит, это не охотник. Запомните это.' }, { who: 'Лена', text: 'Камера. Сфотографируйте его. Пожалуйста.' }]);
         }
         // insect-silence lesson
         if (S.silence === 'none' && S.traces >= 1 && !S.seen) { S.silence = 'wait'; S.silenceT = 20; }
@@ -4792,7 +3374,7 @@ CHAPTERS.valley = {
             const side = new THREE.Vector2(-fwd.y, fwd.x);
             S.rStart = new THREE.Vector2(p.pos.x + fwd.x * 85 + side.x * 30, p.pos.z + fwd.y * 85 + side.y * 30);
             S.rEnd = new THREE.Vector2(p.pos.x + fwd.x * 95 - side.x * 35, p.pos.z + fwd.y * 95 - side.y * 35);
-            setTimeout(() => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Итан… насекомые замолчали. Пригнитесь.' }], true), 1600);
+            setTimeout(() => HUD.say([{ who: 'Лена (рация)', text: 'Итан… насекомые замолчали. Пригнитесь.' }], true), 1600);
           }
         }
         if (S.silence === 'run') {
@@ -4805,7 +3387,7 @@ CHAPTERS.valley = {
           shadowRaptor.userData.anim(dt, 3.2, { alert: true });
           if (S.silenceClock > 14) {
             S.silence = 'done'; shadowRaptor.visible = false; Sound.bed('insects', 0.05, 3);
-            HUD.say([{ who: 'Лена', text: 'Ушёл. Что бы это ни было. Запомните этот звук — тишину.' }]);
+            HUD.say([{ who: 'Лена (рация)', text: 'Ушёл. Что бы это ни было. Запомните этот звук — тишину.' }]);
           }
         }
         // herd discovered
@@ -4813,8 +3395,7 @@ CHAPTERS.valley = {
         if (!S.seen && nd < 85) {
           S.seen = true; Journal.add('tri', 'seen');
           HUD.objective('Понаблюдайте за стадом', IS_TOUCH ? 'Присядьте и не двигайтесь в 25–75 м от стада, глядя на него. Можно сделать фото.' : 'Присядьте (C) и не двигайтесь в 25–75 м от стада, глядя на него. Можно сделать фото (F).');
-          HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Вот они… Девять. Два детёныша в центре. Не подходите ближе — просто смотрите.' }]);
-          Tutorial.show('crouch', IS_TOUCH ? 'Кнопка <kbd>Присесть</kbd> — стадо хуже замечает того, кто пригнулся' : '<kbd>C</kbd> — присесть. Стадо хуже замечает того, кто пригнулся', () => p.crouch, { max: 16 });
+          HUD.say([{ who: 'Лена', text: 'Вот они… Девять. Два детёныша в центре. Не подходите ближе — просто смотрите.' }]);
         }
         if (S.seen) S.herdSeenT += dt;
         // observation
@@ -4841,7 +3422,6 @@ CHAPTERS.valley = {
       restore() {
         const cp = S.lastCp || { x: -12, z: 150 };
         Game.player.place(cp.x - 4, cp.z + 6, Math.PI);
-        if (S.phase === 'hunt') lena().place(cp.x - 6, cp.z + 8);
         herd.reset(herd.center.x, herd.center.y);
         HUD.danger(false);
       },
@@ -5106,6 +3686,7 @@ CHAPTERS.k4 = {
     // companions at the gate
     const lena = makeNPC('lena'); lena.position.set(20.5, 0, 38); lena.rotation.y = Math.PI * 0.9; world.add(lena); world.circles.push({ x: 20.5, z: 38, r: 0.5 });
     const diego = makeNPC('diego'); diego.position.set(27.5, 0, 38.6); diego.rotation.y = -Math.PI * 0.9; world.add(diego); world.circles.push({ x: 27.5, z: 38.6, r: 0.5 });
+    world.onUpdate((dt) => { lena.userData.anim(dt, 0); diego.userData.anim(dt, 0); });
 
     // ---------- navigation ----------
     const N = {
@@ -5805,7 +4386,7 @@ CHAPTERS.attack = {
     const cx = VALLEY.camp.x, cz = VALLEY.camp.z;
     const fire = new THREE.PointLight('#ff9a4a', 12, 18, 1.6); fire.position.set(cx, world.groundH(cx, cz) + 1, cz + 3); world.add(fire);
     const flood = new THREE.SpotLight('#dfe6ff', 40, 50, 0.6, 0.4, 1.2); flood.position.set(cx + 8, world.groundH(cx, cz) + 6, cz + 10); flood.target.position.set(cx - 4, 0, cz - 8); world.add(flood); world.add(flood.target);
-    const diego = makeNPC('diego'); diego.userData.scripted = true; diego.position.set(cx - 4, world.groundH(cx - 4, cz), cz - 2); world.add(diego);
+    const diego = makeNPC('diego'); diego.position.set(cx - 4, world.groundH(cx - 4, cz), cz - 2); world.add(diego);
     const lena = makeNPC('lena'); lena.position.set(cx + 2, world.groundH(cx + 2, cz + 4), cz + 4); lena.rotation.y = Math.PI; world.add(lena);
     const lucas = makeNPC('lucas'); lucas.position.set(cx + 4, world.groundH(cx + 4, cz + 2), cz + 2); lucas.rotation.y = -2.2; world.add(lucas);
     const raps = [0, 1, 2].map((i) => { const r = makeRaptor({ notch: i === 0, skin: '#3f3f34' }); r.position.set(cx - 18 - i * 3, world.groundH(cx - 18, cz - 10), cz - 10 + i * 5); world.add(r); return r; });
@@ -5820,6 +4401,7 @@ CHAPTERS.attack = {
       diego.position.set(dp.x, world.groundH(dp.x, dp.z), dp.z);
       diego.rotation.y = run > 0 ? Math.atan2(-8, -18) : 0.8;
       diego.userData.anim(dt, run > 0 && run < 1 ? 6 : 0, {});
+      lena.userData.anim(dt, 0); lucas.userData.anim(dt, 0);
       raps.forEach((r, i) => {
         let x, z, sp;
         if (t < 14) { const a = Game.time * 0.35 + i * 2.1; x = cx + Math.cos(a) * (14 + i * 2); z = cz + Math.sin(a) * (12 + i * 2); sp = 3; }
@@ -5942,7 +4524,7 @@ CHAPTERS.peaks = {
     const wreckP = at(0.3), relayP = at(0.46);
     const off = (p, k) => ({ x: p.x + Math.cos(p.a) * k, z: p.z + Math.sin(p.a) * k });
     const wr = off(wreckP, 5.2);
-    const wreck = makeHelicopter({ color: '#4a4a3a', wreck: true, silent: true, label: 'D-02' });
+    const wreck = makeHelicopter({ color: '#4a4a3a' });
     wreck.position.set(wr.x, wreckP.y - 1.2, wr.z); wreck.rotation.set(0.5, wreckP.a, 1.1); wreck.userData.rotor.rotation.set(0.4, 0.3, 0.2);
     world.add(wreck);
     const rl = off(relayP, -4.2);
@@ -6314,7 +4896,7 @@ CHAPTERS.truth = {
     const fireLogs = mesh(G.cyl(0.9, 1.1, 0.25, 8), mat('#3a2a1a'), { parent: world.scene, pos: [cx, campH(cx, cz) + 0.1, cz], cast: false });
     const npc = {};
     [['lena', cx + 3, cz + 3, 2.4], ['halm', cx - 3, cz + 2, 1.2]].forEach(([k, x, z, ry]) => { const n = makeNPC(k); n.position.set(x, campH(x, z), z); n.rotation.y = ry; n.visible = false; world.add(n); npc[k] = n; });
-    world.onUpdate(() => { diego.userData.pose = { crouch: S.stage !== 'camp' }; });
+    world.onUpdate((dt) => { Object.values(npc).forEach((n) => n.userData.anim(dt, 0)); diego.userData.anim(dt, 0, { crouch: S.stage !== 'camp' }); });
 
     const S = { stage: 'volcano', filter: 45, gasHurtT: 0, diego: false, clues: new Set(), seenEva: false, cp: 'start', reveal: false, bunker: false, core: false, mara: false };
     const P = () => Game.player;
@@ -6537,6 +5119,7 @@ CHAPTERS.queen = {
     // companions (appear in the lab)
     const npc = {};
     [['lena', -4, -12, 0.4], ['halm', 4, -13, -0.3], ['diego', -8, -10, 0.9]].forEach(([k, x, z, ry]) => { const n = makeNPC(k); n.position.set(x, 0, z); n.rotation.y = ry; n.visible = false; world.add(n); npc[k] = n; });
+    world.onUpdate((dt) => Object.values(npc).forEach((n) => n.userData.anim(dt, 0)));
     // ---------- the Queen ----------
     const rex = makeRex(); world.add(rex);
     const patrol = [[40, 110], [-50, 120], [-70, 60], [60, 50], [10, 150]];
@@ -6812,7 +5395,7 @@ CHAPTERS.dawn = {
     // companions
     const npc = {};
     [['lena', -3, 4, 2.6], ['halm', 4, 6, -2.4], ['diego', -5, 6, 2.2]].forEach(([k, x, z, ry]) => { const n = makeNPC(k); n.position.set(x, 0, z); n.rotation.y = ry; world.add(n); world.circles.push({ x, z, r: 0.5 }); npc[k] = n; });
-    world.onUpdate((dt) => { varn.userData.anim(dt, 0); varn.rotation.y = Math.sin(Game.time * 0.3) * 0.2; rings.forEach((r, i) => { r.rotation.z += dt * (0.1 + i * 0.05); }); });
+    world.onUpdate((dt) => { Object.values(npc).forEach((n) => n.userData.anim(dt, 0)); varn.userData.anim(dt, 0); varn.rotation.y = Math.sin(Game.time * 0.3) * 0.2; rings.forEach((r, i) => { r.rotation.z += dt * (0.1 + i * 0.05); }); });
     Sound.bed('hum', 0.04);
     const order = ['tri', 'rap', 'spi', 'pte', 'rex'];
     const names = { tri: 'TRICERATOPS', rap: 'VELOCIRAPTOR', spi: 'SPINOSAURUS', pte: 'PTERANODON', rex: 'TYRANNOSAURUS' };
@@ -6892,7 +5475,7 @@ CHAPTERS.lighthouse = {
       g.position.set(x, world.groundH(x, z), z); world.add(g); world.circles.push({ x, z, r: 1.2 });
       return { x, z, led, off: false };
     });
-    const helis = [0, 1].map((i) => { const h = makeHelicopter({ color: '#1c1f22', stripe: '#7a1a16', label: 'ORIGO', rpm: 1, onGround: false }); world.add(h); return { h, a: i * Math.PI, r: 70 + i * 20, y: 40 + i * 8 }; });
+    const helis = [0, 1].map((i) => { const h = makeHelicopter({ color: '#1c1f22' }); world.add(h); return { h, a: i * Math.PI, r: 70 + i * 20, y: 40 + i * 8 }; });
     // stampede
     const herd = [];
     for (let i = 0; i < 9; i++) { const t = makeTriceratops({ scale: i % 4 === 3 ? 0.5 : rnd(0.9, 1.05) }); world.add(t); herd.push({ g: t, off: new THREE.Vector2(rnd(-10, 10), rnd(-6, 6)), phase: 0 }); }
@@ -6973,6 +5556,7 @@ CHAPTERS.lighthouse = {
       const top = V(LH.x, world.groundH(LH.x, LH.z) + 97, LH.z);
       const halm = makeNPC('halm'); halm.position.set(LH.x + 3, top.y, LH.z + 2); halm.rotation.y = -2.2; world.add(halm);
       const me = Game.player; me.model.position.set(LH.x - 2, top.y, LH.z + 3); me.model.rotation.y = 1.2;
+      world.onUpdate((dt) => halm.userData.anim(dt, 0));
       await Cine.play([
         { from: V(LH.x + 30, top.y - 60, LH.z + 30), to: V(LH.x + 22, top.y + 4, LH.z + 22), look: () => top, dur: 6, cut: true, fov: 50, onStart: () => Sound.bed('wind', 0.2) },
         { from: V(LH.x - 6, top.y + 2.2, LH.z + 7), look: V(LH.x + 3, top.y + 1.5, LH.z + 2), dur: 8, cut: true, fov: 45, onStart: () => HUD.say([{ who: 'Хальм', text: 'Красиво, правда? Я был здесь пятнадцать лет назад и ни разу не видел солнца. Никто не видел.', dur: 4.6 }, { who: 'Хальм', text: 'Отдай мне кейс, Итан. Я улечу, и больше никто не умрёт. Кроме острова.', dur: 3.6 }]) },
@@ -7078,8 +5662,6 @@ function teardown() {
   HUD.hideBig(); HUD.observe(null); HUD.danger(false); HUD.timer(null); HUD.journalChip(null);
   HUD.viewfinder(null); HUD.throwBtn(false);
   Cam.mode = 'third'; Cam.pull = null;
-  Guide.reset(); Tutorial.reset(); Cast.reset();
-  Sound.stopEmitters(0.4);
   Sound.silenceAll(0.8);
 }
 
@@ -7254,18 +5836,12 @@ function frame(now) {
       Interact.update(dt, Game.world);
       if ((Cam.mode === 'photo') && Input.pressed('shoot')) Photo.shoot(Game.world.scene, Game.ctx.subjects ? Game.ctx.subjects() : []);
       if (Cam.mode === 'aim' && Input.pressed('shoot') && Game.ctx.onShoot) Game.ctx.onShoot();
-      Cast.update(Game.world, dt);
       Cine.update(dt);
       Cam.update(dt);
       const p = Game.player.pos;
-      const mk = (Game.ctx.markers ? Game.ctx.markers() : []).map((m) => ({ ...m, bearing: Math.atan2(m.x - p.x, -(m.z - p.z)), cls: (m.cls || '') + (m.goal ? ' goal' : '') }));
+      const mk = (Game.ctx.markers ? Game.ctx.markers() : []).map((m) => ({ ...m, bearing: Math.atan2(m.x - p.x, -(m.z - p.z)) }));
       HUD.compass(Cam.heading(), mk);
-      if (Input.pressed('objective')) Guide.recall();
-      Guide.update(dt, mk);
-      Tutorial.update(dt);
     }
-    Cast.tags(Game.world);
-    Sound.listen(camera);
     renderer.render(Game.world.scene, camera);
   }
   HUD.endFrame();
@@ -7281,7 +5857,7 @@ function boot() {
   HUD.fade(0, 1.4);
   requestAnimationFrame(frame);
 }
-window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, renderer, get ctx() { return Game.ctx; } };
+window.__umbraRenderer = renderer; window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, get ctx() { return Game.ctx; } };
 boot();
 
 </script>

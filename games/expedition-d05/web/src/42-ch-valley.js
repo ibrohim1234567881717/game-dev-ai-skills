@@ -164,52 +164,86 @@ function makeCarcass(world, x, z) {
   return g;
 }
 
+// the flight in: crew in the cabin, the Veil, the reveal, landing and disembarking
 function flightIntro(world, herd) {
-  const heli = makeHelicopter();
+  const heli = makeHelicopter({ label: 'D-05', onGround: false, rpm: 1 });
+  heli.rotation.order = 'YXZ';
   world.add(heli);
-  const pts = [V(0, 72, 980), V(0, 68, 760), V(4, 62, 560), V(12, 52, 360), V(46, 46, 200), V(112, 42, 40), V(138, 36, -58), V(100, 34, -128), V(24, 34, -92), V(-48, 30, -34), V(-46, 22, 78), V(-14, 10, 150), V(VALLEY.pad.x, 1.4 + valleyHeight(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z)];
+  heli.userData.engine.managed = true;
+  const crew = {};
+  [['lucas', 0, 'flight'], ['halm', 1], ['lena', 2], ['diego', 4]].forEach(([k, seat, v]) => { const n = makeNPC(k, v); world.add(n); heli.userData.seat(n, seat); crew[k] = n; });
+  heli.userData.cabinLight.intensity = 0.45;
+  const pts = [V(0, 72, 980), V(0, 68, 760), V(4, 62, 560), V(12, 52, 360), V(46, 46, 200), V(112, 42, 40), V(138, 36, -58), V(100, 34, -128), V(24, 34, -92), V(-48, 30, -34), V(-46, 22, 78), V(-14, 10, 150), V(VALLEY.pad.x, valleyHeight(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z)];
   const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
-  const T = 50; let t = 0; let active = true; let heading = 0;
+  const T = 52; let t = 0; let active = true; let heading = 0, bank = 0;
   const fog = world.scene.fog, baseNear = fog.near, baseFar = fog.far;
   const loc = (x, y, z) => () => heli.localToWorld(new THREE.Vector3(x, y, z));
   const uOf = (k) => (k < 0.85 ? (k / 0.85) * 0.955 : 0.955 + (1 - Math.pow(1 - (k - 0.85) / 0.15, 2)) * 0.045);
   herd.goal.set(VALLEY.pastures[1][0], VALLEY.pastures[1][1]); herd.state = 'flee';
-  let lastRotor = 0;
+  const pm = () => Game.player.model;
+  let shake = 0;
   world.onUpdate((dt) => {
-    if (!active) { heli.userData.update(dt, Math.max(0, heli.userData.rs = (heli.userData.rs ?? 1) - dt * 0.12)); return; }
+    heli.userData.update(dt);
+    if (!active) return;
     t += dt * Cine.speed;
     const k = clamp(t / T, 0, 1), u = uOf(k);
     const p = curve.getPointAt(u), p2 = curve.getPointAt(Math.min(1, u + 0.004));
     heli.position.copy(p);
-    if (Math.hypot(p2.x - p.x, p2.z - p.z) > 0.25) heading = Math.atan2(p2.x - p.x, p2.z - p.z);
-    heli.rotation.set(0, heading, 0);
-    heli.userData.update(dt, 1);
-    if (Game.time - lastRotor > 0.09) { lastRotor = Game.time; Sound.sfx('rotor', k < 0.1 ? 0.5 : 0.25); }
-    // the Veil: fog closes in between 9 s and 17 s, opens by 20 s
-    const inVeil = smoothstep(7, 11, t) * (1 - smoothstep(17.5, 20, t));
+    if (Math.hypot(p2.x - p.x, p2.z - p.z) > 0.25) { const nh = Math.atan2(p2.x - p.x, p2.z - p.z); bank = damp(bank, clamp(wrapAngle(nh - heading) * 18, -0.35, 0.35), 2, dt); heading = nh; }
+    const flare = smoothstep(0.9, 1, k);
+    heli.rotation.set(-0.08 * (1 - flare) + flare * 0.1, heading, -bank * (1 - flare));
+    // the Veil: fog closes in while crossing the cloud wall, opens on the island side
+    const inVeil = smoothstep(11, 15, t) * (1 - smoothstep(23.5, 26.5, t));
     fog.near = lerp(baseNear, 2, inVeil); fog.far = lerp(baseFar + 300, 38, inVeil);
     fog.color.set(inVeil > 0.5 ? '#5a6168' : TIME_PRESETS[world.timeKey].fog);
     if (world.rain) world.rain.visible = inVeil > 0.2;
-    if (k >= 1) active = false;
+    heli.userData.body.rotation.z = Math.sin(t * 7) * 0.02 * inVeil;
+    if (k >= 1) { active = false; heli.position.y = valleyHeight(heli.position.x, heli.position.z); heli.rotation.set(0, heading, 0); }
   });
+  const sit = (k, dt) => pm().userData.anim(dt || 0.016, 0, { sit: true });
   const shots = [
-    { from: () => heli.position.clone().add(V(18, 3, 12)), to: () => heli.position.clone().add(V(14, 2, 4)), look: () => heli.position, dur: 6, cut: true, fov: 50, rigid: true,
+    { from: () => heli.position.clone().add(V(22, 2, -34)), to: () => heli.position.clone().add(V(16, 3, -20)), look: () => heli.position.clone().add(V(0, 2, 0)), dur: 6, cut: true, fov: 46, rigid: true,
       onStart: () => { Sound.bed('wind', 0.12); HUD.say([{ who: 'Лукас', text: 'Дамы и господа, говорит ваш капитан. Напитков не будет, парашютов тоже.', dur: 3.6 }, { who: 'Нора (радио)', text: 'Дельта-пять, «Порог». Курс подтверждаю. Удачи вам.', dur: 2.6 }]); } },
-    { from: loc(0, 1.75, 3.7), look: loc(0, 0.2, 40), dur: 6, cut: true, fov: 64, rigid: true,
-      onStart: () => { HUD.say([{ who: 'Лукас', text: 'У меня компас пляшет. Да все приборы пляшут.', dur: 2.8 }, { who: 'Нора (радио)', text: 'Дельта-пять… вас не… повто…', dur: 2.4 }]); setTimeout(() => lightning(world, 1, 0.6), 2500); setTimeout(() => lightning(world, 0.8, 0.3), 4600); } },
-    { from: loc(-6, 3, -13), to: loc(-4, 2.6, -11), look: loc(0, 1.5, 4), dur: 5, cut: true, fov: 58, rigid: true,
+    { from: loc(-0.2, 2.28, -1.5), look: loc(0.2, 2.0, 5), dur: 6, cut: true, fov: 60, rigid: true, onUpdate: sit,
+      onStart: () => { crew.lena.userData.pose = { sit: true, lookY: 0.9 }; HUD.say([{ who: 'Лена', text: 'Это она? Вуаль?', dur: 2.2 }, { who: 'Хальм', text: 'Сорок лет облаков на одном месте. Погода так не умеет.', dur: 3.4 }]); } },
+    { from: loc(0.05, 2.05, 1.7), look: loc(0.1, 1.62, 3.0), dur: 5, cut: true, fov: 52, rigid: true, onUpdate: sit,
+      onStart: () => { HUD.say([{ who: 'Лукас', text: 'У меня компас пляшет. Да все приборы пляшут.', dur: 2.8 }, { who: 'Нора (радио)', text: 'Дельта-пять… вас не… повто…', dur: 2.4 }]); setTimeout(() => lightning(world, 1, 0.6), 2500); } },
+    { from: loc(-8, 3, -14), to: loc(-5, 2.6, -11), look: loc(0, 1.5, 4), dur: 5, cut: true, fov: 58, rigid: true,
       onStart: () => { Cam.shake = 0.5; Sound.bed('rain', 0.14); HUD.say([{ who: 'Хальм', text: 'Это нормально. Держите курс на ноль-восемь-пять.', dur: 2.6 }, { who: 'Лукас', text: 'Нормально? Откуда вы знаете, что нормально?', dur: 2.4 }]); setTimeout(() => lightning(world, 1, 0.2), 1800); },
       onUpdate: () => { Cam.shake = Math.max(Cam.shake, 0.25); } },
-    { from: loc(0, 1.75, 3.7), look: loc(0, -2, 40), dur: 4.5, cut: true, fov: 64, rigid: true,
-      onStart: () => { Sound.silenceAll(0.6); } },
+    { from: loc(-0.3, 2.25, -1.4), look: loc(0.3, 1.9, 3), dur: 4.5, cut: true, fov: 62, rigid: true,
+      onStart: () => { crew.lena.userData.pose = { sit: true, hold: true }; crew.diego.userData.pose = { sit: true, hold: true }; Sound.sfx('thud', 0.5); setTimeout(() => lightning(world, 1.2, 0.1), 900); },
+      onUpdate: (k, dt) => { sit(k, dt); Cam.shake = Math.max(Cam.shake, 0.35 * (1 - k)); if (k > 0.85 && !shake) { shake = 1; HUD.flash(0.9, 1.2); Sound.silenceAll(0.6); } } },
     { from: V(170, 9, -40), to: V(166, 11, -62), look: () => V(herd.center.x, 3, herd.center.y).lerp(heli.position, 0.28), dur: 11, cut: true, fov: 52,
-      onStart: () => { Sound.bed('wind', 0.08); Sound.theme(0.1); setTimeout(() => HUD.big('UMBRA', 'Expedition D-05', 'title', 5), 2500); setTimeout(() => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Они живые. Они настоящие.', dur: 3 }]), 7500); } },
-    { from: V(-30, 14, -44), to: V(-32, 15, -36), look: () => V(-62, 15, -18).lerp(heli.position, 0.35), dur: 7, cut: true, fov: 50,
-      onStart: () => HUD.say([{ who: 'Диего', text: 'Скажи это ещё раз, когда будем внизу.', dur: 2.6 }]) },
-    { from: () => V(-26, valleyHeight(-26, 184) + 1.8, 184), to: () => V(-22, valleyHeight(-22, 181) + 1.7, 181), look: () => heli.position, dur: 8.5, cut: true, fov: 50,
+      onStart: () => { heli.userData.cabinLight.intensity = 0.3; Sound.bed('wind', 0.08); Sound.theme(0.1); setTimeout(() => HUD.big('UMBRA', 'Expedition D-05', 'title', 5), 2500); setTimeout(() => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Они живые. Они настоящие.', dur: 3 }]), 7500); } },
+    { from: loc(0.1, 2.1, 1.75), look: loc(0.62, 2.02, 0.85), dur: 5, cut: true, fov: 42, rigid: true, onUpdate: sit,
+      onStart: () => { crew.lena.userData.pose = { sit: true, lookY: 1.05 }; crew.diego.userData.pose = { sit: true }; HUD.say([{ who: 'Диего', text: 'Скажи это ещё раз, когда будем внизу.', dur: 2.6 }, { who: 'Лена', text: 'Они живые, Диего.', dur: 2 }]); } },
+    { from: V(-30, 14, -44), to: V(-32, 15, -36), look: () => V(-62, 15, -18).lerp(heli.position, 0.35), dur: 6, cut: true, fov: 50 },
+    { from: () => V(-26, valleyHeight(-26, 184) + 1.8, 184), to: () => V(-22, valleyHeight(-22, 181) + 1.7, 181), look: () => heli.position.clone().add(V(0, 1.5, 0)), dur: 8.5, cut: true, fov: 50,
       onStart: () => { Sound.bed('insects', 0.05); Sound.bed('wind', 0.06); } },
+    // touchdown: door slides open, the team steps out
+    { from: loc(7, 1.7, 5), to: loc(6.2, 1.6, 4.2), look: loc(1.6, 1.3, 0.2), dur: 7, cut: true, fov: 48,
+      onStart: () => { heli.userData.openDoor(true); heli.userData.idle(); setTimeout(() => heli.userData.stop(), 3500); disembark(); } },
   ];
-  return { heli, shots, done: () => !active };
+  const door = () => { const d = heli.localToWorld(V(2.4, 0, 0.7)); d.y = valleyHeight(d.x, d.z); return d; };
+  const walkers = {};
+  function disembark() {
+    const d = door();
+    const out = [['halm', 0, [[-14, 152]], null], ['diego', 0.9, [[-11, 143]], null], ['lena', 1.8, [[d.x + 2.2, d.z - 1.2]], null]];
+    for (const [k, delay] of out) {
+      setTimeout(() => {
+        const n = crew[k];
+        world.scene.attach(n);
+        n.userData.pose = null; n.userData.seated = false;
+        n.position.set(d.x, d.y, d.z);
+        const c = new Companion(world, n);
+        walkers[k] = c;
+        const tgt = out.find((o) => o[0] === k)[2];
+        c.walk(tgt);
+      }, delay * 1000 / Math.max(1, Cine.speed));
+    }
+  }
+  return { heli, crew, walkers, shots, door, done: () => !active };
 }
 
 CHAPTERS.valley = {
@@ -218,7 +252,7 @@ CHAPTERS.valley = {
     makeRain(world).visible = false;
     const herd = new TriHerd(world, VALLEY.pastures[0][0], VALLEY.pastures[0][1]);
     herd.reset(VALLEY.pastures[0][0], VALLEY.pastures[0][1]);
-    const S = { traces: 0, seen: false, observe: 0, duel: 'none', dna: false, braSeen: false, silence: 'none', carcass: false, herdSeenT: 0, fleeCount: 0, bloodPos: null };
+    const S = { phase: 'arrive', leadLine: 0, traces: 0, seen: false, observe: 0, duel: 'none', dna: false, braSeen: false, silence: 'none', carcass: false, herdSeenT: 0, fleeCount: 0, bloodPos: null };
     // footprints along the trail
     const tr = VALLEY.trail;
     for (let i = 0; i < tr.length - 1; i++) {
@@ -255,15 +289,18 @@ CHAPTERS.valley = {
       const a = rnd(0, TAU);
       compies.push({ g: c, home: new THREE.Vector2(VALLEY.carcass.x + Math.cos(a) * 2.6, VALLEY.carcass.z + Math.sin(a) * 2.6), pos: new THREE.Vector2(VALLEY.carcass.x + Math.cos(a) * 2.6, VALLEY.carcass.z + Math.sin(a) * 2.6), yaw: a, flee: 0 });
     }
-    // NPCs at camp
-    const npcs = {};
-    [['halm', -16, 150, 2.5], ['lucas', -6, 162, -2], ['diego', -12, 142, 3.1]].forEach(([k, x, z, ry]) => { const n = makeNPC(k); n.position.set(x, world.groundH(x, z), z); n.rotation.y = ry; world.add(n); world.circles.push({ x, z, r: 0.5 }); npcs[k] = n; });
-    world.onUpdate((dt) => Object.values(npcs).forEach((n) => n.userData.anim(dt, 0)));
-    // parked helicopter (replaced by the flight one if the intro plays)
+    // the team: in the flight version they arrive in the helicopter, from chapter select they are already at camp
     let flight = null;
+    const team = {};
+    const HEAD = 0.51; // landing heading: the cabin door faces the camp side
     if (o.flight) flight = flightIntro(world, herd);
-    else { const h = makeHelicopter(); h.position.set(VALLEY.pad.x, world.groundH(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z); h.rotation.y = 2.4; world.add(h); world.onUpdate((dt) => h.userData.update(dt, 0)); }
-    world.circles.push({ x: VALLEY.pad.x, z: VALLEY.pad.z, r: 3.2 });
+    else {
+      const h = makeHelicopter({ label: 'D-05' }); h.position.set(VALLEY.pad.x, world.groundH(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z); h.rotation.y = HEAD; world.add(h); world.onUpdate((dt) => h.userData.update(dt));
+      const pilot = makeNPC('lucas'); world.add(pilot); h.userData.seat(pilot, 0);
+      [['halm', -14, 152], ['diego', -11, 143], ['lena', -10, 158]].forEach(([k, x, z]) => { const n = makeNPC(k); n.position.set(x, world.groundH(x, z), z); world.add(n); team[k] = new Companion(world, n); });
+    }
+    for (const z of [2.2, 0, -2.2, -5]) world.circles.push({ x: VALLEY.pad.x + Math.sin(HEAD) * z, z: VALLEY.pad.z + Math.cos(HEAD) * z, r: z < -3 ? 0.7 : 1.45 });
+    const lena = () => (flight ? flight.walkers.lena : team.lena);
     // raptor silhouette for the insect-silence lesson
     const shadowRaptor = makeRaptor({ skin: '#3d3d34' }); shadowRaptor.visible = false; world.add(shadowRaptor);
 
@@ -295,6 +332,7 @@ CHAPTERS.valley = {
           Sound.sfx('ping');
           HUD.say([{ who: traceText[key][0], text: traceText[key][1], dur: 4 }, { who: 'Лена', text: lenaAfter[key] }]);
           Journal.add('tri', journalId[key]);
+          if (S.phase !== 'hunt') { S.phase = 'hunt'; lena().follow({ dist: 2.8 }); }
           traceObjective();
           S.lastCp = { x, z };
         },
@@ -323,7 +361,7 @@ CHAPTERS.valley = {
           await wait(1.2);
           await HUD.say([{ who: 'Лена', text: 'Первый. Итан… у нас первый. Осталось четыре.' }, { who: 'Хальм (рация)', text: 'Хорошая работа, мистер Рид. Возвращайтесь в лагерь до темноты.' }]);
           await wait(1.5);
-          await HUD.say([{ who: 'Лукас (рация)', text: 'У меня в эфире маяк. Зациклен. Код… D-01.' }, { who: 'Хальм (рация)', text: 'Старое оборудование. Игнорируем.' }, { who: 'Лена (рация)', text: 'Зона рапторов — в той же стороне, Виктор.' }]);
+          await HUD.say([{ who: 'Лукас (рация)', text: 'У меня в эфире маяк. Зациклен. Код… D-01.' }, { who: 'Хальм (рация)', text: 'Старое оборудование. Игнорируем.' }, { who: 'Лена', text: 'Зона рапторов — в той же стороне, Виктор.' }]);
           await wait(1);
           Game.complete('k4');
         }
@@ -399,29 +437,47 @@ CHAPTERS.valley = {
 
     const ctx = {
       world,
-      spawn: o.flight ? { x: -11, z: 159, yaw: Math.PI * 0.95 } : { x: -12, z: 156, yaw: Math.PI * 0.95 },
+      spawn: o.flight ? { x: -11, z: 159, yaw: Math.PI * 0.95 } : { x: -12, z: 154, yaw: Math.PI * 0.95 },
       async start(opts = {}) {
         Sound.bed('wind', 0.06); Sound.bed('insects', 0.05);
+        const P = Game.player;
         if (flight) {
           HUD.show(false);
+          flight.heli.userData.seat(P.model, 3);
           await Cine.play(flight.shots, { skippable: true });
+          // step out of the cabin
+          const d = flight.door();
+          world.scene.attach(P.model);
+          P.model.userData.pose = null; P.model.userData.seated = false;
+          P.place(d.x + 1.2, d.z + 0.4, -2.6);
+          Cam.yaw = P.yaw + Math.PI; Cam.pitch = 0.18; Cam.curPos.copy(camera.position);
           HUD.show(true);
           herd.reset(VALLEY.pastures[0][0], VALLEY.pastures[0][1]);
           Sound.bed('wind', 0.06); Sound.bed('insects', 0.05);
-          HUD.say([{ who: 'Лена', text: 'Здесь кто-то был. Лет пять-десять назад.' }, { who: 'Хальм', text: 'Старые изыскатели. Разгружаемся.' }, { who: 'Лукас', text: '<em>(вдыхает)</em> Пахнет… как в оранжерее, где кто-то умер.' }]);
-          await wait(8);
+          await HUD.say([{ who: 'Хальм', text: 'Лагерь «Эхо» — за палатками. Здесь стояла передовая группа D-04. Разбиваем базу и выходим на связь с «Порогом».' }, { who: 'Лена', text: 'Здесь кто-то был. Лет пять-десять назад.' }, { who: 'Лукас', text: '<em>(вдыхает)</em> Пахнет… как в оранжерее, где кто-то умер.' }]);
         }
-        HUD.objective('Найдите следы у озера', 'Озеро к северу от лагеря. Подойдите к следам и удерживайте E, чтобы изучить их.');
-        HUD.say([{ who: 'Лена (рация)', text: 'Итан, трицератопсы пасутся на северо-востоке долины, если верить карте. Но карта старая. Верьте следам — начните с берега озера.' }]);
-        if (IS_TOUCH) HUD.toast('Кнопка «Камера» — фото для журнала', 4);
-        else HUD.toast('F — камера · J — журнал · C — присесть', 4.5);
+        S.phase = 'lead';
+        HUD.objective('Идите с Леной к озеру', 'Лена покажет, где начинать поиск. Трицератопсы пасутся за озером, на северо-востоке.');
+        HUD.say([{ who: 'Лена', text: 'Итан, трицератопсы пасутся за озером. Идёмте со мной — начнём со следов у берега.' }]);
+        const c = lena();
+        c.lead(LEAD_PATH, { wait: 13, calls: [{ who: 'Лена', text: 'Итан! Сюда, к озеру. Не отставайте.' }, { who: 'Лена', text: 'Итан, я здесь. Идём по тропе на север.' }],
+          onArrive: () => {
+            if (S.phase !== 'lead') return;
+            S.phase = 'print';
+            c.setHold(c.pos.x, c.pos.y, null);
+            HUD.objective('Изучите отпечатки', 'Следы у берега прямо перед Леной. Подойдите и удерживайте E.');
+            HUD.say([{ who: 'Лена', text: 'Стойте. Видите? Отпечатки. Свежие. Изучите их — удерживайте E.' }]);
+          } });
+        setTimeout(() => Tutorial.show('sprint', IS_TOUCH ? 'Джойстик до упора — бег. Лена побежит следом' : 'Удерживайте <kbd>Shift</kbd>, чтобы бежать. Лена побежит следом', () => Input.running() && P.speed > 5, { max: 14 }), 5000);
       },
       markers() {
         const m = [{ x: VALLEY.camp.x, z: VALLEY.camp.z, label: 'лагерь' }];
+        if (S.phase === 'lead') { const l = lena().pos; m.push({ x: l.x, z: l.y, label: 'Лена', goal: true, near: 9 }); return m; }
         const n = nextTrace();
-        if (n && !S.seen) m.push({ x: VALLEY.traces[n][0], z: VALLEY.traces[n][1], label: 'след' });
-        if (S.traces >= 3 && !S.seen) m.push({ x: herd.center.x + 15, z: herd.center.y - 10, label: 'стадо?' });
-        if (S.duel === 'done' && !S.dna && S.bloodPos) m.push({ x: S.bloodPos.x, z: S.bloodPos.y, label: 'кровь', cls: 'bad' });
+        if (n && !S.seen) m.push({ x: VALLEY.traces[n][0], z: VALLEY.traces[n][1], label: 'след', goal: true, near: 4 });
+        if (S.traces >= 3 && !S.seen) m.push({ x: herd.center.x + 15, z: herd.center.y - 10, label: 'стадо?', goal: true, near: 70 });
+        if (S.seen && S.duel !== 'done') m.push({ x: herd.center.x, z: herd.center.y, label: 'стадо', goal: true, near: 85, patient: true });
+        if (S.duel === 'done' && !S.dna && S.bloodPos) m.push({ x: S.bloodPos.x, z: S.bloodPos.y, label: 'кровь', cls: 'bad', goal: true, near: 3 });
         return m;
       },
       subjects() {
@@ -439,6 +495,12 @@ CHAPTERS.valley = {
       update(dt) {
         const p = P();
         herd.update(dt, p, world);
+        // Lena's commentary on the walk to the lake: the island's first rules, taught on the move
+        if (S.phase === 'lead') {
+          const left = lena().path.length;
+          if (S.leadLine === 0 && left <= 5) { S.leadLine = 1; HUD.say([{ who: 'Лена', text: 'Смотрите под ноги, не только по сторонам. Трава примята — здесь что-то проходило.' }]); }
+          if (S.leadLine === 1 && left <= 3) { S.leadLine = 2; HUD.say([{ who: 'Лена', text: 'Карте D-04 два года. Стадо могло уйти. Поэтому — следы.' }]); }
+        }
         // compies
         for (const c of compies) {
           const d = dist2d(p.pos.x, p.pos.z, c.pos.x, c.pos.y);
@@ -457,7 +519,9 @@ CHAPTERS.valley = {
           S.braSeen = true;
           Journal.add('bra', 'seen');
           Cam.pull = { x: brachios[0].position.x, z: brachios[0].position.z, strength: 2.2, time: 2.2 };
-          HUD.say([{ who: 'Лена', text: 'Итан… не двигайтесь. Просто смотрите.', dur: 3 }, { who: 'Лена', text: 'Слышите насекомых? Они не замолчали. Значит, это не охотник. Запомните это.' }, { who: 'Лена', text: 'Камера. Сфотографируйте его. Пожалуйста.' }]);
+          HUD.say([{ who: 'Лена', text: 'Итан… не двигайтесь. Просто смотрите.', dur: 3 }, { who: 'Лена', text: 'Слышите насекомых? Они не замолчали. Значит, это не охотник. Запомните это.' }, { who: 'Лена', text: 'Камера. Сфотографируйте его. Пожалуйста.' }]).then(() => {
+            Tutorial.show('photo', IS_TOUCH ? 'Кнопка <kbd>Камера</kbd> — снимок для журнала' : '<kbd>F</kbd> — камера, клик или <kbd>Пробел</kbd> — снимок', () => Cam.mode === 'photo', { max: 14 });
+          });
         }
         // insect-silence lesson
         if (S.silence === 'none' && S.traces >= 1 && !S.seen) { S.silence = 'wait'; S.silenceT = 20; }
@@ -470,7 +534,7 @@ CHAPTERS.valley = {
             const side = new THREE.Vector2(-fwd.y, fwd.x);
             S.rStart = new THREE.Vector2(p.pos.x + fwd.x * 85 + side.x * 30, p.pos.z + fwd.y * 85 + side.y * 30);
             S.rEnd = new THREE.Vector2(p.pos.x + fwd.x * 95 - side.x * 35, p.pos.z + fwd.y * 95 - side.y * 35);
-            setTimeout(() => HUD.say([{ who: 'Лена (рация)', text: 'Итан… насекомые замолчали. Пригнитесь.' }], true), 1600);
+            setTimeout(() => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Итан… насекомые замолчали. Пригнитесь.' }], true), 1600);
           }
         }
         if (S.silence === 'run') {
@@ -483,7 +547,7 @@ CHAPTERS.valley = {
           shadowRaptor.userData.anim(dt, 3.2, { alert: true });
           if (S.silenceClock > 14) {
             S.silence = 'done'; shadowRaptor.visible = false; Sound.bed('insects', 0.05, 3);
-            HUD.say([{ who: 'Лена (рация)', text: 'Ушёл. Что бы это ни было. Запомните этот звук — тишину.' }]);
+            HUD.say([{ who: 'Лена', text: 'Ушёл. Что бы это ни было. Запомните этот звук — тишину.' }]);
           }
         }
         // herd discovered
@@ -491,7 +555,8 @@ CHAPTERS.valley = {
         if (!S.seen && nd < 85) {
           S.seen = true; Journal.add('tri', 'seen');
           HUD.objective('Понаблюдайте за стадом', IS_TOUCH ? 'Присядьте и не двигайтесь в 25–75 м от стада, глядя на него. Можно сделать фото.' : 'Присядьте (C) и не двигайтесь в 25–75 м от стада, глядя на него. Можно сделать фото (F).');
-          HUD.say([{ who: 'Лена', text: 'Вот они… Девять. Два детёныша в центре. Не подходите ближе — просто смотрите.' }]);
+          HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Вот они… Девять. Два детёныша в центре. Не подходите ближе — просто смотрите.' }]);
+          Tutorial.show('crouch', IS_TOUCH ? 'Кнопка <kbd>Присесть</kbd> — стадо хуже замечает того, кто пригнулся' : '<kbd>C</kbd> — присесть. Стадо хуже замечает того, кто пригнулся', () => p.crouch, { max: 16 });
         }
         if (S.seen) S.herdSeenT += dt;
         // observation
@@ -518,6 +583,7 @@ CHAPTERS.valley = {
       restore() {
         const cp = S.lastCp || { x: -12, z: 150 };
         Game.player.place(cp.x - 4, cp.z + 6, Math.PI);
+        if (S.phase === 'hunt') lena().place(cp.x - 6, cp.z + 8);
         herd.reset(herd.center.x, herd.center.y);
         HUD.danger(false);
       },

@@ -5,12 +5,14 @@ const HUD = {
   _promptSet: false, _radioQ: [], _radioBusy: false, _bigTimer: null, _toastTimer: null,
   show(on) { $('hud').hidden = !on; $('touch').hidden = !(on && IS_TOUCH); },
   objective(text, sub) {
+    $('objective').hidden = text === '…'; // no placeholder panel while a chapter sets up
     const el = $('objText');
     el.innerHTML = text + (sub ? `<small>${sub}</small>` : '');
     const o = $('objective');
     o.classList.remove('fresh'); void o.offsetWidth; o.classList.add('fresh');
-    Sound.sfx('ping', 0.5);
+    Guide.onObjective(text, sub);
   },
+  speaking: null, // { key, radio } while a subtitle line is up
   beginFrame() { this._promptSet = false; },
   endFrame() { if (!this._promptSet) $('prompt').hidden = true; },
   prompt(text, key = 'E', progress = null, warn = false) {
@@ -32,6 +34,7 @@ const HUD = {
     if (typeof Cine !== 'undefined' && Cine.active) interrupt = true;
     if (interrupt) {
       clearTimeout(this._radioTimer);
+      Voice.stop();
       if (this._radioCur && this._radioCur.done) this._radioCur.done();
       for (const q of this._radioQ) if (q.done) q.done();
       this._radioQ.length = 0;
@@ -46,17 +49,23 @@ const HUD = {
     const r = $('radio');
     const l = this._radioQ.shift();
     this._radioCur = l || null;
-    if (!l) { this._radioBusy = false; r.hidden = true; return; }
+    if (!l) { this._radioBusy = false; r.hidden = true; this.speaking = null; return; }
     this._radioBusy = true;
     r.hidden = false;
     $('radioWho').textContent = l.who || '';
     $('radioWho').className = l.who && l.who.startsWith('[') ? 'sys' : '';
     $('radioText').innerHTML = l.text;
-    const dur = l.dur ?? clamp(1.6 + l.text.length * 0.055, 2.2, 7.5);
+    const radio = isRadioLine(l.who);
+    this.speaking = { key: speakerKey(l.who), radio, until: Game.time + 99 };
+    let dur = l.dur ?? clamp(1.6 + l.text.length * 0.055, 2.2, 7.5);
+    const v = Voice.lookup(l.who, l.text);
+    if (v && Sound.ctx && !Game.muted) { Voice.play(v, radio); dur = v.d + 0.35; }
     this._radioTimer = setTimeout(() => { const d = l.done; l.done = null; if (d) d(); this._nextRadio(); }, dur * 1000);
   },
   clearRadio() {
     clearTimeout(this._radioTimer);
+    Voice.stop();
+    this.speaking = null;
     if (this._radioCur && this._radioCur.done) this._radioCur.done();
     for (const q of this._radioQ) if (q.done) q.done();
     this._radioQ.length = 0; this._radioBusy = false; this._radioCur = null; $('radio').hidden = true;
@@ -110,7 +119,7 @@ const HUD = {
     }
     strip.innerHTML = html;
   },
-  letterbox(on) { $('letterbox').classList.toggle('on', !!on); },
+  letterbox(on) { $('letterbox').classList.toggle('on', !!on); document.body.classList.toggle('cine', !!on); },
   fade(to, dur = 1) {
     const f = $('fade');
     f.style.transition = `opacity ${dur}s ease`;
@@ -211,6 +220,7 @@ const Journal = {
     if (!silent) {
       HUD.toast(`ЖУРНАЛ · ${SPECIES[sp].name} <b style="color:var(--amber)">+${item[2]}%</b> · ${item[1]}`);
       Sound.sfx('ping', 0.35);
+      setTimeout(() => Tutorial.show('journal', IS_TOUCH ? 'Кнопка <kbd>Журнал</kbd> — всё, что вы узнали о видах' : '<kbd>J</kbd> — полевой журнал: всё, что вы узнали о видах', () => !$('journal').hidden, { max: 10 }), 2600);
     }
     HUD.journalChip(sp);
     Game.lastSpecies = sp;

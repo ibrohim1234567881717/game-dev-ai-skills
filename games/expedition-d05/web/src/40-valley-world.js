@@ -12,7 +12,10 @@ const VALLEY = {
   carcass: { x: 58, z: -34 },
   pastures: [[128, -118], [150, -62], [92, -150]],
   brachio: [[-66, -22], [-58, 6]],
+  // the track D-04 walked from camp Echo to the lake shore
+  track: [[-10, 150], [-10, 122], [-6, 94], [-2, 64], [2, 34], [4, 4], [5, -24]],
 };
+const LEAD_PATH = VALLEY.track.slice(1);
 const _tmpC = new THREE.Color();
 function valleyHeight(x, z) {
   const r = Math.hypot(x - VALLEY.center.x, z - VALLEY.center.z);
@@ -28,6 +31,16 @@ function valleyHeight(x, z) {
   h = lerp(h, 2.4, Math.exp(-(dc * dc) / (2 * 22 * 22)));
   return h;
 }
+function trackDist(x, z) {
+  let best = 1e9;
+  const t = VALLEY.track;
+  for (let i = 0; i < t.length - 1; i++) {
+    const [ax, az] = t[i], [bx, bz] = t[i + 1], dx = bx - ax, dz = bz - az;
+    const k = clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1);
+    best = Math.min(best, Math.hypot(x - ax - dx * k, z - az - dz * k));
+  }
+  return best;
+}
 function valleyColor(x, z, y, slope, c) {
   const n = fbm(x * 0.05, z * 0.05, 3) * 0.5 + 0.5;
   if (y < -1.4) c.set('#3d3b2f');
@@ -38,6 +51,9 @@ function valleyColor(x, z, y, slope, c) {
     if (m < -0.35) c.lerp(_tmpC.set('#5a5236'), 0.3);
   }
   if (slope > 0.3) c.lerp(_tmpC.set('#66665a'), smoothstep(0.3, 0.55, slope));
+  // worn track from camp Echo to the lake: bare earth that breaks up at the edges
+  const td = trackDist(x, z) + fbm(x * 0.4, z * 0.4, 2) * 0.9;
+  if (td < 2.2 && y > 0.3) c.lerp(_tmpC.set('#6e5d40'), (1 - smoothstep(0.9, 2.2, td)) * 0.75);
   if (y > 70) c.lerp(_tmpC.set('#4f5048'), smoothstep(70, 150, y));
   if (y > 150) c.lerp(_tmpC.set('#3a3530'), 0.6);
 }
@@ -121,6 +137,25 @@ function buildValleyWorld(o = {}) {
     world.circles.push({ x, z, r: s * 1.1 });
   });
 
+  // D-04 survey stakes with orange ribbon along the track: a line the eye follows to the lake
+  {
+    const parts = [];
+    const t = VALLEY.track;
+    let acc = 8;
+    for (let i = 0; i < t.length - 1; i++) {
+      const [ax, az] = t[i], [bx, bz] = t[i + 1], len = Math.hypot(bx - ax, bz - az);
+      for (; acc < len; acc += 15) {
+        const k = acc / len, side = (Math.floor(acc / 15) % 2 ? 1 : -1) * 2.4;
+        const x = lerp(ax, bx, k) + (bz - az) / len * side, z = lerp(az, bz, k) - (bx - ax) / len * side;
+        const y = H(x, z), lean = rnd(-0.08, 0.08);
+        parts.push({ geo: G.cyl(0.035, 0.045, 1.5, 5), color: '#b8a888', m: M4(x, y + 0.72, z, lean, 0, lean) });
+        parts.push({ geo: G.box(0.03, 0.14, 0.42), color: '#e0662a', m: M4(x, y + 1.35, z + 0.2, 0, rnd(0, TAU), 0.2) });
+      }
+      acc -= len;
+    }
+    const stakes = new THREE.Mesh(mergeParts(parts), new THREE.MeshLambertMaterial({ vertexColors: true }));
+    stakes.castShadow = true; world.add(stakes);
+  }
   // camp Echo (D-04 forward camp)
   const cx = VALLEY.camp.x, cz = VALLEY.camp.z;
   makeTent(world, cx - 7, cz - 4, 0.3);

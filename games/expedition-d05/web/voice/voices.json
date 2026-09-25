@@ -1,0 +1,278 @@
+{
+  "_readme": "Голоса UMBRA для Qwen3-TTS. who_map: префикс подписи реплики -> ключ диктора (новый персонаж = новая строка здесь + профиль в speakers). description и style/emotions на английском: так инструкции надёжнее понимают модели VoiceDesign и CustomVoice 1.7B. Модель 0.6B-CustomVoice инструкции игнорирует: у неё работают только preset, pitch_semitones, speed и gain_db. Подробности — README.md рядом.",
+  "schema": 1,
+  "language": "Russian",
+
+  "who_map": {
+    "Хальм": "halm",
+    "Лена": "lena",
+    "Лукас": "lucas",
+    "Диего": "diego",
+    "Итан": "ethan",
+    "Нора": "nora",
+    "Юсуф": "yusuf",
+    "Варн": "varn",
+    "Кесслер": "kessler",
+    "Мара Линд": "mara",
+    "Дневник D-04 · Мара Линд": "mara",
+    "Бортовой самописец D-02": "d02pilot",
+    "Эфир · закрытый канал": "halm"
+  },
+
+  "extra_key_pairs": [["nudgeWho", "nudge"]],
+
+  "radio": {
+    "markers": ["(рация)", "(радио)", "(интерком)", "(спутниковый канал)"],
+    "bracketed_is_recording": true
+  },
+
+  "directions": {
+    "шёпотом": "whisper",
+    "шепотом": "whisper",
+    "шепчет": "whisper",
+    "тихо": "quiet",
+    "пауза": "hesitant",
+    "вдыхает": "breath",
+    "кричит": "shouting"
+  },
+
+  "pronounce": {
+    "D-01": "Дэ-ноль-один",
+    "D-02": "Дэ-ноль-два",
+    "D-03": "Дэ-ноль-три",
+    "D-04": "Дэ-ноль-четыре",
+    "D-05": "Дэ-ноль-пять",
+    "K-4": "Ка-четыре",
+    "S-5": "Эс-пять",
+    "ЕВА-0": "Ева-ноль",
+    "ЕВА": "Ева",
+    "Объект-0": "Объект-ноль",
+    "2001": "две тысячи первый",
+    "ORIGO": "Ориго",
+    "T-Rex": "Ти-рекс",
+    "ДНК": "дэ-эн-ка"
+  },
+
+  "line_overrides": {},
+
+  "emotion_defaults": {
+    "neutral": {},
+    "whisper": { "instruct": "Whispering, very quiet and breathy, close to the listener.", "gain_db": -6 },
+    "quiet": { "instruct": "Speaking softly and quietly, restrained.", "gain_db": -3 },
+    "hesitant": { "instruct": "Hesitant, with small pauses, choosing words carefully.", "speed": 0.96 },
+    "breath": { "instruct": "Takes an audible breath first, then speaks with quiet resolve." },
+    "urgent": { "instruct": "Urgent, fast and tense.", "speed": 1.04 },
+    "shouting": { "instruct": "Shouting loudly, alarmed and intense.", "speed": 1.04 }
+  },
+
+  "speakers": {
+    "halm": {
+      "name": "Виктор Хальм",
+      "role": "руководитель экспедиции",
+      "gender": "male",
+      "age": 58,
+      "description": "Male, around sixty. Low, warm baritone with a slightly husky texture. Speaks calmly and slowly in measured, deliberate phrases; paternal and reassuring, never raises his voice, yet something is withheld and secretive under the calm.",
+      "preset": "Uncle_Fu",
+      "preset_alternatives": ["Ryan", "Eric"],
+      "pitch_semitones": 0,
+      "speed": 0.95,
+      "style": "Calm, low and measured. Paternal, composed, quietly authoritative, with deliberate pauses between phrases.",
+      "emotions": {
+        "quiet": "Very quietly, almost to himself, heavy and restrained.",
+        "hesitant": "A short pause before speaking; guarded, choosing every word.",
+        "urgent": "Firm and faster, commanding, but still controlled, never shouting.",
+        "shouting": "Raises his voice for once: firm and loud, but controlled.",
+        "whisper": "Low confidential whisper."
+      },
+      "ref_text": "Меня зовут Виктор Хальм. Двадцать лет я вожу экспедиции туда, где нет карт. Правило у меня одно: слушайте, смотрите и не торопитесь. Остров не прощает спешки."
+    },
+
+    "lena": {
+      "name": "Лена Арден",
+      "role": "палеогенетик",
+      "gender": "female",
+      "age": 34,
+      "description": "Female, mid-thirties. Warm, clear mezzo-soprano; lively, precise and curious, speaks faster when excited and full of wonder. In key moments she becomes emotional and vulnerable, her voice can tremble.",
+      "preset": "Sohee",
+      "preset_alternatives": ["Serena", "Vivian"],
+      "pitch_semitones": 0,
+      "speed": 1.0,
+      "style": "Warm, curious and articulate; a scientist fascinated by what she sees.",
+      "emotions": {
+        "whisper": "Whispering in awe, breathy and close.",
+        "quiet": "Softly and quietly, tender, a little sad.",
+        "hesitant": "Hesitant and emotional, voice slightly trembling.",
+        "breath": "Takes a breath first, then speaks with resolve, holding back tears.",
+        "urgent": "Urgent and fast, alarmed, slightly breathless.",
+        "shouting": "Shouting into the radio, desperate and loud."
+      },
+      "ref_text": "Я всю жизнь собирала древнюю ДНК по крупицам, из костей и янтаря. А здесь всё живое, настоящее, оно дышит. Честно, мне до сих пор страшно поверить, что это не сон."
+    },
+
+    "lucas": {
+      "name": "Лукас Ортис",
+      "role": "пилот",
+      "gender": "male",
+      "age": 41,
+      "description": "Male, around forty. Bright, energetic voice with a grin in it; talks fast and easily, cocky and joking. A helicopter pilot who hides his nerves behind humour.",
+      "preset": "Aiden",
+      "preset_alternatives": ["Ryan", "Dylan"],
+      "pitch_semitones": 0,
+      "speed": 1.06,
+      "style": "Fast, playful and cocky, with a smile in the voice; casual and joking.",
+      "emotions": {
+        "urgent": "No jokes now: fast, tense, focused pilot under pressure.",
+        "shouting": "Shouting over rotor noise, urgent.",
+        "hesitant": "Uneasy, a nervous half-joke, slight hesitation.",
+        "quiet": "Unusually quiet and serious."
+      },
+      "ref_text": "Следопыт, расслабься. Я летал в такую погоду, что эта облачность по сравнению с ней — просто лёгкий туман. Ну, почти. Держись за что-нибудь крепкое."
+    },
+
+    "diego": {
+      "name": "Диего Рамос",
+      "role": "охрана",
+      "gender": "male",
+      "age": 36,
+      "description": "Male, late thirties. Gruff, low, slightly raspy voice; short clipped sentences and dry sarcastic humour. A tense security officer who trusts his rifle more than scientists.",
+      "preset": "Eric",
+      "preset_alternatives": ["Ryan", "Uncle_Fu"],
+      "pitch_semitones": -1,
+      "speed": 0.98,
+      "style": "Gruff, dry and clipped; deadpan sarcasm; tense.",
+      "emotions": {
+        "urgent": "Barked and fast, tactical, tense.",
+        "shouting": "Shouting commands, rough and loud.",
+        "quiet": "Low and grim, tired.",
+        "hesitant": "Grim and reluctant, a short pause.",
+        "whisper": "Hoarse tactical whisper."
+      },
+      "ref_text": "Слушай внимательно, повторять не буду. Держись за мной, смотри под ноги и не геройствуй. Двенадцать патронов — это не так много, как тебе кажется."
+    },
+
+    "ethan": {
+      "name": "Итан Рид",
+      "role": "следопыт (игрок)",
+      "gender": "male",
+      "age": 38,
+      "description": "Male, late thirties. Quiet, even baritone; calm and observant, speaks little and softly, with understated irony when he is scared. A field tracker and former ranger.",
+      "preset": "Dylan",
+      "preset_alternatives": ["Ryan", "Aiden"],
+      "pitch_semitones": 0,
+      "speed": 0.98,
+      "style": "Quiet, calm and understated; observant, with dry irony.",
+      "emotions": {
+        "whisper": "Barely audible whisper, focused, not to scare the animal.",
+        "quiet": "Very quietly, thoughtful.",
+        "hesitant": "Thinking aloud, slow, piecing things together.",
+        "urgent": "Tense and fast, but controlled."
+      },
+      "ref_text": "Следы свежие, часа два, не больше. Шла медленно, волочила левую ногу. Если ветер не переменится, она нас не почует. Тихо. Слушаем."
+    },
+
+    "nora": {
+      "name": "Нора Квист",
+      "role": "оператор связи станции «Порог»",
+      "gender": "female",
+      "age": 40,
+      "description": "Female, around forty. Clear, composed, professional radio operator's voice; precise diction, with sympathetic warmth under the professionalism.",
+      "preset": "Ono_Anna",
+      "preset_alternatives": ["Vivian", "Serena"],
+      "pitch_semitones": -1,
+      "speed": 1.0,
+      "style": "Clear and professional radio operator, precise and composed, quietly sympathetic.",
+      "emotions": {
+        "urgent": "Fast and alarmed, but still professional.",
+        "quiet": "Softer, sympathetic."
+      },
+      "ref_text": "Станция «Порог», говорит Нора Квист. Связь устойчивая, погода в коридоре подлёта в норме. Мистер Рид, брифинг начнётся через пять минут, командный центр."
+    },
+
+    "yusuf": {
+      "name": "Юсуф",
+      "role": "техник базы",
+      "gender": "male",
+      "age": 45,
+      "description": "Male, mid-forties. Friendly, warm, easygoing voice of a technician; relaxed and helpful, a little talkative.",
+      "preset": "Ryan",
+      "preset_alternatives": ["Aiden", "Eric"],
+      "pitch_semitones": -1,
+      "speed": 1.0,
+      "style": "Friendly, relaxed and warm; a helpful technician explaining equipment.",
+      "emotions": {
+        "hesitant": "Slightly evasive, brushing the question off."
+      },
+      "ref_text": "Так, смотрите сюда. Это кейс для образцов, пять капсул, каждая держит температуру сама. Ничего сложного: открыли, положили, закрыли. Главное — не уронить."
+    },
+
+    "varn": {
+      "name": "Элиас Варн",
+      "role": "создатель острова, запись 1998 года",
+      "gender": "male",
+      "age": 60,
+      "description": "Male, around sixty. Deep, solemn, slightly hoarse voice of an old visionary scientist addressing the future; slow and dignified, with weighty pauses and quiet conviction.",
+      "preset": "Uncle_Fu",
+      "preset_alternatives": ["Eric", "Ryan"],
+      "pitch_semitones": -2,
+      "speed": 0.92,
+      "style": "Solemn, slow and dignified; a recorded address to the future, weighty and sincere.",
+      "emotions": {
+        "hesitant": "Slow, reflective, with long pauses."
+      },
+      "ref_text": "Если вы слышите эту запись, значит, прошло много лет. Я хочу, чтобы вы поняли главное: жизнь, которую мы потеряли, можно вернуть. Но только если её не продавать."
+    },
+
+    "kessler": {
+      "name": "Ада Кесслер",
+      "role": "член совета ORIGO, голос по спутниковому каналу",
+      "gender": "female",
+      "age": 50,
+      "description": "Female, around fifty. Cold, crisp, low-pitched corporate voice; clipped and emotionless, businesslike, used to being obeyed.",
+      "preset": "Vivian",
+      "preset_alternatives": ["Serena", "Ono_Anna"],
+      "pitch_semitones": -1.5,
+      "speed": 1.0,
+      "style": "Cold, clipped and businesslike; no warmth, total authority.",
+      "emotions": {
+        "urgent": "Cold impatience, faster, final."
+      },
+      "ref_text": "Совет принял решение, Виктор. Сроки не обсуждаются. Мне нужен результат, а не отчёты. Вертолёты будут на месте в назначенное время."
+    },
+
+    "mara": {
+      "name": "Мара Линд",
+      "role": "руководитель D-04, мать Лены (аудиодневник)",
+      "gender": "female",
+      "age": 55,
+      "description": "Female, mid-fifties. Soft, tired, slightly hoarse voice; tender and loving, recording a personal audio diary alone. Quiet and intimate, with fatigue and quiet courage.",
+      "preset": "Serena",
+      "preset_alternatives": ["Sohee", "Vivian"],
+      "pitch_semitones": -1,
+      "speed": 0.95,
+      "style": "Tired but tender; an intimate personal audio diary, quiet and warm.",
+      "emotions": {
+        "hesitant": "Tired and emotional, pausing, holding back tears.",
+        "quiet": "Very softly, like speaking to a sleeping child.",
+        "breath": "A tired breath first, then gentle resolve."
+      },
+      "ref_text": "Запись четырнадцатая. Сегодня опять шёл дождь, и я почти весь день просидела в модуле. Я очень устала, Лена. Но я всё ещё здесь, и я всё ещё записываю."
+    },
+
+    "d02pilot": {
+      "name": "Пилот D-02",
+      "role": "бортовой самописец, 2006",
+      "gender": "male",
+      "age": 35,
+      "description": "Male, mid-thirties. Pilot's voice on a cockpit recorder, panicked; fast and breathless, the voice breaking as the aircraft fails.",
+      "preset": "Ryan",
+      "preset_alternatives": ["Dylan", "Aiden"],
+      "pitch_semitones": 1,
+      "speed": 1.08,
+      "style": "Panicked pilot in a failing aircraft: fast, breathless, voice breaking.",
+      "emotions": {
+        "hesitant": "Panicked and confused, words breaking off mid-sentence."
+      },
+      "ref_text": "Земля, я Дельта-два, прошли облачный фронт, высота полторы тысячи. Приборы ведут себя странно, компас крутится. Повторяю, приборы ведут себя странно."
+    }
+  }
+}

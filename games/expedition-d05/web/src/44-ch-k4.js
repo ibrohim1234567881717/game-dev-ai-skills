@@ -109,7 +109,6 @@ CHAPTERS.k4 = {
     // companions at the gate
     const lena = makeNPC('lena'); lena.position.set(20.5, 0, 38); lena.rotation.y = Math.PI * 0.9; world.add(lena); world.circles.push({ x: 20.5, z: 38, r: 0.5 });
     const diego = makeNPC('diego'); diego.position.set(27.5, 0, 38.6); diego.rotation.y = -Math.PI * 0.9; world.add(diego); world.circles.push({ x: 27.5, z: 38.6, r: 0.5 });
-    world.onUpdate((dt) => { lena.userData.anim(dt, 0); diego.userData.anim(dt, 0); });
 
     // ---------- navigation ----------
     const N = {

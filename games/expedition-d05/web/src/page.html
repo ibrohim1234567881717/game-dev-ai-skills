@@ -9,6 +9,10 @@
   <canvas id="game" aria-label="Игровое поле"></canvas>
 
   <div id="hud" hidden>
+    <div id="tags" aria-hidden="true"></div>
+    <div id="waypoint" hidden aria-hidden="true"><i></i><span id="wpDist"></span></div>
+    <div id="objBanner" hidden><div id="obKind"></div><div id="obTitle"></div></div>
+    <div id="tutorial" hidden role="status"></div>
     <div id="objective" class="panel">
       <div class="label">Цель</div>
       <div id="objText"></div>
@@ -43,6 +47,7 @@
       <button class="tbtn" data-action="shoot" id="tbShoot" hidden>Снимок</button>
       <button class="tbtn" data-action="throw" id="tbThrow" hidden>Приманка</button>
       <button class="tbtn small" data-action="journal" id="tbJournal">Журнал</button>
+      <button class="tbtn small" data-action="objective" id="tbObjective">Цель</button>
       <button class="tbtn small" data-action="pause" id="tbPause">Пауза</button>
     </div>
   </div>
@@ -66,7 +71,7 @@
       <div class="controls-help" id="helpDesk">
         <div><kbd>W A S D</kbd> идти</div><div><kbd>Мышь</kbd> смотреть</div><div><kbd>Shift</kbd> бежать</div>
         <div><kbd>C</kbd> присесть</div><div><kbd>E</kbd> действие</div><div><kbd>F</kbd> камера</div>
-        <div><kbd>Q</kbd> приманка</div><div><kbd>J</kbd> журнал</div><div><kbd>Esc</kbd> пауза</div>
+        <div><kbd>Q</kbd> приманка</div><div><kbd>J</kbd> журнал</div><div><kbd>Tab</kbd> цель</div>
       </div>
       <div class="controls-help" id="helpTouch" hidden>
         <div>Левый палец — идти</div><div>Правый палец — смотреть</div><div>Джойстик до упора — бег</div>

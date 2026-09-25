@@ -145,7 +145,7 @@ CHAPTERS.truth = {
     const fireLogs = mesh(G.cyl(0.9, 1.1, 0.25, 8), mat('#3a2a1a'), { parent: world.scene, pos: [cx, campH(cx, cz) + 0.1, cz], cast: false });
     const npc = {};
     [['lena', cx + 3, cz + 3, 2.4], ['halm', cx - 3, cz + 2, 1.2]].forEach(([k, x, z, ry]) => { const n = makeNPC(k); n.position.set(x, campH(x, z), z); n.rotation.y = ry; n.visible = false; world.add(n); npc[k] = n; });
-    world.onUpdate((dt) => { Object.values(npc).forEach((n) => n.userData.anim(dt, 0)); diego.userData.anim(dt, 0, { crouch: S.stage !== 'camp' }); });
+    world.onUpdate(() => { diego.userData.pose = { crouch: S.stage !== 'camp' }; });
 
     const S = { stage: 'volcano', filter: 45, gasHurtT: 0, diego: false, clues: new Set(), seenEva: false, cp: 'start', reveal: false, bunker: false, core: false, mara: false };
     const P = () => Game.player;

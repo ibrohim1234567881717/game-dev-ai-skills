@@ -4,7 +4,7 @@
 const KEYMAP = {
   KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
   ShiftLeft: 'run', ShiftRight: 'run', KeyE: 'interact', KeyF: 'photo', KeyC: 'crouch', ControlLeft: 'crouch',
-  KeyJ: 'journal', Tab: 'journal', KeyQ: 'throw', Escape: 'pause', KeyP: 'pause', Space: 'shoot', KeyM: 'mute', Enter: 'confirm',
+  KeyJ: 'journal', Tab: 'objective', KeyQ: 'throw', Escape: 'pause', KeyP: 'pause', Space: 'shoot', KeyM: 'mute', Enter: 'confirm',
 };
 const Input = {
   held: Object.create(null),
@@ -39,7 +39,7 @@ const Input = {
 window.addEventListener('keydown', (e) => {
   const a = KEYMAP[e.code];
   if (!a) return;
-  if (a === 'journal' || a === 'shoot' || e.code.startsWith('Arrow')) e.preventDefault();
+  if (a === 'journal' || a === 'objective' || a === 'shoot' || e.code.startsWith('Arrow')) e.preventDefault();
   if (!e.repeat) Input.press(a);
   Input.held[a] = true;
 });

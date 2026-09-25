@@ -71,7 +71,7 @@ CHAPTERS.dawn = {
     // companions
     const npc = {};
     [['lena', -3, 4, 2.6], ['halm', 4, 6, -2.4], ['diego', -5, 6, 2.2]].forEach(([k, x, z, ry]) => { const n = makeNPC(k); n.position.set(x, 0, z); n.rotation.y = ry; world.add(n); world.circles.push({ x, z, r: 0.5 }); npc[k] = n; });
-    world.onUpdate((dt) => { Object.values(npc).forEach((n) => n.userData.anim(dt, 0)); varn.userData.anim(dt, 0); varn.rotation.y = Math.sin(Game.time * 0.3) * 0.2; rings.forEach((r, i) => { r.rotation.z += dt * (0.1 + i * 0.05); }); });
+    world.onUpdate((dt) => { varn.userData.anim(dt, 0); varn.rotation.y = Math.sin(Game.time * 0.3) * 0.2; rings.forEach((r, i) => { r.rotation.z += dt * (0.1 + i * 0.05); }); });
     Sound.bed('hum', 0.04);
     const order = ['tri', 'rap', 'spi', 'pte', 'rex'];
     const names = { tri: 'TRICERATOPS', rap: 'VELOCIRAPTOR', spi: 'SPINOSAURUS', pte: 'PTERANODON', rex: 'TYRANNOSAURUS' };
@@ -151,7 +151,7 @@ CHAPTERS.lighthouse = {
       g.position.set(x, world.groundH(x, z), z); world.add(g); world.circles.push({ x, z, r: 1.2 });
       return { x, z, led, off: false };
     });
-    const helis = [0, 1].map((i) => { const h = makeHelicopter({ color: '#1c1f22' }); world.add(h); return { h, a: i * Math.PI, r: 70 + i * 20, y: 40 + i * 8 }; });
+    const helis = [0, 1].map((i) => { const h = makeHelicopter({ color: '#1c1f22', stripe: '#7a1a16', label: 'ORIGO', rpm: 1, onGround: false }); world.add(h); return { h, a: i * Math.PI, r: 70 + i * 20, y: 40 + i * 8 }; });
     // stampede
     const herd = [];
     for (let i = 0; i < 9; i++) { const t = makeTriceratops({ scale: i % 4 === 3 ? 0.5 : rnd(0.9, 1.05) }); world.add(t); herd.push({ g: t, off: new THREE.Vector2(rnd(-10, 10), rnd(-6, 6)), phase: 0 }); }
@@ -232,7 +232,6 @@ CHAPTERS.lighthouse = {
       const top = V(LH.x, world.groundH(LH.x, LH.z) + 97, LH.z);
       const halm = makeNPC('halm'); halm.position.set(LH.x + 3, top.y, LH.z + 2); halm.rotation.y = -2.2; world.add(halm);
       const me = Game.player; me.model.position.set(LH.x - 2, top.y, LH.z + 3); me.model.rotation.y = 1.2;
-      world.onUpdate((dt) => halm.userData.anim(dt, 0));
       await Cine.play([
         { from: V(LH.x + 30, top.y - 60, LH.z + 30), to: V(LH.x + 22, top.y + 4, LH.z + 22), look: () => top, dur: 6, cut: true, fov: 50, onStart: () => Sound.bed('wind', 0.2) },
         { from: V(LH.x - 6, top.y + 2.2, LH.z + 7), look: V(LH.x + 3, top.y + 1.5, LH.z + 2), dur: 8, cut: true, fov: 45, onStart: () => HUD.say([{ who: 'Хальм', text: 'Красиво, правда? Я был здесь пятнадцать лет назад и ни разу не видел солнца. Никто не видел.', dur: 4.6 }, { who: 'Хальм', text: 'Отдай мне кейс, Итан. Я улечу, и больше никто не умрёт. Кроме острова.', dur: 3.6 }]) },

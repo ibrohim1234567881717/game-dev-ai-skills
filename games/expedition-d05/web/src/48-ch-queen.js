@@ -72,7 +72,6 @@ CHAPTERS.queen = {
     // companions (appear in the lab)
     const npc = {};
     [['lena', -4, -12, 0.4], ['halm', 4, -13, -0.3], ['diego', -8, -10, 0.9]].forEach(([k, x, z, ry]) => { const n = makeNPC(k); n.position.set(x, 0, z); n.rotation.y = ry; n.visible = false; world.add(n); npc[k] = n; });
-    world.onUpdate((dt) => Object.values(npc).forEach((n) => n.userData.anim(dt, 0)));
     // ---------- the Queen ----------
     const rex = makeRex(); world.add(rex);
     const patrol = [[40, 110], [-50, 120], [-70, 60], [60, 50], [10, 150]];

@@ -17,7 +17,11 @@ class World {
     this.wind = new THREE.Vector2(1, 0);
     this.noiseListeners = [];
   }
-  add(o) { this.scene.add(o); return o; }
+  add(o) {
+    this.scene.add(o);
+    if (o.userData && o.userData.castKey && !o.userData.isPlayer) { this.cast ||= []; if (!this.cast.includes(o)) this.cast.push(o); }
+    return o;
+  }
   onUpdate(fn) { this.updaters.push(fn); return fn; }
   update(dt) { for (let i = 0; i < this.updaters.length; i++) this.updaters[i](dt); }
   groundH(x, z) {
@@ -517,32 +521,4 @@ function makeCrate(world, x, z, s = 1, color = '#4f5a3c', ry = 0) {
   world.circles.push({ x, z, r: 0.75 * s });
   return c;
 }
-function makeHelicopter(o = {}) {
-  const g = new THREE.Group();
-  const body = o.color || '#2f3833';
-  mesh(G.capsule(1.25, 3.4, 6, 12), mat(body, { rough: 0.6, metal: 0.3 }), { parent: g, rot: [Math.PI / 2, 0, 0], pos: [0, 1.6, 0], scale: [1, 1, 0.9] });
-  mesh(G.sphere(1.05, 12, 8), mat('#1a2a33', { rough: 0.1, metal: 0.6 }), { parent: g, pos: [0, 1.95, 2.25], scale: [1, 0.7, 0.9] });
-  mesh(G.cyl(0.32, 0.5, 5.6, 8), mat(body, { rough: 0.6, metal: 0.3 }), { parent: g, rot: [Math.PI / 2, 0, 0], pos: [0, 2.0, -4.6] });
-  mesh(G.box(0.12, 1.4, 1.0), mat(body), { parent: g, pos: [0, 2.6, -7.2] });
-  const rotor = new THREE.Group(); rotor.position.set(0, 3.25, 0.1); g.add(rotor);
-  mesh(G.cyl(0.2, 0.2, 0.5, 8), mat('#222'), { parent: rotor });
-  for (let i = 0; i < 4; i++) mesh(G.box(0.34, 0.05, 7.2), mat('#1c1f1d'), { parent: rotor, rot: [0, (i / 4) * Math.PI, 0], pos: [0, 0.2, 0] });
-  const tail = new THREE.Group(); tail.position.set(0.18, 2.6, -7.3); g.add(tail);
-  for (let i = 0; i < 2; i++) mesh(G.box(0.05, 1.5, 0.16), mat('#1c1f1d'), { parent: tail, rot: [(i / 2) * Math.PI, 0, 0] });
-  for (const s of [-1, 1]) {
-    mesh(G.box(0.1, 0.1, 4.2), mat('#222'), { parent: g, pos: [s * 1.1, 0.1, 0.3] });
-    mesh(G.box(0.08, 0.7, 0.08), mat('#222'), { parent: g, pos: [s * 1.0, 0.45, 1.3] });
-    mesh(G.box(0.08, 0.7, 0.08), mat('#222'), { parent: g, pos: [s * 1.0, 0.45, -0.8] });
-  }
-  const navR = mesh(G.sphere(0.08, 6, 4), mat('#ff3030', { emissive: '#ff2020', ei: 3 }), { parent: g, pos: [-1.3, 1.6, 0.5], cast: false });
-  const navG = mesh(G.sphere(0.08, 6, 4), mat('#30ff60', { emissive: '#20ff40', ei: 3 }), { parent: g, pos: [1.3, 1.6, 0.5], cast: false });
-  g.userData = { rotor, tail, spin: 0, navR, navG };
-  g.userData.update = (dt, speed = 1) => {
-    g.userData.spin += dt * 24 * speed;
-    rotor.rotation.y = g.userData.spin;
-    tail.rotation.x = g.userData.spin * 1.6;
-    const blink = (Game.time % 1.2) < 0.15;
-    navR.visible = navG.visible = blink || speed < 0.1;
-  };
-  return g;
-}
+// makeHelicopter: see 28-heli.js

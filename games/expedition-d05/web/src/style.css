@@ -325,3 +325,45 @@ kbd { font: 500 11px/1 var(--mono); color: var(--ink); border: 1px solid rgba(23
 @media (prefers-reduced-motion: reduce) {
   #objective.fresh, #big.show, .slot.analyzing { animation: none; }
 }
+
+/* ---------- guidance: banner, waypoint, tutorials, nameplates ---------- */
+#objective.collapsed #objText small { display: none; }
+#compassStrip span.mk.goal { color: #ffd27a; font-size: 12px; }
+#objBanner {
+  position: absolute; left: 50%; top: calc(58px + var(--safe-t)); transform: translateX(-50%);
+  text-align: center; width: min(560px, 90vw); pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 16px rgba(0,0,0,.55);
+}
+#objBanner.show { animation: obIn 3.4s ease forwards; }
+@keyframes obIn { 0% { opacity: 0; transform: translate(-50%, -8px);} 10% { opacity: 1; transform: translate(-50%, 0);} 82% { opacity: 1;} 100% { opacity: 0;} }
+#obKind { display: inline-flex; align-items: center; gap: 10px; font: 700 11px/1 var(--display); letter-spacing: .28em; text-transform: uppercase; color: var(--amber); }
+#obKind::before, #obKind::after { content: ""; width: 34px; height: 1px; background: currentColor; opacity: .7; }
+#obTitle { font: 700 clamp(19px, 2.6vw, 26px)/1.15 var(--display); letter-spacing: .03em; margin-top: 6px; text-wrap: balance; }
+#waypoint { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; margin: -8px 0 0 -8px; pointer-events: none; }
+#waypoint i { width: 12px; height: 12px; border: 2px solid #ffd27a; transform: rotate(45deg); box-shadow: 0 0 8px rgba(0,0,0,.6); }
+#waypoint span { font: 500 11px/1 var(--mono); color: #ffe2a8; text-shadow: 0 1px 2px #000; }
+#waypoint.edge i { background: rgba(255,210,122,.35); }
+#tutorial {
+  position: absolute; left: calc(12px + var(--safe-l)); bottom: calc(86px + var(--safe-b));
+  max-width: min(360px, 70vw); padding: 9px 12px; border-radius: 4px;
+  background: rgba(8,14,11,.78); border: 1px solid rgba(255,210,122,.45); border-left: 3px solid var(--amber);
+  font: 500 14px/1.35 var(--body); color: var(--ink); transition: opacity .4s, transform .4s;
+}
+#tutorial.show { animation: tutIn .45s ease-out; }
+#tutorial.done { opacity: 0; transform: translateY(6px); }
+@keyframes tutIn { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: none;} }
+#tutorial kbd { font-size: 12px; padding: 2px 6px; }
+body.touch #tutorial { left: 50%; bottom: auto; top: calc(96px + var(--safe-t)); transform: translateX(-50%); }
+body.touch #tutorial.done { transform: translate(-50%, 6px); }
+#tags { position: absolute; inset: 0; pointer-events: none; }
+#tags .tag { position: absolute; left: 0; top: 0; transform-origin: 50% 100%; margin: 0; white-space: nowrap; text-align: center; translate: -50% -100%;
+  font: 600 12px/1.15 var(--display); letter-spacing: .06em; color: var(--ink); text-shadow: 0 1px 2px #000, 0 0 8px rgba(0,0,0,.7); }
+#tags .tag small { display: block; font: 500 10.5px/1.2 var(--body); letter-spacing: .02em; color: var(--muted); }
+#tags .tag.talk b::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: var(--amber); vertical-align: 1px; box-shadow: 0 0 6px var(--amber); }
+#tags .tag.speaking b { color: var(--amber); }
+@media (prefers-reduced-motion: reduce) { #objBanner.show { animation: none; } #tutorial.show { animation: none; } }
+
+/* cinematics: only subtitles stay on screen */
+#objective, #case, #noise, #health, #compass, #journalChip, #tutorial, #tags, #waypoint, #timer, #observe { transition: opacity .5s; }
+body.cine #objective, body.cine #case, body.cine #noise, body.cine #health, body.cine #compass, body.cine #journalChip,
+body.cine #tutorial, body.cine #tags, body.cine #waypoint, body.cine #timer, body.cine #observe, body.cine #prompt, body.cine #touch { opacity: 0; }

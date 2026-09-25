@@ -83,7 +83,7 @@ CHAPTERS.peaks = {
     const wreckP = at(0.3), relayP = at(0.46);
     const off = (p, k) => ({ x: p.x + Math.cos(p.a) * k, z: p.z + Math.sin(p.a) * k });
     const wr = off(wreckP, 5.2);
-    const wreck = makeHelicopter({ color: '#4a4a3a' });
+    const wreck = makeHelicopter({ color: '#4a4a3a', wreck: true, silent: true, label: 'D-02' });
     wreck.position.set(wr.x, wreckP.y - 1.2, wr.z); wreck.rotation.set(0.5, wreckP.a, 1.1); wreck.userData.rotor.rotation.set(0.4, 0.3, 0.2);
     world.add(wreck);
     const rl = off(relayP, -4.2);

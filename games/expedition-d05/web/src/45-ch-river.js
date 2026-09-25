@@ -377,7 +377,7 @@ CHAPTERS.attack = {
     const cx = VALLEY.camp.x, cz = VALLEY.camp.z;
     const fire = new THREE.PointLight('#ff9a4a', 12, 18, 1.6); fire.position.set(cx, world.groundH(cx, cz) + 1, cz + 3); world.add(fire);
     const flood = new THREE.SpotLight('#dfe6ff', 40, 50, 0.6, 0.4, 1.2); flood.position.set(cx + 8, world.groundH(cx, cz) + 6, cz + 10); flood.target.position.set(cx - 4, 0, cz - 8); world.add(flood); world.add(flood.target);
-    const diego = makeNPC('diego'); diego.position.set(cx - 4, world.groundH(cx - 4, cz), cz - 2); world.add(diego);
+    const diego = makeNPC('diego'); diego.userData.scripted = true; diego.position.set(cx - 4, world.groundH(cx - 4, cz), cz - 2); world.add(diego);
     const lena = makeNPC('lena'); lena.position.set(cx + 2, world.groundH(cx + 2, cz + 4), cz + 4); lena.rotation.y = Math.PI; world.add(lena);
     const lucas = makeNPC('lucas'); lucas.position.set(cx + 4, world.groundH(cx + 4, cz + 2), cz + 2); lucas.rotation.y = -2.2; world.add(lucas);
     const raps = [0, 1, 2].map((i) => { const r = makeRaptor({ notch: i === 0, skin: '#3f3f34' }); r.position.set(cx - 18 - i * 3, world.groundH(cx - 18, cz - 10), cz - 10 + i * 5); world.add(r); return r; });
@@ -392,7 +392,6 @@ CHAPTERS.attack = {
       diego.position.set(dp.x, world.groundH(dp.x, dp.z), dp.z);
       diego.rotation.y = run > 0 ? Math.atan2(-8, -18) : 0.8;
       diego.userData.anim(dt, run > 0 && run < 1 ? 6 : 0, {});
-      lena.userData.anim(dt, 0); lucas.userData.anim(dt, 0);
       raps.forEach((r, i) => {
         let x, z, sp;
         if (t < 14) { const a = Game.time * 0.35 + i * 2.1; x = cx + Math.cos(a) * (14 + i * 2); z = cz + Math.sin(a) * (12 + i * 2); sp = 3; }
