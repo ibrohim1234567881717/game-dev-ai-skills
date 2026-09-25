@@ -257,8 +257,9 @@ CHAPTERS.lighthouse = {
       const t = tower.userData;
       const top = V(LH.x, world.groundH(LH.x, LH.z) + 97, LH.z);
       const sky = world.sky.material.uniforms;
-      // a recorded ending theme replaces the synthesized stingers in the ending shots
-      const rec = Music.play('ending', { loop: false, fade: 2.5 });
+      // a recorded ending theme replaces the synthesized stingers in the ending shots. It loops:
+      // the ending runs from these shots through the cards into the credits roll, far past one pass.
+      const rec = Music.play('ending', { fade: 2.5 });
       const theme = (v) => { if (!rec) Sound.theme(v); }, motif = (s, v) => { if (!rec) Sound.motif(s, v); };
       const shots = {
         transmit: [{ from: V(LH.x + 120, top.y - 20, LH.z + 120), to: V(LH.x + 100, top.y + 10, LH.z + 100), look: () => top.clone().add(V(0, 80, 0)), dur: 9, cut: true, fov: 55, onStart: () => { theme(0.12); }, onUpdate: (k) => { t.beam.scale.set(1 + k * 6, 1, 1 + k * 6); t.beamM.opacity = 0.35 + k * 0.3; } }],

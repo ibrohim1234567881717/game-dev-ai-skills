@@ -17,6 +17,8 @@ const MenuMusic = {
   ],
   LEN: 9,
   start() {
+    // a cue that took the player over (or a stop from elsewhere) leaves the flag lying: clear it
+    if (this.on && this.file && !Music.playing('menu')) { this.on = false; this.file = false; }
     if (this.on) return;
     // a recorded menu theme wins over the synthesized one
     if (Music.play('menu', { fade: 3 })) { this.on = true; this.file = true; Sound.bed('wind', 0.05, 3); Sound.bed('insects', 0.022, 4); return; }
