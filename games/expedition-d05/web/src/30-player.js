@@ -317,7 +317,7 @@ const Photo = {
     return best;
   },
   shoot(scene, subjects) {
-    renderer.render(scene, camera);
+    Post.render(scene, camera);
     let src = '';
     try {
       const c = document.createElement('canvas'); c.width = 256; c.height = 144;

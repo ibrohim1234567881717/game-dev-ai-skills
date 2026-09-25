@@ -2,7 +2,13 @@
 // 00-core.js — math, renderer, materials, save, game state
 // ============================================================
 const IS_TOUCH = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
-const QUALITY = IS_TOUCH ? 0 : 1;
+// graphics level: 0 low, 1 medium, 2 high. Stored per browser; density-based choices (vegetation,
+// grass) apply when a chapter is built, the rest (post-processing, shadows, resolution) at once.
+const GFX = {
+  level: (() => { try { const v = localStorage.getItem('umbra.gfx'); if (v !== null && !isNaN(+v)) return Math.max(0, Math.min(2, +v)); } catch (e) { /* storage blocked */ } return IS_TOUCH ? 0 : 2; })(),
+  names: ['Низкая', 'Средняя', 'Высокая'],
+};
+const QUALITY = GFX.level > 0 ? 1 : 0; // density tier for world building
 if (IS_TOUCH) document.body.classList.add('touch');
 
 const TAU = Math.PI * 2;
@@ -57,11 +63,13 @@ try {
   $('boot').textContent = 'Этот браузер не поддерживает WebGL. Откройте игру в Chrome, Safari или Firefox.';
   throw e;
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY ? 1.75 : 1.3));
+const pixelRatioFor = (lvl) => Math.min(window.devicePixelRatio || 1, [1, 1.3, 1.75][lvl]);
+renderer.setPixelRatio(pixelRatioFor(GFX.level));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
+renderer.info.autoReset = false; // one frame = scene + shadow + post passes; reset in the main loop
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 1600);
@@ -70,6 +78,7 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
+  try { Post.resize(); } catch (e) { /* Post is declared later in the bundle; the first call happens before it exists */ }
 }
 window.addEventListener('resize', resize);
 resize();
@@ -79,7 +88,7 @@ const _matCache = new Map();
 function mat(color, o = {}) {
   const key = color + JSON.stringify(o);
   if (_matCache.has(key)) return _matCache.get(key);
-  const m = new THREE.MeshStandardMaterial({ color, roughness: o.rough ?? 0.88, metalness: o.metal ?? 0, flatShading: o.flat ?? true, ...(o.extra || {}) });
+  const m = new THREE.MeshStandardMaterial({ color, roughness: o.rough ?? 0.88, metalness: o.metal ?? 0, flatShading: o.flat ?? true, envMapIntensity: o.env ?? 0.55, ...(o.extra || {}) });
   if (o.emissive) { m.emissive = new THREE.Color(o.emissive); m.emissiveIntensity = o.ei ?? 1; }
   if (o.side) m.side = o.side;
   if (o.transparent) { m.transparent = true; m.opacity = o.opacity ?? 0.8; m.depthWrite = o.depthWrite ?? false; }

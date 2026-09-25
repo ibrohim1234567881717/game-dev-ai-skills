@@ -344,8 +344,8 @@ kbd { font: 500 11px/1 var(--mono); color: var(--ink); border: 1px solid rgba(23
 #waypoint span { font: 500 11px/1 var(--mono); color: #ffe2a8; text-shadow: 0 1px 2px #000; }
 #waypoint.edge i { background: rgba(255,210,122,.35); }
 #tutorial {
-  position: absolute; left: calc(12px + var(--safe-l)); bottom: calc(86px + var(--safe-b));
-  max-width: min(360px, 70vw); padding: 9px 12px; border-radius: 4px;
+  position: absolute; left: calc(12px + var(--safe-l)); top: 38%;
+  max-width: min(340px, 36vw); padding: 9px 12px; border-radius: 4px;
   background: rgba(8,14,11,.78); border: 1px solid rgba(255,210,122,.45); border-left: 3px solid var(--amber);
   font: 500 14px/1.35 var(--body); color: var(--ink); transition: opacity .4s, transform .4s;
 }
@@ -362,6 +362,14 @@ body.touch #tutorial.done { transform: translate(-50%, 6px); }
 #tags .tag.talk b::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: var(--amber); vertical-align: 1px; box-shadow: 0 0 6px var(--amber); }
 #tags .tag.speaking b { color: var(--amber); }
 @media (prefers-reduced-motion: reduce) { #objBanner.show { animation: none; } #tutorial.show { animation: none; } }
+/* a decision on screen: subtitles and hints underneath the choice panel only get in the way */
+body:has(#choice:not([hidden])) :is(#radio, #tutorial, #prompt, #objBanner) { visibility: hidden; }
+/* small laptop windows: subtitles above the sample case, banner below the objective panel */
+@media (min-width: 561px) and (max-width: 1100px) {
+  #radio { bottom: calc(118px + var(--safe-b)); width: min(600px, 72vw); }
+  #prompt { bottom: calc(196px + var(--safe-b)); }
+  #objBanner { top: calc(126px + var(--safe-t)); }
+}
 
 /* cinematics: only subtitles stay on screen */
 #objective, #case, #noise, #health, #compass, #journalChip, #tutorial, #tags, #waypoint, #timer, #observe { transition: opacity .5s; }

@@ -12,6 +12,108 @@ function limb(parent, x, y, z, len, r, m, o = {}) {
   return { pivot, knee, up };
 }
 
+// Draw-call reduction. The static meshes hanging off each node of a rig are merged into one
+// mesh per material, so a triceratops costs ~16 draw calls instead of ~33 (the herd alone was
+// most of the valley's calls). Groups keep their transforms, so code that rotates head, neck,
+// jaw or legs is unaffected. Meshes referenced from userData or passed in `keep` stay separate,
+// as do meshes with children. Call it at the end of a builder, before anything is rendered.
+function bakeRig(root, keep = []) {
+  const held = new Set();
+  const mark = (v, depth) => {
+    if (!v || depth > 3) return;
+    if (v.isObject3D) { held.add(v); return; }
+    if (Array.isArray(v)) v.forEach((x) => mark(x, depth + 1));
+    else if (typeof v === 'object' && v.constructor === Object) Object.values(v).forEach((x) => mark(x, depth + 1));
+  };
+  mark(root.userData, 0); mark(keep, 0);
+  const nodes = [];
+  root.traverse((n) => { if (n.children.length > 1) nodes.push(n); });
+  for (const node of nodes) {
+    const buckets = new Map();
+    for (const c of node.children) {
+      if (!c.isMesh || c.isInstancedMesh || c.isSkinnedMesh || c.children.length || held.has(c) || Array.isArray(c.material) || !c.visible) continue;
+      const key = c.material.uuid + (c.castShadow ? 'C' : '') + (c.receiveShadow ? 'R' : '');
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(c);
+    }
+    for (const list of buckets.values()) {
+      if (list.length < 2) continue;
+      const merged = new THREE.Mesh(mergeTransformed(list), list[0].material);
+      merged.castShadow = list[0].castShadow; merged.receiveShadow = list[0].receiveShadow;
+      list.forEach((c) => node.remove(c));
+      node.add(merged);
+    }
+  }
+  return root;
+}
+// Far LOD for herd animals: the whole rig in its rest pose as one vertex-coloured mesh. World.cull
+// shows it beyond `far` metres and hides the animated parts, so a grazing herd across the valley
+// costs one draw call per animal. At that distance the missing leg swing is not readable.
+const LOD_K = () => [0.65, 0.85, 1][GFX.level];
+const _lodMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, flatShading: true, envMapIntensity: 0.55 });
+function rigLOD(root, far) {
+  root.updateMatrixWorld(true);
+  const inv = root.matrixWorld.clone().invert(), list = [];
+  root.traverse((c) => {
+    if (!c.isMesh || Array.isArray(c.material) || c.material.transparent) return;
+    let v = true; for (let p = c; p && p !== root; p = p.parent) if (!p.visible) v = false;
+    if (v) list.push(c);
+  });
+  const stand = list.map((c) => {
+    const g = c.geometry.clone();
+    const col = c.material.color || new THREE.Color('#888888'), n = g.attributes.position.count, C = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { C[i * 3] = col.r; C[i * 3 + 1] = col.g; C[i * 3 + 2] = col.b; }
+    g.setAttribute('color', new THREE.BufferAttribute(C, 3));
+    const m = new THREE.Mesh(g); m.matrixAutoUpdate = false;
+    m.matrix.multiplyMatrices(inv, c.matrixWorld);
+    return m;
+  });
+  const lod = new THREE.Mesh(mergeTransformed(stand), _lodMat);
+  lod.castShadow = true; lod.visible = false;
+  root.userData.lodNear = root.children.slice();
+  root.add(lod);
+  root.userData.lodMesh = lod; root.userData.lodFar = far;
+  return root;
+}
+// merge meshes that share a parent into one geometry expressed in that parent's space
+function mergeTransformed(list) {
+  const parts = list.map((c) => {
+    if (c.matrixAutoUpdate) c.updateMatrix(); // rigLOD passes precomputed (possibly sheared) matrices
+    const g = c.geometry.clone().applyMatrix4(c.matrix);
+    if (!g.index) { const idx = new Array(g.attributes.position.count); for (let i = 0; i < idx.length; i++) idx[i] = i; g.setIndex(idx); }
+    if (c.matrix.determinant() < 0) { const ix = g.index; for (let k = 0; k < ix.count; k += 3) { const b = ix.getX(k + 1); ix.setX(k + 1, ix.getX(k + 2)); ix.setX(k + 2, b); } }
+    return g;
+  });
+  const withUV = parts.every((g) => g.attributes.uv), withC = parts.every((g) => g.attributes.color && g.attributes.color.itemSize === 3);
+  let nv = 0, ni = 0;
+  parts.forEach((g) => { nv += g.attributes.position.count; ni += g.index.count; });
+  const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), U = withUV ? new Float32Array(nv * 2) : null, C = withC ? new Float32Array(nv * 3) : null;
+  const I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+  let vo = 0, io = 0;
+  for (const g of parts) {
+    if (!g.attributes.normal) g.computeVertexNormals();
+    const pa = g.attributes.position, na = g.attributes.normal, ua = g.attributes.uv, ca = g.attributes.color, ix = g.index;
+    for (let i = 0; i < pa.count; i++) {
+      const k = (vo + i) * 3;
+      P[k] = pa.getX(i); P[k + 1] = pa.getY(i); P[k + 2] = pa.getZ(i);
+      N[k] = na.getX(i); N[k + 1] = na.getY(i); N[k + 2] = na.getZ(i);
+      if (U) { U[(vo + i) * 2] = ua.getX(i); U[(vo + i) * 2 + 1] = ua.getY(i); }
+      if (C) { C[k] = ca.getX(i); C[k + 1] = ca.getY(i); C[k + 2] = ca.getZ(i); }
+    }
+    for (let k = 0; k < ix.count; k++) I[io + k] = ix.getX(k) + vo;
+    vo += pa.count; io += ix.count;
+    g.dispose();
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.BufferAttribute(P, 3));
+  out.setAttribute('normal', new THREE.BufferAttribute(N, 3));
+  if (U) out.setAttribute('uv', new THREE.BufferAttribute(U, 2));
+  if (C) out.setAttribute('color', new THREE.BufferAttribute(C, 3));
+  out.setIndex(new THREE.BufferAttribute(I, 1));
+  out.computeBoundingSphere();
+  return out;
+}
+
 // ---------- Triceratops ----------
 function makeTriceratops(o = {}) {
   const skin = o.skin || '#6d6a4f', belly = o.belly || '#8a8466', frillC = o.frill || '#8a4b2c';
@@ -60,7 +162,7 @@ function makeTriceratops(o = {}) {
       neck.rotation.y = damp(neck.rotation.y, st.look ?? 0, 3, dt);
     },
   };
-  return g;
+  return rigLOD(bakeRig(g), 105 * LOD_K());
 }
 
 // ---------- Brachiosaurus ----------
@@ -98,7 +200,7 @@ function makeBrachio() {
       neck.rotation.y = Math.sin(Game.time * 0.23) * 0.25;
     },
   };
-  return g;
+  return rigLOD(bakeRig(g), 170 * LOD_K());
 }
 
 // ---------- Compsognathus ----------
@@ -119,7 +221,7 @@ function makeCompy() {
       head.rotation.x = st.peck ? Math.max(0, Math.sin(Game.time * 9 + ph)) * 0.9 : 0;
     },
   };
-  return g;
+  return rigLOD(bakeRig(g, legs), 42 * LOD_K());
 }
 
 // ---------- Velociraptor (Varn's reconstruction) ----------
@@ -175,7 +277,7 @@ function makeRaptor(o = {}) {
     },
   };
   g.scale.setScalar(o.scale ?? 1.25);
-  return g;
+  return bakeRig(g);
 }
 
 // ---------- Spinosaurus ----------
@@ -221,7 +323,7 @@ function makeSpino() {
       neck.rotation.x = damp(neck.rotation.x, st.lunge ? 0.5 : st.up ? -0.4 : 0, 4, dt);
     },
   };
-  return g;
+  return bakeRig(g);
 }
 
 // ---------- Deinosuchus (head + back only) ----------
@@ -232,7 +334,7 @@ function makeCroc() {
   for (let i = 0; i < 6; i++) mesh(G.cone(0.12, 0.22, 4), M, { parent: g, pos: [0, 0.28, -1.4 + i * 0.5] });
   for (const sx of [-1, 1]) mesh(G.sphere(0.07, 5, 4), mat('#c9b04a', { emissive: '#5a4800' }), { parent: g, pos: [sx * 0.2, 0.25, 1.6], cast: false });
   g.userData = { kind: 'croc', anim() {} };
-  return g;
+  return bakeRig(g);
 }
 
 // ---------- Pteranodon ----------
@@ -267,7 +369,7 @@ function makePtera(o = {}) {
     },
   };
   g.scale.setScalar(o.scale ?? 1);
-  return g;
+  return bakeRig(g);
 }
 
 // ---------- Tyrannosaurus ----------
@@ -325,7 +427,7 @@ function makeRex() {
       jaw.rotation.x = damp(jaw.rotation.x, st.roar ? 0.75 : st.open ? 0.45 : 0.02, st.roar ? 6 : 8, dt);
     },
   };
-  return g;
+  return bakeRig(g);
 }
 
 // ---------- EVA-0 ----------
@@ -362,7 +464,7 @@ function makeEva() {
       body.position.y = st.sleep ? 1.3 : 2.6;
     },
   };
-  return g;
+  return bakeRig(g);
 }
 
 // humans: see 26-people.js (makeHuman) and 27-cast.js (characters, NPCs, companions)

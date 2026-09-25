@@ -132,12 +132,12 @@ CHAPTERS.river = {
       spawn: { x: 0, z: 176, yaw: Math.PI },
       markers() {
         const m = [];
-        if (S.stage === 'swamp') m.push({ x: 30, z: 40, label: 'река' });
-        else if (S.stage === 'river' && !S.station) m.push({ x: RIVER.station[0], z: RIVER.station[1], label: 'R-3' });
-        else if (S.stage === 'river') m.push({ x: RIVER.pier.x, z: -10, label: 'причал' });
-        else if (S.stage === 'chase' || S.stage === 'swim') m.push({ x: 90, z: 3, label: 'плотина', cls: 'bad' });
-        else if (S.stage === 'dam') m.push({ x: 86, z: -20, label: 'водосброс', cls: 'bad' });
-        else if (S.stage === 'dart' && S.dart) m.push({ x: S.dart.pos.x, z: S.dart.pos.z, label: 'дротик' });
+        if (S.stage === 'swamp') m.push({ x: 30, z: 40, label: 'река', goal: true, near: 12 });
+        else if (S.stage === 'river' && !S.station) m.push({ x: RIVER.station[0], z: RIVER.station[1], label: 'R-3', goal: true, near: 5 });
+        else if (S.stage === 'river') m.push({ x: RIVER.pier.x, z: -10, label: 'причал', goal: true, near: 3 });
+        else if (S.stage === 'chase' || S.stage === 'swim') m.push({ x: 90, z: 3, label: 'плотина', cls: 'bad', goal: true, near: 4 });
+        else if (S.stage === 'dam') m.push({ x: 86, z: -20, label: 'водосброс', cls: 'bad', goal: true, near: 12, patient: true });
+        else if (S.stage === 'dart' && S.dart) m.push({ x: S.dart.pos.x, z: S.dart.pos.z, label: 'дротик', goal: true, near: 3 });
         return m;
       },
       subjects() {
@@ -343,6 +343,7 @@ CHAPTERS.river = {
       onUse: async () => {
         S.crossbow = true; S.darts = Math.max(S.darts, 2); Game.state.flags.darts = S.darts; crossbowCase.visible = false;
         HUD.throwBtn(true); $('tbThrow').textContent = 'Арбалет';
+        setTimeout(() => Tutorial.show('crossbow', IS_TOUCH ? 'Кнопка <kbd>Арбалет</kbd> — прицел, <kbd>Выстрел</kbd> — биопсийный дротик' : '<kbd>Q</kbd> — арбалет, клик — выстрел биопсийным дротиком', () => Cam.mode === 'aim', { max: 14 }), 16000);
         // reveal
         SP.x = RIVER.pier.x - 10; SP.z = -14; SP.yaw = Math.PI / 2; SP.state = 'reveal'; SP.rise = 0;
         Sound.silenceAll(0.3);

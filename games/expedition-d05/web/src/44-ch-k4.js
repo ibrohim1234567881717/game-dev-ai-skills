@@ -20,9 +20,10 @@ CHAPTERS.k4 = {
     world.blocked = (x, z) => (z < 32.2 && (x < -0.2 || x > 50.2)) || (z < 36.2 && x > 50.2) || z < 0.2;
     world.snapY = true;
     world.scene.background = new THREE.Color('#050807');
+    world.grade = { exposure: 1.08, contrast: 1.12, saturation: 0.95, lift: '#050404', gain: '#f0f4ee', bloom: 0.85, vignette: 1.2 };
     world.scene.fog = new THREE.Fog('#0b120e', 8, 60);
-    const hemi = new THREE.HemisphereLight('#7f9e8c', '#1f2819', 0.7); world.add(hemi); world.hemi = hemi; world.baseHemi = 0.7;
-    const moon = new THREE.DirectionalLight('#b8c8d8', 1.0); moon.position.set(-30, 60, 80); world.add(moon);
+    const hemi = new THREE.HemisphereLight('#8fb0a0', '#26301f', 1.05); world.add(hemi); world.hemi = hemi; world.baseHemi = 1.05;
+    const moon = new THREE.DirectionalLight('#b8c8d8', 1.5); moon.position.set(-30, 60, 80); world.add(moon);
     const flash = makeFlashlight(world, 34);
     // exterior terrain & jungle
     makeTerrain(world, { size: 140, seg: 80, cx: 25, cz: 64, height: (x, z) => (z < 36 ? -0.4 : jH(x, z)), color: (x, z, y, s, c) => { c.set('#2e3f24').lerp(_tmpC.set('#3d4a2a'), fbm(x * 0.1, z * 0.1, 2) * 0.5 + 0.5); if (Math.abs(x - 24) < 3 && z > 36) c.lerp(_tmpC.set('#4a4232'), 0.6); } });
@@ -261,7 +262,12 @@ CHAPTERS.k4 = {
           box.appendChild(b);
         }
         const done = document.createElement('button'); done.className = 'btn'; done.textContent = 'Готово';
-        done.onclick = () => { $('choice').hidden = true; Game.paused = false; applyPower(); resolve(); };
+        done.onclick = () => {
+          $('choice').hidden = true; Game.paused = false; applyPower();
+          // the objective used to keep saying "open the lab" after the doors were already powered
+          if (S.power.lab && !S.labSeen && !S.fridge) HUD.objective('Войдите в лабораторию', 'Двери открыты. Выбор систем можно поменять на щитке в любой момент.');
+          resolve();
+        };
         box.appendChild(done);
       };
       render();
@@ -300,7 +306,7 @@ CHAPTERS.k4 = {
       HUD.throwBtn(true);
       HUD.say([{ who: 'Диего (рация)', text: 'Есть свет.' }, { who: 'Лена (рация)', text: 'Итан… это были все двери? Я слышала… что-то.' }, { who: 'Диего (рация)', text: 'Никто не бежит. Слышишь? Никто не бежит.' }]);
       HUD.objective('Откройте лабораторию', 'Щиток в холле. Генератор тянет 3 системы из 4 — чем пожертвовать?');
-      HUD.toast(IS_TOUCH ? '«Приманка» — отвлечь шумом' : 'Q — бросить шумовую приманку', 4);
+      Tutorial.show('lure', IS_TOUCH ? 'Кнопка <kbd>Приманка</kbd> — отвлечь рапторов шумом' : '<kbd>Q</kbd> — бросить шумовую приманку: рапторы идут на звук', () => S.lures < 3, { max: 16 });
     }
     async function fridgeSample() {
       S.fridge = true;
@@ -339,13 +345,13 @@ CHAPTERS.k4 = {
       spawn: { x: 24, z: 70, yaw: Math.PI },
       markers() {
         const m = [];
-        if (S.stage === 'outside') m.push({ x: 23, z: 33, label: 'ворота' });
-        else if (!S.gen) m.push({ x: 5, z: 28, label: 'генератор' });
-        else if (!labDoor.open && !S.fridge) m.push({ x: 13.5, z: 24.5, label: 'щиток' });
-        else if (!S.fridge) m.push({ x: 38, z: 3, label: 'образцы' });
-        else if (!S.slammed) m.push({ x: 41, z: 9.5, label: 'бронедверь', cls: 'bad' });
-        else if (!S.dna) m.push({ x: 41, z: 9.6, label: 'перо' });
-        else m.push({ x: 48, z: 36, label: 'выход', cls: 'bad' });
+        if (S.stage === 'outside') m.push({ x: 23, z: 33, label: 'ворота', goal: true, near: 4, nudge: 'Итан, ворота прямо перед вами. Мы с Диего ждём у входа.', nudgeWho: 'Лена' });
+        else if (!S.gen) m.push({ x: 5, z: 28, label: 'генератор', goal: true, near: 3 });
+        else if (!labDoor.open && !S.fridge) m.push({ x: 13.5, z: 24.5, label: 'щиток', goal: true, near: 2.5 });
+        else if (!S.fridge) m.push({ x: 38, z: 3, label: 'образцы', goal: true, near: 2.5 });
+        else if (!S.slammed) m.push({ x: 41, z: 9.5, label: 'бронедверь', cls: 'bad', goal: true, near: 3 });
+        else if (!S.dna) m.push({ x: 41, z: 9.6, label: 'перо', goal: true, near: 2 });
+        else m.push({ x: 48, z: 36, label: 'выход', cls: 'bad', goal: true, near: 3 });
         if (S.gen && S.power.cams && S.secVisited) raptors.forEach((r) => { if (r.state !== 'dormant') m.push({ x: r.pos.x, z: r.pos.y, label: 'раптор', cls: 'bad' }); });
         return m;
       },
@@ -358,14 +364,14 @@ CHAPTERS.k4 = {
       async start() {
         Sound.bed('insects', 0.06); Sound.bed('wind', 0.03);
         HUD.objective('Доберитесь до комплекса K-4', 'Осмотрите джипы D-01 по дороге — если хотите знать, что здесь было.');
-        HUD.say([{ who: 'Лена', text: 'Вот он. K-4. Здесь Варн держал рапторов.' }, { who: 'Хальм (рация)', text: 'Генератор — в западном крыле. Без света вы там ничего не найдёте.' }]);
+        HUD.say([{ who: 'Лена (рация)', text: 'Итан, мы с Диего у ворот K-4. Здесь Варн держал рапторов.' }, { who: 'Хальм (рация)', text: 'Генератор — в западном крыле. Без света вы там ничего не найдёте.' }]);
       },
       update(dt) {
         const P = Game.player;
         const ins = inside(P.pos.x, P.pos.z);
         world.ceiling = ins ? 3.35 : null;
-        hemi.intensity = damp(hemi.intensity, ins ? 0.04 : 0.7, 2, dt);
-        moon.intensity = ins ? 0 : 1.0;
+        hemi.intensity = damp(hemi.intensity, ins ? 0.08 : 1.05, 2, dt);
+        moon.intensity = ins ? 0 : 1.5;
         Sound.bed('insects', ins ? 0 : 0.06);
         if (!S.secVisited && S.gen && P.pos.x > 34.5 && P.pos.z > 22.5 && P.pos.z < 32) { S.secVisited = true; HUD.toast(S.power.cams ? 'Мониторы охраны: рапторы видны на компасе' : 'Мониторы темны — камеры без питания', 3.5); }
         if (!S.labSeen && labDoor.open && P.pos.x > 22.5 && P.pos.x < 40 && P.pos.z < 17.5) { S.labSeen = true; S.stage = 'lab'; S.cp = 'labEntry'; HUD.objective('Осмотрите лабораторию', 'Холодильник с образцами — у северной стены.'); }

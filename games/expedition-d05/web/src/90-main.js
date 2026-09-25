@@ -78,6 +78,7 @@ async function goChapter(id, o = {}) {
   seed(1983 + CHAPTER_ORDER.indexOf(id) * 97);
   const ctx = CHAPTERS[id].create(o);
   Game.ctx = ctx; Game.world = ctx.world;
+  Post.setGrade(ctx.world.grade);
   if (!Game.player) Game.player = new Player();
   Game.player.crouch = false; $('tbCrouch').classList.remove('on');
   Game.player.frozen = false;
@@ -173,6 +174,7 @@ function openMenu() {
   buildMenu();
   $('menu').hidden = false;
   if (!menuWorld) menuWorld = buildValleyWorld({ time: 'dusk', menu: true }).world;
+  Post.setGrade(menuWorld.grade);
   HUD.fade(0, 1.2);
 }
 
@@ -183,8 +185,26 @@ function setPaused(p) {
   $('pause').hidden = !p;
   if (p && document.pointerLockElement) document.exitPointerLock();
   $('btnSound').textContent = Game.muted ? 'Звук: выкл' : 'Звук: вкл';
+  $('btnGfx').textContent = `Графика: ${GFX.names[GFX.level]}`;
+  $('btnVoice').hidden = !Voice.count();
+  $('btnVoice').textContent = Voice.enabled ? `Озвучка: вкл (${Voice.count()})` : 'Озвучка: выкл';
 }
 $('btnResume').onclick = () => setPaused(false);
+$('btnGfx').onclick = () => { Post.apply((GFX.level + 1) % 3); $('btnGfx').textContent = `Графика: ${GFX.names[GFX.level]}`; HUD.toast('Плотность растительности изменится при следующей загрузке главы', 3); };
+$('btnVoice').onclick = () => { Voice.enabled = !Voice.enabled; if (!Voice.enabled) Voice.stop(); $('btnVoice').textContent = Voice.enabled ? `Озвучка: вкл (${Voice.count()})` : 'Озвучка: выкл'; };
+
+// ---------- adaptive quality: step down once if frames stay slow ----------
+const Perf = {
+  acc: 0, n: 0, slowT: 0, stepped: false,
+  sample(dt) {
+    if (Game.paused || Game.loading || Cine.active || this.stepped || GFX.level === 0) return;
+    this.acc += dt; this.n++;
+    if (this.acc < 1) return;
+    const avg = this.acc / this.n; this.acc = 0; this.n = 0;
+    this.slowT = avg > 1 / 28 ? this.slowT + 1 : Math.max(0, this.slowT - 1);
+    if (this.slowT >= 6 && !Game.noAutoGfx) { this.stepped = true; Post.apply(GFX.level - 1); HUD.toast(`Графика: ${GFX.names[GFX.level]} — снижено автоматически. Можно вернуть в паузе`, 4); }
+  },
+};
 $('btnSound').onclick = () => { Sound.setMuted(!Game.muted); $('btnSound').textContent = Game.muted ? 'Звук: выкл' : 'Звук: вкл'; };
 $('btnMenu').onclick = () => { setPaused(false); HUD.fade(1, 0.5).then(openMenu); };
 $('btnRestartCp').onclick = () => { setPaused(false); if (Game.ctx && Game.ctx.restore) Game.fail('Контрольная точка', '', () => Game.ctx.restore()); };
@@ -214,7 +234,9 @@ function frame(now) {
       camera.lookAt(-10, 8, -40);
       if (camera.fov !== 55) { camera.fov = 55; camera.updateProjectionMatrix(); }
       menuWorld.update(dt);
-      renderer.render(menuWorld.scene, camera);
+      menuWorld.cull(camera);
+      renderer.info.reset();
+      Post.render(menuWorld.scene, camera, dt);
     }
   } else if (Game.ctx && Game.world) {
     if (!$('journal').hidden) { if (Input.pressed('journal') || Input.pressed('pause')) { $('journal').hidden = true; Game.paused = false; } }
@@ -245,7 +267,10 @@ function frame(now) {
     }
     Cast.tags(Game.world);
     Sound.listen(camera);
-    renderer.render(Game.world.scene, camera);
+    Game.world.cull(camera);
+    renderer.info.reset();
+    Post.render(Game.world.scene, camera, dt);
+    Perf.sample(dt);
   }
   HUD.endFrame();
   Input.endFrame();
@@ -255,6 +280,7 @@ function frame(now) {
 function boot() {
   buildMenu();
   menuWorld = buildValleyWorld({ time: 'dusk', menu: true }).world;
+  Post.setGrade(menuWorld.grade);
   $('boot').hidden = true;
   $('menu').hidden = false;
   HUD.fade(0, 1.4);

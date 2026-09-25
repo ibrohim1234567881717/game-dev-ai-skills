@@ -272,7 +272,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "41-ch-prologue.js:228"
+  "source": "41-ch-prologue.js:229"
  },
  {
   "id": "d091b2c0",
@@ -283,7 +283,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "41-ch-prologue.js:239"
+  "source": "41-ch-prologue.js:240"
  },
  {
   "id": "af1f65a4",
@@ -294,7 +294,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:256"
+  "source": "41-ch-prologue.js:257"
  },
  {
   "id": "12fbd71b",
@@ -305,7 +305,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:279"
+  "source": "41-ch-prologue.js:280"
  },
  {
   "id": "2052deae",
@@ -316,7 +316,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:280"
+  "source": "41-ch-prologue.js:281"
  },
  {
   "id": "5262faac",
@@ -327,7 +327,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:280"
+  "source": "41-ch-prologue.js:281"
  },
  {
   "id": "334ff3ed",
@@ -338,7 +338,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:281"
+  "source": "41-ch-prologue.js:282"
  },
  {
   "id": "2f624a20",
@@ -349,7 +349,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:281"
+  "source": "41-ch-prologue.js:282"
  },
  {
   "id": "e48fdf45",
@@ -360,7 +360,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:283"
+  "source": "41-ch-prologue.js:284"
  },
  {
   "id": "8231a5e5",
@@ -371,7 +371,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:283"
+  "source": "41-ch-prologue.js:284"
  },
  {
   "id": "76b435ef",
@@ -382,7 +382,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:287"
+  "source": "41-ch-prologue.js:288"
  },
  {
   "id": "02ece47d",
@@ -393,7 +393,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:288"
+  "source": "41-ch-prologue.js:289"
  },
  {
   "id": "dfd9918c",
@@ -404,7 +404,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:289"
+  "source": "41-ch-prologue.js:290"
  },
  {
   "id": "04ad9461",
@@ -415,7 +415,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:290"
+  "source": "41-ch-prologue.js:291"
  },
  {
   "id": "98346812",
@@ -426,7 +426,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:299"
+  "source": "41-ch-prologue.js:300"
  },
  {
   "id": "0cec2972",
@@ -439,7 +439,7 @@
    "пауза"
   ],
   "radio": false,
-  "source": "41-ch-prologue.js:300"
+  "source": "41-ch-prologue.js:301"
  },
  {
   "id": "8f16bcde",
@@ -450,7 +450,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:305"
+  "source": "41-ch-prologue.js:306"
  },
  {
   "id": "d8410628",
@@ -461,7 +461,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:305"
+  "source": "41-ch-prologue.js:306"
  },
  {
   "id": "88ee6d29",
@@ -472,7 +472,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:306"
+  "source": "41-ch-prologue.js:307"
  },
  {
   "id": "af3583c9",
@@ -483,7 +483,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:317"
+  "source": "41-ch-prologue.js:318"
  },
  {
   "id": "7af7e198",
@@ -494,7 +494,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:318"
+  "source": "41-ch-prologue.js:320"
  },
  {
   "id": "48f9572e",
@@ -505,7 +505,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:319"
+  "source": "41-ch-prologue.js:323"
  },
  {
   "id": "82ed3e68",
@@ -516,7 +516,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:319"
+  "source": "41-ch-prologue.js:323"
  },
  {
   "id": "c3e9d871",
@@ -529,7 +529,7 @@
    "тихо"
   ],
   "radio": false,
-  "source": "41-ch-prologue.js:320"
+  "source": "41-ch-prologue.js:324"
  },
  {
   "id": "02fb6a1e",
@@ -540,7 +540,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:328"
+  "source": "41-ch-prologue.js:332"
  },
  {
   "id": "40408e14",
@@ -551,7 +551,7 @@
   "emotion": "urgent",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:328"
+  "source": "41-ch-prologue.js:332"
  },
  {
   "id": "d5b4e804",
@@ -562,7 +562,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:348"
+  "source": "41-ch-prologue.js:352"
  },
  {
   "id": "f2927599",
@@ -573,7 +573,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:351"
+  "source": "41-ch-prologue.js:355"
  },
  {
   "id": "e679962e",
@@ -584,7 +584,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "41-ch-prologue.js:351"
+  "source": "41-ch-prologue.js:355"
  },
  {
   "id": "e31a92da",
@@ -597,7 +597,7 @@
    "тихо"
   ],
   "radio": false,
-  "source": "41-ch-prologue.js:354"
+  "source": "41-ch-prologue.js:358"
  },
  {
   "id": "1be357ee",
@@ -608,7 +608,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:358"
+  "source": "41-ch-prologue.js:362"
  },
  {
   "id": "a680a976",
@@ -619,7 +619,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:367"
+  "source": "41-ch-prologue.js:371"
  },
  {
   "id": "df044459",
@@ -630,7 +630,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:373"
+  "source": "41-ch-prologue.js:377"
  },
  {
   "id": "acc60920",
@@ -641,7 +641,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:373"
+  "source": "41-ch-prologue.js:377"
  },
  {
   "id": "1059ac99",
@@ -652,7 +652,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:374"
+  "source": "41-ch-prologue.js:378"
  },
  {
   "id": "60183372",
@@ -663,7 +663,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:374"
+  "source": "41-ch-prologue.js:378"
  },
  {
   "id": "8eb99cbb",
@@ -674,7 +674,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:375"
+  "source": "41-ch-prologue.js:379"
  },
  {
   "id": "89b893d8",
@@ -685,7 +685,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:375"
+  "source": "41-ch-prologue.js:379"
  },
  {
   "id": "db4933b3",
@@ -696,7 +696,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:376"
+  "source": "41-ch-prologue.js:380"
  },
  {
   "id": "fa29e3f1",
@@ -707,7 +707,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:197"
+  "source": "42-ch-valley.js:206"
  },
  {
   "id": "9b6421bd",
@@ -718,7 +718,29 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "42-ch-valley.js:197"
+  "source": "42-ch-valley.js:206"
+ },
+ {
+  "id": "a2d06f3e",
+  "speaker": "lena",
+  "who": "Лена",
+  "text": "Это она? Вуаль?",
+  "say": "Это она? Вуаль?",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "42-ch-valley.js:208"
+ },
+ {
+  "id": "d2c99d67",
+  "speaker": "halm",
+  "who": "Хальм",
+  "text": "Сорок лет облаков на одном месте. Погода так не умеет.",
+  "say": "Сорок лет облаков на одном месте. Погода так не умеет.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "42-ch-valley.js:208"
  },
  {
   "id": "07c5a4a3",
@@ -729,7 +751,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:199"
+  "source": "42-ch-valley.js:210"
  },
  {
   "id": "4433cc87",
@@ -740,7 +762,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "42-ch-valley.js:199"
+  "source": "42-ch-valley.js:210"
  },
  {
   "id": "89114b5e",
@@ -751,7 +773,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:201"
+  "source": "42-ch-valley.js:212"
  },
  {
   "id": "2aa8c6f4",
@@ -762,7 +784,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:201"
+  "source": "42-ch-valley.js:212"
  },
  {
   "id": "5e815f46",
@@ -775,7 +797,7 @@
    "шёпотом"
   ],
   "radio": false,
-  "source": "42-ch-valley.js:206"
+  "source": "42-ch-valley.js:218"
  },
  {
   "id": "e34e5a95",
@@ -786,7 +808,18 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:208"
+  "source": "42-ch-valley.js:220"
+ },
+ {
+  "id": "23c9eb5f",
+  "speaker": "lena",
+  "who": "Лена",
+  "text": "Они живые, Диего.",
+  "say": "Они живые, Диего.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "42-ch-valley.js:220"
  },
  {
   "id": "5ca44844",
@@ -797,7 +830,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:277"
+  "source": "42-ch-valley.js:323"
  },
  {
   "id": "2ce3f0bc",
@@ -808,7 +841,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:278"
+  "source": "42-ch-valley.js:324"
  },
  {
   "id": "c0ba41f4",
@@ -819,7 +852,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:279"
+  "source": "42-ch-valley.js:325"
  },
  {
   "id": "ba67ccd0",
@@ -830,7 +863,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:308"
+  "source": "42-ch-valley.js:355"
  },
  {
   "id": "2cbc4b52",
@@ -841,7 +874,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:308"
+  "source": "42-ch-valley.js:355"
  },
  {
   "id": "2d0bdea5",
@@ -852,7 +885,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:324"
+  "source": "42-ch-valley.js:371"
  },
  {
   "id": "defc5ce7",
@@ -863,7 +896,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "42-ch-valley.js:324"
+  "source": "42-ch-valley.js:371"
  },
  {
   "id": "b88426ac",
@@ -874,7 +907,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "42-ch-valley.js:326"
+  "source": "42-ch-valley.js:373"
  },
  {
   "id": "dbcfb800",
@@ -885,18 +918,18 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "42-ch-valley.js:326"
+  "source": "42-ch-valley.js:373"
  },
  {
   "id": "959c9080",
   "speaker": "lena",
-  "who": "Лена (рация)",
+  "who": "Лена",
   "text": "Зона рапторов — в той же стороне, Виктор.",
   "say": "Зона рапторов — в той же стороне, Виктор.",
   "emotion": "neutral",
   "directions": [],
-  "radio": true,
-  "source": "42-ch-valley.js:326"
+  "radio": false,
+  "source": "42-ch-valley.js:373"
  },
  {
   "id": "7f68a92a",
@@ -907,7 +940,7 @@
   "emotion": "urgent",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:344"
+  "source": "42-ch-valley.js:391"
  },
  {
   "id": "e6b69a16",
@@ -918,7 +951,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:348"
+  "source": "42-ch-valley.js:395"
  },
  {
   "id": "8cabb3aa",
@@ -929,7 +962,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:382"
+  "source": "42-ch-valley.js:429"
  },
  {
   "id": "9c439b8e",
@@ -940,7 +973,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:392"
+  "source": "42-ch-valley.js:439"
  },
  {
   "id": "13de9725",
@@ -951,7 +984,18 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:397"
+  "source": "42-ch-valley.js:444"
+ },
+ {
+  "id": "1a848bce",
+  "speaker": "halm",
+  "who": "Хальм",
+  "text": "Лагерь «Эхо» — за палатками. Здесь стояла передовая группа D-04. Разбиваем базу и выходим на связь с «Порогом».",
+  "say": "Лагерь «Эхо» — за палатками. Здесь стояла передовая группа Дэ-ноль-четыре. Разбиваем базу и выходим на связь с «Порогом».",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "42-ch-valley.js:466"
  },
  {
   "id": "4b47c41d",
@@ -962,18 +1006,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:411"
- },
- {
-  "id": "eda3a183",
-  "speaker": "halm",
-  "who": "Хальм",
-  "text": "Старые изыскатели. Разгружаемся.",
-  "say": "Старые изыскатели. Разгружаемся.",
-  "emotion": "neutral",
-  "directions": [],
-  "radio": false,
-  "source": "42-ch-valley.js:411"
+  "source": "42-ch-valley.js:466"
  },
  {
   "id": "df30b9d0",
@@ -986,18 +1019,73 @@
    "вдыхает"
   ],
   "radio": false,
-  "source": "42-ch-valley.js:411"
+  "source": "42-ch-valley.js:466"
  },
  {
-  "id": "cf01db00",
+  "id": "78e6d54b",
   "speaker": "lena",
-  "who": "Лена (рация)",
-  "text": "Итан, трицератопсы пасутся на северо-востоке долины, если верить карте. Но карта старая. Верьте следам — начните с берега озера.",
-  "say": "Итан, трицератопсы пасутся на северо-востоке долины, если верить карте. Но карта старая. Верьте следам — начните с берега озера.",
+  "who": "Лена",
+  "text": "Итан, трицератопсы пасутся за озером. Идёмте со мной — начнём со следов у берега.",
+  "say": "Итан, трицератопсы пасутся за озером. Идёмте со мной — начнём со следов у берега.",
   "emotion": "neutral",
   "directions": [],
-  "radio": true,
-  "source": "42-ch-valley.js:415"
+  "radio": false,
+  "source": "42-ch-valley.js:470"
+ },
+ {
+  "id": "47d24660",
+  "speaker": "lena",
+  "who": "Лена",
+  "text": "Итан! Сюда, к озеру. Не отставайте.",
+  "say": "Итан! Сюда, к озеру. Не отставайте.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "42-ch-valley.js:472"
+ },
+ {
+  "id": "e5ed28e5",
+  "speaker": "lena",
+  "who": "Лена",
+  "text": "Итан, я здесь. Идём по тропе на север.",
+  "say": "Итан, я здесь. Идём по тропе на север.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "42-ch-valley.js:472"
+ },
+ {
+  "id": "873ac611",
+  "speaker": "lena",
+  "who": "Лена",
+  "text": "Стойте. Видите? Отпечатки. Свежие. Изучите их — удерживайте E.",
+  "say": "Стойте. Видите? Отпечатки. Свежие. Изучите их — удерживайте E.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "42-ch-valley.js:478"
+ },
+ {
+  "id": "017aa49f",
+  "speaker": "lena",
+  "who": "Лена",
+  "text": "Смотрите под ноги, не только по сторонам. Трава примята — здесь что-то проходило.",
+  "say": "Смотрите под ноги, не только по сторонам. Трава примята — здесь что-то проходило.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "42-ch-valley.js:510"
+ },
+ {
+  "id": "0ea78eaa",
+  "speaker": "lena",
+  "who": "Лена",
+  "text": "Карте D-04 два года. Стадо могло уйти. Поэтому — следы.",
+  "say": "Карте Дэ-ноль-четыре два года. Стадо могло уйти. Поэтому — следы.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "42-ch-valley.js:511"
  },
  {
   "id": "5fc64f93",
@@ -1008,7 +1096,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:460"
+  "source": "42-ch-valley.js:531"
  },
  {
   "id": "a0f2f8b3",
@@ -1019,7 +1107,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:460"
+  "source": "42-ch-valley.js:531"
  },
  {
   "id": "6bf3387f",
@@ -1030,40 +1118,44 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:460"
+  "source": "42-ch-valley.js:531"
  },
  {
-  "id": "7b799a9e",
+  "id": "c40317c7",
   "speaker": "lena",
-  "who": "Лена (рация)",
-  "text": "Итан… насекомые замолчали. Пригнитесь.",
+  "who": "Лена",
+  "text": "<em>(шёпотом)</em> Итан… насекомые замолчали. Пригнитесь.",
   "say": "Итан… насекомые замолчали. Пригнитесь.",
-  "emotion": "hesitant",
-  "directions": [],
-  "radio": true,
-  "source": "42-ch-valley.js:473"
+  "emotion": "whisper",
+  "directions": [
+   "шёпотом"
+  ],
+  "radio": false,
+  "source": "42-ch-valley.js:546"
  },
  {
   "id": "5ced67be",
   "speaker": "lena",
-  "who": "Лена (рация)",
+  "who": "Лена",
   "text": "Ушёл. Что бы это ни было. Запомните этот звук — тишину.",
   "say": "Ушёл. Что бы это ни было. Запомните этот звук — тишину.",
   "emotion": "neutral",
   "directions": [],
-  "radio": true,
-  "source": "42-ch-valley.js:486"
+  "radio": false,
+  "source": "42-ch-valley.js:559"
  },
  {
-  "id": "8ba5fd23",
+  "id": "ab8aede4",
   "speaker": "lena",
   "who": "Лена",
-  "text": "Вот они… Девять. Два детёныша в центре. Не подходите ближе — просто смотрите.",
+  "text": "<em>(шёпотом)</em> Вот они… Девять. Два детёныша в центре. Не подходите ближе — просто смотрите.",
   "say": "Вот они… Девять. Два детёныша в центре. Не подходите ближе — просто смотрите.",
-  "emotion": "hesitant",
-  "directions": [],
+  "emotion": "whisper",
+  "directions": [
+   "шёпотом"
+  ],
   "radio": false,
-  "source": "42-ch-valley.js:494"
+  "source": "42-ch-valley.js:567"
  },
  {
   "id": "bd0cf19a",
@@ -1074,7 +1166,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:508"
+  "source": "42-ch-valley.js:582"
  },
  {
   "id": "aceb2f59",
@@ -1085,7 +1177,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:509"
+  "source": "42-ch-valley.js:583"
  },
  {
   "id": "e9c5e7d1",
@@ -1096,7 +1188,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:219"
+  "source": "44-ch-k4.js:220"
  },
  {
   "id": "d44527fa",
@@ -1107,7 +1199,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:273"
+  "source": "44-ch-k4.js:274"
  },
  {
   "id": "5c837978",
@@ -1118,7 +1210,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "44-ch-k4.js:278"
+  "source": "44-ch-k4.js:279"
  },
  {
   "id": "a7246763",
@@ -1129,7 +1221,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:281"
+  "source": "44-ch-k4.js:282"
  },
  {
   "id": "fbc417d4",
@@ -1140,7 +1232,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:281"
+  "source": "44-ch-k4.js:282"
  },
  {
   "id": "f321b348",
@@ -1151,7 +1243,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:284"
+  "source": "44-ch-k4.js:285"
  },
  {
   "id": "84dfab24",
@@ -1162,7 +1254,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:301"
+  "source": "44-ch-k4.js:302"
  },
  {
   "id": "48e0b7fb",
@@ -1173,7 +1265,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:301"
+  "source": "44-ch-k4.js:302"
  },
  {
   "id": "e15fdc83",
@@ -1184,7 +1276,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:301"
+  "source": "44-ch-k4.js:302"
  },
  {
   "id": "f480c206",
@@ -1195,7 +1287,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:309"
+  "source": "44-ch-k4.js:310"
  },
  {
   "id": "cdd6d89c",
@@ -1206,7 +1298,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:309"
+  "source": "44-ch-k4.js:310"
  },
  {
   "id": "11f15099",
@@ -1217,7 +1309,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:316"
+  "source": "44-ch-k4.js:317"
  },
  {
   "id": "0174f485",
@@ -1228,7 +1320,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:331"
+  "source": "44-ch-k4.js:332"
  },
  {
   "id": "5f7ac1f2",
@@ -1239,18 +1331,29 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:331"
+  "source": "44-ch-k4.js:332"
  },
  {
-  "id": "7215938f",
+  "id": "87ea11e3",
   "speaker": "lena",
   "who": "Лена",
-  "text": "Вот он. K-4. Здесь Варн держал рапторов.",
-  "say": "Вот он. Ка-четыре. Здесь Варн держал рапторов.",
+  "text": "Итан, ворота прямо перед вами. Мы с Диего ждём у входа.",
+  "say": "Итан, ворота прямо перед вами. Мы с Диего ждём у входа.",
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "44-ch-k4.js:361"
+  "source": "44-ch-k4.js:343"
+ },
+ {
+  "id": "eb8f97bb",
+  "speaker": "lena",
+  "who": "Лена (рация)",
+  "text": "Итан, мы с Диего у ворот K-4. Здесь Варн держал рапторов.",
+  "say": "Итан, мы с Диего у ворот Ка-четыре. Здесь Варн держал рапторов.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": true,
+  "source": "44-ch-k4.js:362"
  },
  {
   "id": "53d81d6f",
@@ -1261,7 +1364,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:361"
+  "source": "44-ch-k4.js:362"
  },
  {
   "id": "32cfaab8",
@@ -1272,7 +1375,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "44-ch-k4.js:389"
+  "source": "44-ch-k4.js:390"
  },
  {
   "id": "52464fd0",
@@ -1283,7 +1386,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": false,
-  "source": "44-ch-k4.js:402"
+  "source": "44-ch-k4.js:403"
  },
  {
   "id": "a9660b64",
@@ -1294,7 +1397,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "44-ch-k4.js:409"
+  "source": "44-ch-k4.js:410"
  },
  {
   "id": "749c2734",
@@ -1305,7 +1408,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "44-ch-k4.js:409"
+  "source": "44-ch-k4.js:410"
  },
  {
   "id": "420d422d",
@@ -1430,7 +1533,7 @@
    "шёпотом"
   ],
   "radio": true,
-  "source": "45-ch-river.js:353"
+  "source": "45-ch-river.js:354"
  },
  {
   "id": "92589543",
@@ -1441,7 +1544,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "45-ch-river.js:355"
+  "source": "45-ch-river.js:356"
  },
  {
   "id": "9a06fb6f",
@@ -1452,7 +1555,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": true,
-  "source": "45-ch-river.js:365"
+  "source": "45-ch-river.js:366"
  },
  {
   "id": "19cb1b9e",
@@ -1463,7 +1566,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "45-ch-river.js:417"
+  "source": "45-ch-river.js:418"
  },
  {
   "id": "1aa15fbf",
@@ -1474,7 +1577,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": false,
-  "source": "45-ch-river.js:418"
+  "source": "45-ch-river.js:419"
  },
  {
   "id": "2a2e5678",
@@ -1485,7 +1588,7 @@
   "emotion": "urgent",
   "directions": [],
   "radio": false,
-  "source": "45-ch-river.js:419"
+  "source": "45-ch-river.js:420"
  },
  {
   "id": "f8e62a13",
@@ -1498,7 +1601,7 @@
    "тихо"
   ],
   "radio": false,
-  "source": "45-ch-river.js:420"
+  "source": "45-ch-river.js:421"
  },
  {
   "id": "35c63fa3",
@@ -1509,7 +1612,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:146"
+  "source": "46-ch-peaks.js:147"
  },
  {
   "id": "ddf00129",
@@ -1520,7 +1623,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:146"
+  "source": "46-ch-peaks.js:147"
  },
  {
   "id": "43ff9bba",
@@ -1531,7 +1634,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:146"
+  "source": "46-ch-peaks.js:147"
  },
  {
   "id": "b4c958e7",
@@ -1542,7 +1645,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:180"
+  "source": "46-ch-peaks.js:181"
  },
  {
   "id": "2a300ad0",
@@ -1553,7 +1656,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:180"
+  "source": "46-ch-peaks.js:181"
  },
  {
   "id": "ebce4673",
@@ -1564,7 +1667,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:201"
+  "source": "46-ch-peaks.js:202"
  },
  {
   "id": "762892c7",
@@ -1575,7 +1678,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "46-ch-peaks.js:248"
+  "source": "46-ch-peaks.js:249"
  },
  {
   "id": "5dd5ce6c",
@@ -1586,7 +1689,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "46-ch-peaks.js:248"
+  "source": "46-ch-peaks.js:249"
  },
  {
   "id": "c9a57430",
@@ -1597,7 +1700,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:268"
+  "source": "46-ch-peaks.js:269"
  },
  {
   "id": "c8e2b313",
@@ -1608,7 +1711,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:268"
+  "source": "46-ch-peaks.js:269"
  },
  {
   "id": "3cd076f8",
@@ -1619,7 +1722,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:272"
+  "source": "46-ch-peaks.js:273"
  },
  {
   "id": "36a0b207",
@@ -1630,7 +1733,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "46-ch-peaks.js:272"
+  "source": "46-ch-peaks.js:273"
  },
  {
   "id": "95ee35bf",
@@ -1641,7 +1744,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:274"
+  "source": "46-ch-peaks.js:275"
  },
  {
   "id": "0a3bacf7",
@@ -1652,7 +1755,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "46-ch-peaks.js:274"
+  "source": "46-ch-peaks.js:275"
  },
  {
   "id": "ae27666b",
@@ -1663,7 +1766,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:283"
+  "source": "46-ch-peaks.js:284"
  },
  {
   "id": "02a097fa",
@@ -1674,7 +1777,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:304"
+  "source": "46-ch-peaks.js:305"
  },
  {
   "id": "cf6b11d2",
@@ -1685,7 +1788,7 @@
   "emotion": "urgent",
   "directions": [],
   "radio": true,
-  "source": "46-ch-peaks.js:304"
+  "source": "46-ch-peaks.js:305"
  },
  {
   "id": "837da115",
@@ -1896,7 +1999,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "47-ch-truth.js:230"
+  "source": "47-ch-truth.js:231"
  },
  {
   "id": "d94f1aa3",
@@ -1907,7 +2010,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:235"
+  "source": "47-ch-truth.js:236"
  },
  {
   "id": "84e92eed",
@@ -1918,7 +2021,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:235"
+  "source": "47-ch-truth.js:236"
  },
  {
   "id": "d5aa0f0f",
@@ -1929,7 +2032,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:235"
+  "source": "47-ch-truth.js:236"
  },
  {
   "id": "562005cf",
@@ -1942,7 +2045,7 @@
    "шорох бумаги"
   ],
   "radio": false,
-  "source": "47-ch-truth.js:235"
+  "source": "47-ch-truth.js:236"
  },
  {
   "id": "463d87bf",
@@ -1953,7 +2056,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "47-ch-truth.js:246"
+  "source": "47-ch-truth.js:247"
  },
  {
   "id": "07d1d80a",
@@ -1966,40 +2069,40 @@
    "шёпотом"
   ],
   "radio": false,
-  "source": "47-ch-truth.js:268"
+  "source": "47-ch-truth.js:269"
  },
  {
-  "id": "d10fd712",
+  "id": "dde07832",
   "speaker": "lena",
-  "who": "Лена",
-  "text": "Слышите? Насекомых нет. Совсем.",
-  "say": "Слышите? Насекомых нет. Совсем.",
+  "who": "Лена (рация)",
+  "text": "Слышите? Насекомых нет. Совсем. Мы идём по краю леса, Итан, в стороне от вас.",
+  "say": "Слышите? Насекомых нет. Совсем. Мы идём по краю леса, Итан, в стороне от вас.",
   "emotion": "neutral",
   "directions": [],
-  "radio": false,
-  "source": "48-ch-queen.js:101"
+  "radio": true,
+  "source": "48-ch-queen.js:102"
  },
  {
   "id": "491c5599",
   "speaker": "halm",
-  "who": "Хальм",
+  "who": "Хальм (рация)",
   "text": "Здесь почти нет других хищников. Причина очевидна.",
   "say": "Здесь почти нет других хищников. Причина очевидна.",
   "emotion": "neutral",
   "directions": [],
-  "radio": false,
-  "source": "48-ch-queen.js:101"
+  "radio": true,
+  "source": "48-ch-queen.js:102"
  },
  {
   "id": "6a607544",
   "speaker": "halm",
-  "who": "Хальм",
+  "who": "Хальм (рация)",
   "text": "Держитесь так, чтобы ветер дул вам в лицо. Тогда она вас не учует.",
   "say": "Держитесь так, чтобы ветер дул вам в лицо. Тогда она вас не учует.",
   "emotion": "neutral",
   "directions": [],
-  "radio": false,
-  "source": "48-ch-queen.js:101"
+  "radio": true,
+  "source": "48-ch-queen.js:102"
  },
  {
   "id": "77680104",
@@ -2010,7 +2113,7 @@
   "emotion": "urgent",
   "directions": [],
   "radio": true,
-  "source": "48-ch-queen.js:109"
+  "source": "48-ch-queen.js:110"
  },
  {
   "id": "58b54a66",
@@ -2021,7 +2124,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "48-ch-queen.js:119"
+  "source": "48-ch-queen.js:120"
  },
  {
   "id": "18fc1137",
@@ -2032,7 +2135,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": true,
-  "source": "48-ch-queen.js:150"
+  "source": "48-ch-queen.js:151"
  },
  {
   "id": "c22d064e",
@@ -2043,7 +2146,7 @@
   "emotion": "urgent",
   "directions": [],
   "radio": true,
-  "source": "48-ch-queen.js:150"
+  "source": "48-ch-queen.js:151"
  },
  {
   "id": "f8130db6",
@@ -2054,7 +2157,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": false,
-  "source": "48-ch-queen.js:166"
+  "source": "48-ch-queen.js:167"
  },
  {
   "id": "12eca0f8",
@@ -2067,7 +2170,7 @@
    "шёпотом"
   ],
   "radio": false,
-  "source": "48-ch-queen.js:214"
+  "source": "48-ch-queen.js:215"
  },
  {
   "id": "e073de52",
@@ -2078,7 +2181,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "48-ch-queen.js:216"
+  "source": "48-ch-queen.js:217"
  },
  {
   "id": "4838c26b",
@@ -2089,7 +2192,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "48-ch-queen.js:216"
+  "source": "48-ch-queen.js:217"
  },
  {
   "id": "e72520b5",
@@ -2100,7 +2203,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "48-ch-queen.js:219"
+  "source": "48-ch-queen.js:220"
  },
  {
   "id": "c5e49d0b",
@@ -2111,7 +2214,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "48-ch-queen.js:219"
+  "source": "48-ch-queen.js:220"
  },
  {
   "id": "5be8af26",
@@ -2122,7 +2225,7 @@
   "emotion": "urgent",
   "directions": [],
   "radio": false,
-  "source": "48-ch-queen.js:225"
+  "source": "48-ch-queen.js:226"
  },
  {
   "id": "96af84e9",
@@ -2133,7 +2236,7 @@
   "emotion": "shouting",
   "directions": [],
   "radio": true,
-  "source": "48-ch-queen.js:234"
+  "source": "48-ch-queen.js:235"
  },
  {
   "id": "e3a3c3a7",
@@ -2144,7 +2247,7 @@
   "emotion": "urgent",
   "directions": [],
   "radio": true,
-  "source": "48-ch-queen.js:239"
+  "source": "48-ch-queen.js:240"
  },
  {
   "id": "0a70ca7e",
@@ -2155,7 +2258,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "48-ch-queen.js:261"
+  "source": "48-ch-queen.js:262"
  },
  {
   "id": "fa0e3bda",
@@ -2166,7 +2269,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "48-ch-queen.js:261"
+  "source": "48-ch-queen.js:262"
  },
  {
   "id": "49891ae7",
@@ -2177,7 +2280,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "48-ch-queen.js:269"
+  "source": "48-ch-queen.js:270"
  },
  {
   "id": "5d1cc4fa",
@@ -2188,7 +2291,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:112"
+  "source": "49-ch-dawn.js:113"
  },
  {
   "id": "3c6d0d19",
@@ -2199,7 +2302,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:113"
+  "source": "49-ch-dawn.js:114"
  },
  {
   "id": "80bb1de5",
@@ -2210,7 +2313,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:114"
+  "source": "49-ch-dawn.js:115"
  },
  {
   "id": "c4ceba39",
@@ -2221,7 +2324,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:115"
+  "source": "49-ch-dawn.js:116"
  },
  {
   "id": "f6471f72",
@@ -2232,7 +2335,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:118"
+  "source": "49-ch-dawn.js:119"
  },
  {
   "id": "660a11ec",
@@ -2243,7 +2346,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:121"
+  "source": "49-ch-dawn.js:122"
  },
  {
   "id": "ed585240",
@@ -2254,7 +2357,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:122"
+  "source": "49-ch-dawn.js:123"
  },
  {
   "id": "17d479e6",
@@ -2265,7 +2368,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:123"
+  "source": "49-ch-dawn.js:124"
  },
  {
   "id": "2b6de65b",
@@ -2276,7 +2379,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "49-ch-dawn.js:127"
+  "source": "49-ch-dawn.js:128"
  },
  {
   "id": "ab08cbbc",
@@ -2287,7 +2390,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:128"
+  "source": "49-ch-dawn.js:129"
  },
  {
   "id": "0433c8a2",
@@ -2298,7 +2401,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "49-ch-dawn.js:179"
+  "source": "49-ch-dawn.js:180"
  },
  {
   "id": "96a65ab9",
@@ -2309,7 +2412,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "49-ch-dawn.js:179"
+  "source": "49-ch-dawn.js:180"
  },
  {
   "id": "050bd1bd",
@@ -2320,7 +2423,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "49-ch-dawn.js:179"
+  "source": "49-ch-dawn.js:180"
  },
  {
   "id": "9beaf618",
@@ -2331,7 +2434,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "49-ch-dawn.js:226"
+  "source": "49-ch-dawn.js:227"
  },
  {
   "id": "6b91287c",
@@ -2342,7 +2445,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:237"
+  "source": "49-ch-dawn.js:238"
  },
  {
   "id": "8bb853f5",
@@ -2353,7 +2456,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "49-ch-dawn.js:237"
+  "source": "49-ch-dawn.js:238"
  },
  {
   "id": "1b86fcd9",
@@ -2366,6 +2469,6 @@
    "отходит к краю"
   ],
   "radio": false,
-  "source": "49-ch-dawn.js:244"
+  "source": "49-ch-dawn.js:245"
  }
 ]

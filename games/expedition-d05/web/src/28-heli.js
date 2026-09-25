@@ -61,7 +61,7 @@ function rotorBlurTexture() {
 }
 
 function makeHelicopter(o = {}) {
-  const g = new THREE.Group();
+  const g = new THREE.Group(); g.name = 'heli';
   const body = new THREE.Group(); g.add(body);
   const paint = new THREE.MeshStandardMaterial({ color: o.color || '#3a4640', roughness: 0.48, metalness: 0.35 });
   const dark = new THREE.MeshStandardMaterial({ color: '#1c1f1e', roughness: 0.6, metalness: 0.3 });
@@ -199,6 +199,6 @@ function makeHelicopter(o = {}) {
     },
     dispose() { if (E.emitter) { E.emitter.stop(0.3); E.emitter = null; } },
   };
-  return g;
+  return bakeRig(g);
 }
 const _heliV = new THREE.Vector3();

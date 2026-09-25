@@ -301,6 +301,15 @@ CHAPTERS.valley = {
     }
     for (const z of [2.2, 0, -2.2, -5]) world.circles.push({ x: VALLEY.pad.x + Math.sin(HEAD) * z, z: VALLEY.pad.z + Math.cos(HEAD) * z, r: z < -3 ? 0.7 : 1.45 });
     const lena = () => (flight ? flight.walkers.lena : team.lena);
+    // the camp generator hums: audible near camp, gone when you walk away
+    let genE = null;
+    world.onUpdate(() => {
+      const g = world.campGen, p = Game.player;
+      if (!g || !Sound.ctx || !p) return;
+      const d = dist2d(p.pos.x, p.pos.z, g.x, g.z);
+      if (d < 70 && !genE) { genE = Sound.emitter('gen', { ref: 3, rolloff: 1.4, gain: 0.45, rate: 1 }); genE.setPos(new THREE.Vector3(g.x, g.y, g.z)); }
+      else if (d > 85 && genE) { genE.stop(1.2); genE = null; }
+    });
     // raptor silhouette for the insect-silence lesson
     const shadowRaptor = makeRaptor({ skin: '#3d3d34' }); shadowRaptor.visible = false; world.add(shadowRaptor);
 
@@ -468,7 +477,7 @@ CHAPTERS.valley = {
             HUD.objective('Изучите отпечатки', 'Следы у берега прямо перед Леной. Подойдите и удерживайте E.');
             HUD.say([{ who: 'Лена', text: 'Стойте. Видите? Отпечатки. Свежие. Изучите их — удерживайте E.' }]);
           } });
-        setTimeout(() => Tutorial.show('sprint', IS_TOUCH ? 'Джойстик до упора — бег. Лена побежит следом' : 'Удерживайте <kbd>Shift</kbd>, чтобы бежать. Лена побежит следом', () => Input.running() && P.speed > 5, { max: 14 }), 5000);
+        setTimeout(() => Tutorial.show('sprint', IS_TOUCH ? 'Джойстик до упора — бег. Лена побежит следом' : 'Удерживайте <kbd>Shift</kbd>, чтобы бежать. Лена побежит следом', () => Input.running() && P.speed > 5, { max: 14, valid: () => S.phase === 'lead' }), 5000);
       },
       markers() {
         const m = [{ x: VALLEY.camp.x, z: VALLEY.camp.z, label: 'лагерь' }];
@@ -580,6 +589,7 @@ CHAPTERS.valley = {
         if (S.duel === 'done' && S.bloodPos && !Journal.has('tri', 't_blood') && dist2d(p.pos.x, p.pos.z, S.bloodPos.x, S.bloodPos.y) < 6) Journal.add('tri', 't_blood');
         HUD.danger(herd.charging && herd.charging.override && herd.charging.override.type === 'charge');
       },
+      debug: () => ({ S, alert: herd.maxAlert(), herd: herd.state, center: { x: herd.center.x, z: herd.center.y } }),
       restore() {
         const cp = S.lastCp || { x: -12, z: 150 };
         Game.player.place(cp.x - 4, cp.z + 6, Math.PI);

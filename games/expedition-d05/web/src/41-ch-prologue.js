@@ -83,6 +83,7 @@ CHAPTERS.prologue = {
     world.floor = () => 0;
     world.ceiling = 3.6;
     world.scene.background = new THREE.Color('#07090a');
+    world.grade = { exposure: 1.18, contrast: 1.06, saturation: 1.05, lift: '#080a0c', gain: '#f6f0e8', bloom: 0.75, vignette: 0.95 };
     const fog = world.scene.fog = new THREE.Fog('#07090a', 18, 40);
     makeSky(world, { top: '#0a111c', horizon: '#26323c', low: '#090d11', sunDir: new THREE.Vector3(0.7, 0.1, -0.3), sunColor: '#44546a', sunSize: 0 });
     const hemi = new THREE.HemisphereLight('#9fbcd2', '#2a302a', 0.9); world.add(hemi);

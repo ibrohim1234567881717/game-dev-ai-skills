@@ -72,7 +72,7 @@ CHAPTERS.peaks = {
     // clouds under the summit
     const cloudGeo = new THREE.SphereGeometry(1, 10, 7);
     const cloudM = new THREE.MeshLambertMaterial({ color: '#f4f6f8', transparent: true, opacity: 0.85, depthWrite: false });
-    const clouds = scatterInstanced(world, cloudGeo, cloudM, scatter(46, () => { const a = rnd(0, TAU), r = rnd(120, 300); return { x: Math.cos(a) * r, y: rnd(24, 44), z: Math.sin(a) * r, s: rnd(10, 22), sx: rnd(1.4, 2.4), sy: 0.35 }; }), { cast: false, receive: false });
+    const clouds = scatterInstanced(world, cloudGeo, cloudM, scatter(46, () => { const a = rnd(0, TAU), r = rnd(120, 300); return { x: Math.cos(a) * r, y: rnd(24, 44), z: Math.sin(a) * r, s: rnd(10, 22), sx: rnd(1.4, 2.4), sy: 0.35 }; }), { cast: false, receive: false, chunk: false });
     makeVeil(world, { r: 520, h: 300 });
     // sparse alpine vegetation & rocks
     makeFerns(world, scatter(QUALITY ? 700 : 350, () => { const x = rnd(-170, 170), z = rnd(-170, 170); const h = peakHeight(x, z); const { d } = nearestPeak(x, z); if (h > 60 || d < PEAK.halfW + 0.5 || d > 30) return null; return { x, y: h - 0.05, z, s: rnd(0.5, 1), ry: rnd(0, TAU), tint: '#7a8a52' }; }));
@@ -127,10 +127,11 @@ CHAPTERS.peaks = {
       spawn: { x: PEAK_PTS[2].x, z: PEAK_PTS[2].z, yaw: Math.atan2(PEAK_PTS[6].x - PEAK_PTS[2].x, PEAK_PTS[6].z - PEAK_PTS[2].z) },
       markers() {
         const m = [];
-        if (S.stage === 'climb') { const t = !S.relay ? 0.46 : 1; const p = at(t); m.push({ x: p.x, z: p.z, label: !S.relay ? 'ретранслятор' : 'гнёзда' }); }
-        else if (S.stage === 'summit' && !S.carrying && !S.chickHome) m.push({ x: chickPos.x, z: chickPos.z, label: 'птенец' });
-        else if (S.carrying) m.push({ x: 4, z: -6, label: 'гнездо' });
-        else if (S.stage === 'escape') { const p = at(0.63); m.push({ x: p.x, z: p.z, label: 'осыпь', cls: 'bad' }); }
+        if (S.stage === 'climb') { const t = !S.relay ? 0.46 : 1; const p = at(t); m.push({ x: !S.relay ? rl.x : p.x, z: !S.relay ? rl.z : p.z, label: !S.relay ? 'ретранслятор' : 'гнёзда', goal: true, near: 4, y: !S.relay ? peakHeight(rl.x, rl.z) + 12 : undefined }); }
+        else if (S.stage === 'summit' && !S.carrying && !S.chickHome) m.push({ x: chickPos.x, z: chickPos.z, label: 'птенец', goal: true, near: 3 });
+        else if (S.carrying) m.push({ x: 4, z: -6, label: 'гнездо', goal: true, near: 3 });
+        else if (S.chickHome && !S.dna) m.push({ x: 4.3, z: -6, label: 'птенец', goal: true, near: 3 });
+        else if (S.stage === 'escape') { const p = at(0.63); m.push({ x: p.x, z: p.z, label: 'осыпь', cls: 'bad', goal: true, near: 6 }); }
         return m;
       },
       subjects() {
@@ -155,7 +156,7 @@ CHAPTERS.peaks = {
         const exposed = (np.t > 0.2 && np.t < 0.42) || (np.t > 0.6 && np.t < 0.8);
         if (S.stage === 'climb' || S.stage === 'escape') {
           S.nextGust -= dt;
-          if (!S.gust && exposed && S.nextGust <= 0) { S.gust = { t: 0 }; Sound.sfx('whistle', 1.2); Sound.bed('wind', 0.35, 0.8); HUD.toast(IS_TOUCH ? 'Порыв ветра — нажмите «Присесть»!' : 'Порыв ветра — присядьте (C)!', 2.2); }
+          if (!S.gust && exposed && S.nextGust <= 0) { S.gust = { t: 0 }; Sound.sfx('whistle', 1.2); Sound.bed('wind', 0.35, 0.8); if (Tutorial.seen('gust')) HUD.toast(IS_TOUCH ? 'Порыв ветра — нажмите «Присесть»!' : 'Порыв ветра — присядьте (C)!', 2.2); else Tutorial.show('gust', IS_TOUCH ? 'Порыв ветра! Кнопка <kbd>Присесть</kbd> — и ветер вас не сдует' : 'Порыв ветра! <kbd>C</kbd> — присесть, и ветер вас не сдует', () => Game.player.crouch, { max: 6, min: 0.5 }); }
           if (S.gust) {
             S.gust.t += dt;
             if (S.gust.t > 1.4 && S.gust.t < 3.4) {

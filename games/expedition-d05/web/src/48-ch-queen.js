@@ -15,7 +15,11 @@ CHAPTERS.queen = {
     const world = new World({ bounds: { x: 0, z: 60, r: 165 } });
     applyTime(world, 'storm');
     world.scene.fog.near = 18; world.scene.fog.far = 150;
-    world.hemi.intensity = world.baseHemi = 1.05;
+    // night storm, but the player and the Queen's silhouette must stay readable (no black crush)
+    world.hemi.intensity = world.baseHemi = 2.1;
+    world.hemi.color.set('#8795a4'); world.hemi.groundColor.set('#343b30');
+    world.sun.intensity = world.baseSun = 1.0;
+    world.grade = { ...world.grade, exposure: 1.16 };
     makeTerrain(world, { size: 400, seg: 150, cx: 0, cz: 60, height: queenH, color: (x, z, y, s, c) => { c.set('#2f3a26').lerp(_tmpC.set('#3a3a2a'), fbm(x * 0.05, z * 0.05, 2) * 0.5 + 0.5); if (Math.hypot(x, z - 6) < 48) c.set('#3a3b36'); if (s > 0.35) c.lerp(_tmpC.set('#4a4a42'), 0.5); } });
     world.floor = (x, z) => (x > -34 && x < 34 && z > -26 && z < 34 ? 0 : world.terrain.sample(x, z));
     world.snapY = true;
@@ -78,7 +82,10 @@ CHAPTERS.queen = {
     const Q = { x: 40, z: 110, yaw: 0, state: 'roam', speed: 0, t: 0, target: { x: -50, z: 120 }, pi: 1, cool: 0, stuck: 0, lastPos: { x: 40, z: 110 }, held: 0, eat: 0 };
     rex.userData.stepCb = () => { const d = dist2d(Game.player.pos.x, Game.player.pos.z, Q.x, Q.z); const v = Sound.vol(d, 8, 140); Sound.sfx('step', v); if (d < 40) Cam.shake = Math.max(Cam.shake, 0.25 * v); };
     let flashT = 0, nextFlash = 5, windT = 40;
-    world.wind.set(0.6, -0.8).normalize();
+    // the opening wind used to blow straight from the spawn to the Queen, so she caught the scent
+    // before the player had read the objective; start across the line and give a short grace
+    world.wind.set(-0.6, -0.8).normalize();
+    let scentGrace = 10;
     const S = { stage: 'territory', scentMask: 0, cp: 'start', switches: 0, bait: false, dna: false, seen: false, scentLearn: 0, glassDone: false };
     const P = () => Game.player;
     const ctx = {
@@ -86,19 +93,19 @@ CHAPTERS.queen = {
       spawn: { x: 0, z: 162, yaw: Math.PI },
       markers() {
         const pp = P().pos, m = [{ x: pp.x + world.wind.x * 50, z: pp.z + world.wind.y * 50, label: 'ветер ↦' }];
-        if (S.stage === 'territory') m.push({ x: 0, z: 32, label: 'Объект-0' });
-        else if (S.stage === 'site') m.push({ x: 0, z: -9, label: 'лаборатория' });
-        else if (S.stage === 'chase' && S.switches < 2) switches.filter((s) => !s.on).forEach((s) => m.push({ x: s.x, z: s.z, label: 'рубильник' }));
-        else if (S.stage === 'chase' && !S.bait) m.push({ x: 0, z: 16, label: 'кран' });
-        else if (S.stage === 'chase') m.push({ x: -9, z: 18, label: 'рычаг', cls: 'bad' });
-        else if (S.stage === 'escape') m.push({ x: -20, z: -12, label: 'Ковчег', cls: 'ark' });
+        if (S.stage === 'territory') m.push({ x: 0, z: 32, label: 'Объект-0', goal: true, near: 6 });
+        else if (S.stage === 'site') m.push({ x: 0, z: -9, label: 'лаборатория', goal: true, near: 3 });
+        else if (S.stage === 'chase' && S.switches < 2) switches.filter((s) => !s.on).forEach((s) => m.push({ x: s.x, z: s.z, label: 'рубильник', goal: true, near: 2.5 }));
+        else if (S.stage === 'chase' && !S.bait) m.push({ x: 0, z: 16, label: 'кран', goal: true, near: 3 });
+        else if (S.stage === 'chase') m.push({ x: -9, z: 18, label: 'рычаг', cls: 'bad', goal: true, near: 2.5, patient: true });
+        else if (S.stage === 'escape') m.push({ x: -20, z: -12, label: 'Ковчег', cls: 'ark', goal: true, near: 3 });
         return m;
       },
       subjects() { return [{ sp: 'rex', obj: rex, size: 12, lift: 4, tag: Q.state === 'track' ? 'Идёт по запаху' : '', item: Q.state === 'track' ? 'b_scent' : null, special: true, maxDist: 150 }]; },
       async start() {
         Sound.bed('rain', 0.14); Sound.bed('wind', 0.1);
         HUD.objective('Пересеките территорию Королевы', 'Она чует по ветру. Смотрите на компас: запах уходит туда, куда дует ветер. Грязь скрывает запах.');
-        HUD.say([{ who: 'Лена', text: 'Слышите? Насекомых нет. Совсем.' }, { who: 'Хальм', text: 'Здесь почти нет других хищников. Причина очевидна.' }, { who: 'Хальм', text: 'Держитесь так, чтобы ветер дул вам в лицо. Тогда она вас не учует.' }]);
+        HUD.say([{ who: 'Лена (рация)', text: 'Слышите? Насекомых нет. Совсем. Мы идём по краю леса, Итан, в стороне от вас.' }, { who: 'Хальм (рация)', text: 'Здесь почти нет других хищников. Причина очевидна.' }, { who: 'Хальм (рация)', text: 'Держитесь так, чтобы ветер дул вам в лицо. Тогда она вас не учует.' }]);
       },
       update(dt) {
         const p = P(), pp = p.pos;
@@ -143,7 +150,8 @@ CHAPTERS.queen = {
       rex.visible = true;
       if (S.stage === 'territory') {
         const tr = { x: (Q.x - pp.x) / (d || 1), z: (Q.z - pp.z) / (d || 1) };
-        const scent = S.scentMask <= 0 && d < 110 && world.wind.x * tr.x + world.wind.y * tr.z > 0.82;
+        scentGrace -= dt;
+        const scent = scentGrace <= 0 && S.scentMask <= 0 && d < 110 && world.wind.x * tr.x + world.wind.y * tr.z > 0.82;
         const sight = d < (flashT > 0 ? 60 : 20) * (p.crouch ? 0.7 : 1);
         const hear = p.noise > 0 && d < p.noise * 2.2;
         if (sight && Q.state !== 'hunt') { Q.state = 'hunt'; Sound.sfx('roar', Sound.vol(d, 10, 150)); if (!S.seen) { S.seen = true; Journal.add('rex', 'seen'); } }

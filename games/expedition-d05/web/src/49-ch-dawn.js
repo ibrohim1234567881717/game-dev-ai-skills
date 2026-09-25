@@ -35,6 +35,7 @@ CHAPTERS.dawn = {
     world.floor = () => 0;
     world.ceiling = 5.5;
     world.scene.background = new THREE.Color('#05070a');
+    world.grade = { exposure: 1.05, contrast: 1.1, saturation: 0.95, lift: '#030610', gain: '#e6eeff', bloom: 0.95, vignette: 1.1 };
     world.scene.fog = new THREE.Fog('#05070a', 10, 40);
     const hemi = new THREE.HemisphereLight('#6d86a8', '#101418', 0.4); world.add(hemi); world.hemi = hemi; world.baseHemi = 0.4;
     buildWalls(world, [[-10, -10, 10, -10], [-10, 10, -3, 10], [3, 10, 10, 10], [-10, -10, -10, 10], [10, -10, 10, 10]], { mat: mat('#2a2e33', { rough: 0.8 }), h: 6 });
@@ -79,7 +80,7 @@ CHAPTERS.dawn = {
     const ctx = {
       world, allowPhoto: false,
       spawn: { x: 0, z: 8, yaw: Math.PI },
-      markers() { return S.done ? [{ x: 0, z: 10, label: 'лифт' }] : [{ x: 0, z: 0, label: 'консоль', cls: 'ark' }]; },
+      markers() { return S.done ? [{ x: 0, z: 10, label: 'лифт', goal: true, near: 2.5 }] : [{ x: 0, z: 0, label: 'консоль', cls: 'ark', goal: true, near: 3.2 }]; },
       async start() {
         mon('ARK · STANDBY'); mon('INSERT GENETIC SAMPLES: 0/5');
         HUD.objective('Вставьте контейнеры в Ковчег', `Консоль в центре зала. Шесть гнёзд. Контейнеров у вас: ${S.total}.`);
@@ -166,8 +167,8 @@ CHAPTERS.lighthouse = {
       world,
       spawn: { x: LH.x - 20, z: LH.z + 40, yaw: Math.PI * 0.8 },
       markers() {
-        if (S.stage === 'nodes') return nodes.filter((n) => !n.off).map((n) => ({ x: n.x, z: n.z, label: 'узел', cls: 'bad' }));
-        if (S.stage === 'climb') return [{ x: LH.x, z: LH.z + 9, label: 'Маяк', cls: 'ark' }];
+        if (S.stage === 'nodes') return nodes.filter((n) => !n.off).map((n) => ({ x: n.x, z: n.z, label: 'узел', cls: 'bad', goal: true, near: 2.5 }));
+        if (S.stage === 'climb') return [{ x: LH.x, z: LH.z + 10.5, label: 'Маяк', cls: 'ark', goal: true, near: 3 }];
         return [];
       },
       subjects() { return [{ sp: 'rex', obj: rex, size: 12, lift: 4, tag: 'Королева на рассвете', special: true, maxDist: 160 }, ...herd.slice(0, 4).map((h) => ({ sp: 'tri', obj: h.g, size: 7, lift: 2 }))]; },

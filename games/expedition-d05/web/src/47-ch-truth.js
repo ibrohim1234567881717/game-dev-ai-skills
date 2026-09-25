@@ -197,10 +197,10 @@ CHAPTERS.truth = {
       spawn: { x: 0, z: 134, yaw: Math.PI },
       markers() {
         const m = [];
-        if (S.stage === 'volcano') m.push({ x: -60, z: 44, label: 'пещера' });
-        else if (S.stage === 'cave' && !S.diego) m.push({ x: TRUTH.alcove[0], z: TRUTH.alcove[1], label: 'голос' });
-        else if (S.stage === 'cave') m.push({ x: -32, z: -90, label: 'выход' });
-        else if (S.stage === 'camp' && S.clues.size < 8) m.push({ x: cx, z: cz, label: 'лагерь D-04' });
+        if (S.stage === 'volcano') m.push({ x: -60, z: 44, label: 'пещера', goal: true, near: 6 });
+        else if (S.stage === 'cave' && !S.diego) m.push({ x: TRUTH.alcove[0], z: TRUTH.alcove[1], label: 'голос', goal: true, near: 6 });
+        else if (S.stage === 'cave') m.push({ x: -32, z: -90, label: 'выход', goal: true, near: 6, patient: true });
+        else if (S.stage === 'camp' && S.clues.size < 8) m.push({ x: cx, z: cz, label: 'лагерь D-04', goal: true, near: 18 });
         if (S.stage === 'cave' && S.diego && Journal.pct('eva') >= 50 && !S.mara) m.push({ x: TRUTH.shelter[0], z: TRUTH.shelter[1], label: '6 = ЕВА', cls: 'ark' });
         return m;
       },
@@ -213,6 +213,7 @@ CHAPTERS.truth = {
       update(dt) {
         const p = P(), pp = p.pos;
         const ins = inside(pp.x, pp.z);
+        if (ins !== S.wasInside) { S.wasInside = ins; Post.setGrade(ins ? { exposure: 1.15, contrast: 1.12, saturation: 0.85, lift: '#020607', gain: '#dff6f0', bloom: 0.9, vignette: 1.25 } : world.grade); }
         world.ceiling = ins ? 7.6 : null;
         world.hemi.intensity = damp(world.hemi.intensity, ins ? 0.06 : world.baseHemi, 2, dt);
         world.sun.intensity = ins ? 0 : world.baseSun;

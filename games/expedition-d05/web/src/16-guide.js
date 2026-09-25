@@ -159,7 +159,9 @@ const Tutorial = {
   seen(id) { return !!(Game.state.flags.tut && Game.state.flags.tut[id]); },
   show(id, html, done, o = {}) {
     if (this.seen(id) || (this.cur && this.cur.id === id) || this.queue.some((q) => q.id === id)) return;
-    const t = { id, html, done, t: 0, okT: 0, min: o.min ?? 1.4, max: o.max ?? 16 };
+    // valid(): the hint only makes sense in some situation (sprint during the long walk); a queued
+    // or open hint whose moment has passed is dropped unseen instead of appearing out of context
+    const t = { id, html, done, valid: o.valid || null, t: 0, okT: 0, min: o.min ?? 1.4, max: o.max ?? 16 };
     if (this.cur) { this.queue.push(t); return; }
     this._open(t);
   },
@@ -181,7 +183,12 @@ const Tutorial = {
   },
   update(dt) {
     const el = $('tutorial');
-    if (!this.cur) { if (this.queue.length && !Cine.active) this._open(this.queue.shift()); return; }
+    if (!this.cur) {
+      while (this.queue.length && this.queue[0].valid && !this.queue[0].valid()) this.queue.shift();
+      if (this.queue.length && !Cine.active) this._open(this.queue.shift());
+      return;
+    }
+    if (this.cur.valid && !this.cur.valid()) { this.cur = null; el.classList.add('done'); setTimeout(() => { if (!this.cur) el.hidden = true; }, 450); return; }
     if (Cine.active || Game.paused) { el.style.visibility = 'hidden'; return; }
     el.style.visibility = '';
     const t = this.cur;
