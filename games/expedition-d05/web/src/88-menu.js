@@ -280,6 +280,7 @@ const SCREENS = {
 
   credits: {
     hints: [['Esc', 'Назад']],
+    onBack() { UI.pop(); if (UI.mode === 'menu' && !MenuMusic.on) MenuMusic.start(); },
     build(s) {
       const sec = CREDITS.map((c) => `<section><h4>${esc(c.head)}</h4>${(c.lines || []).map((l) => `<div>${l}</div>`).join('')}${c.cast ? `<div class="cast">${c.cast.map(([n, r]) => `<div><b>${esc(n)}</b><span>${esc(r)}</span></div>`).join('')}</div>` : ''}</section>`).join('');
       s.el.innerHTML = `${screenHead('Авторы')}<div class="roll" data-nav tabindex="0" aria-label="Титры"><div class="roll-in"><div class="r-logo">UMBRA</div><div class="r-sub">Expedition D-05</div>${sec}<div class="r-end">Спасибо, что играете.</div></div></div>`;

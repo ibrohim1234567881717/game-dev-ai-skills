@@ -17,8 +17,12 @@ const MenuMusic = {
   ],
   LEN: 9,
   start() {
+    if (this.on) return;
+    // a recorded menu theme wins over the synthesized one
+    if (Music.play('menu', { fade: 3 })) { this.on = true; this.file = true; Sound.bed('wind', 0.05, 3); Sound.bed('insects', 0.022, 4); return; }
     const ctx = Sound.ctx;
-    if (!ctx || this.on) return;
+    if (!ctx) return;
+    Music.stop(2);
     this.on = true;
     this.out = ctx.createGain();
     this.out.gain.setValueAtTime(0.0001, ctx.currentTime);
@@ -38,6 +42,7 @@ const MenuMusic = {
   stop(fade = 1.6) {
     if (!this.on) return;
     this.on = false;
+    if (this.file) { this.file = false; Music.stop(fade); return; }
     clearTimeout(this._timer); clearTimeout(this._callTimer);
     const ctx = Sound.ctx, out = this.out, drone = this.drone;
     out.gain.cancelScheduledValues(ctx.currentTime);
@@ -86,5 +91,76 @@ const MenuMusic = {
       o.connect(lp); lp.connect(g); g.connect(Sound.bedBus); o.start(t); o.stop(t + 3.3);
       this._call();
     }, (22 + Math.random() * 20) * 1000);
+  },
+};
+
+// ---------- recorded tracks (web/music/, copied next to the page by build.py) ----------
+// Played through <audio> elements, not decoded into the audio graph: that also works when the
+// game is opened straight from disk (file://), where fetch() of a local file is refused. Volume
+// follows the master and music settings and drops while paused. Loops crossfade their last
+// seconds into a fresh copy from the start, so a track that does not loop sample-exactly has no
+// seam. Every cue falls back to the synthesized score when its file is missing.
+const Music = {
+  files: (typeof window !== 'undefined' && window.MUSIC_TRACKS) || {},
+  cur: null, fading: [], _dangerOff: 0, _before: null,
+  has(n) { return !!this.files[n]; },
+  playing(n) { return !!(this.cur && this.cur.name === n); },
+  gain() { const v = Settings.v; return Game.muted ? 0 : (v.master / 100) * (v.music / 100) * (Game.paused && !Game.inMenu ? 0.35 : 1); },
+  _el(src) { const a = new Audio(src); a.preload = 'auto'; a.volume = 0; a.play().catch(() => {}); return a; },
+  play(name, o = {}) {
+    if (!this.has(name)) return false;
+    if (this.playing(name)) return true;
+    this.stop(o.fade ?? 2);
+    this.cur = { name, a: this._el(this.files[name]), k: 0, rise: 1 / Math.max(0.05, o.fade ?? 2), loop: o.loop !== false, vol: o.vol ?? 1, next: null };
+    return true;
+  },
+  stop(fade = 2) {
+    // any pending hand-back from the danger cue dies with the track (a chapter change, the menu)
+    this._dangerOff = 0; this._before = null;
+    const t = this.cur;
+    if (!t) return;
+    this.cur = null;
+    t.fall = 1 / Math.max(0.05, fade);
+    this.fading.push(t);
+  },
+  tick(dt) {
+    const g = this.gain(), t = this.cur, X = 3;
+    if (this._dangerOff > 0) {
+      this._dangerOff -= dt;
+      if (this._dangerOff <= 0) {
+        this._dangerOff = 0;
+        const back = this._before; this._before = null;
+        if (!(back && this.play(back, { fade: 3 }))) this.stop(4);
+      }
+    }
+    if (t) {
+      t.k = Math.min(1, t.k + dt * t.rise);
+      const a = t.a;
+      if (t.loop && !t.next && isFinite(a.duration) && a.duration > X * 3 && a.currentTime > a.duration - X) t.next = { b: this._el(a.src), k: 0 };
+      if (t.next) {
+        const n = t.next;
+        n.k = Math.max(n.k, Math.min(1, n.b.currentTime / X)); // the new copy's own clock: exact at any frame rate
+        n.b.volume = clamp(g * t.vol * n.k, 0, 1);
+        a.volume = clamp(g * t.vol * t.k * (1 - n.k), 0, 1);
+        if (n.k >= 1) { a.pause(); t.a = n.b; t.next = null; }
+      } else a.volume = clamp(g * t.vol * t.k, 0, 1);
+      if (!t.loop && a.ended) this.cur = null;
+    }
+    for (let i = this.fading.length - 1; i >= 0; i--) {
+      const f = this.fading[i];
+      f.k -= dt * f.fall;
+      const v = clamp(g * f.vol * Math.max(0, f.k), 0, 1);
+      f.a.volume = v; if (f.next) f.next.b.volume = v;
+      if (f.k <= 0) { f.a.pause(); if (f.next) f.next.b.pause(); this.fading.splice(i, 1); }
+    }
+  },
+  // the danger cue follows HUD.danger (a chase, a charge, being spotted) and lingers a few seconds
+  // after the threat is gone, then hands back to whatever loop was playing before
+  danger(on) {
+    if (!this.has('danger')) return;
+    if (on) {
+      this._dangerOff = 0;
+      if (!this.playing('danger')) { const before = this.cur && this.cur.loop ? this.cur.name : null; this.play('danger', { fade: 1.2 }); this._before = before; }
+    } else if (this.playing('danger') && !this._dangerOff) this._dangerOff = 5;
   },
 };

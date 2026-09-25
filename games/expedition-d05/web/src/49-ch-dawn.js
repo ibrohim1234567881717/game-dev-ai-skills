@@ -174,7 +174,7 @@ CHAPTERS.lighthouse = {
       subjects() { return [{ sp: 'rex', obj: rex, size: 12, lift: 4, tag: 'Королева на рассвете', special: true, maxDist: 160 }, ...herd.slice(0, 4).map((h) => ({ sp: 'tri', obj: h.g, size: 7, lift: 2 }))]; },
       async start() {
         Sound.bed('wind', 0.08);
-        Sound.theme(0.08);
+        if (!Music.play('finale', { fade: 3 })) Sound.theme(0.08);
         HUD.big('РАССВЕТ', 'ВУАЛЬ ОТКЛЮЧЕНА', 'ark', 3.5);
         HUD.objective('Отключите узлы связи ORIGO · 0/3', 'Три узла у основания Маяка. Пока идёт загрузка, «Пепел» взведён.');
         HUD.say([{ who: 'Лена (рация)', text: 'Итан, посмотрите на небо… Солнце. Над островом солнце.' }, { who: 'Лукас (рация)', text: 'Вижу вертолёты ORIGO. Два. Я кружу над кальдерой — позовёшь, и я там.' }, { who: 'Лена (рация)', text: 'Земля трясётся. Стада бегут к побережью — все сразу. Осторожно!' }]);
@@ -257,10 +257,13 @@ CHAPTERS.lighthouse = {
       const t = tower.userData;
       const top = V(LH.x, world.groundH(LH.x, LH.z) + 97, LH.z);
       const sky = world.sky.material.uniforms;
+      // a recorded ending theme replaces the synthesized stingers in the ending shots
+      const rec = Music.play('ending', { loop: false, fade: 2.5 });
+      const theme = (v) => { if (!rec) Sound.theme(v); }, motif = (s, v) => { if (!rec) Sound.motif(s, v); };
       const shots = {
-        transmit: [{ from: V(LH.x + 120, top.y - 20, LH.z + 120), to: V(LH.x + 100, top.y + 10, LH.z + 100), look: () => top.clone().add(V(0, 80, 0)), dur: 9, cut: true, fov: 55, onStart: () => { Sound.theme(0.12); }, onUpdate: (k) => { t.beam.scale.set(1 + k * 6, 1, 1 + k * 6); t.beamM.opacity = 0.35 + k * 0.3; } }],
-        seal: [{ from: V(LH.x + 120, top.y - 20, LH.z + 120), to: V(LH.x + 110, top.y - 10, LH.z + 110), look: () => top, dur: 9, cut: true, fov: 55, onStart: () => Sound.motif(1.4, 0.1), onUpdate: (k) => { t.beamM.opacity = 0.35 * (1 - k); t.light.intensity = 80 * (1 - k); world.scene.fog.far = lerp(700, 90, k); world.scene.fog.color.lerpColors(new THREE.Color('#c7bca8'), new THREE.Color('#5a6068'), k); sky.flash.value = 0; } }],
-        rosetta: [{ from: V(LH.x + 120, top.y - 20, LH.z + 120), to: V(LH.x + 90, top.y + 20, LH.z + 90), look: () => top.clone().add(V(0, 60, 0)), dur: 10, cut: true, fov: 55, onStart: () => { Sound.theme(0.1); t.beamM.color.set('#ffffff'); }, onUpdate: (k) => { t.beam.scale.set(1 - k * 0.6, 1, 1 - k * 0.6); world.scene.fog.far = lerp(700, 260, k); } }],
+        transmit: [{ from: V(LH.x + 120, top.y - 20, LH.z + 120), to: V(LH.x + 100, top.y + 10, LH.z + 100), look: () => top.clone().add(V(0, 80, 0)), dur: 9, cut: true, fov: 55, onStart: () => { theme(0.12); }, onUpdate: (k) => { t.beam.scale.set(1 + k * 6, 1, 1 + k * 6); t.beamM.opacity = 0.35 + k * 0.3; } }],
+        seal: [{ from: V(LH.x + 120, top.y - 20, LH.z + 120), to: V(LH.x + 110, top.y - 10, LH.z + 110), look: () => top, dur: 9, cut: true, fov: 55, onStart: () => motif(1.4, 0.1), onUpdate: (k) => { t.beamM.opacity = 0.35 * (1 - k); t.light.intensity = 80 * (1 - k); world.scene.fog.far = lerp(700, 90, k); world.scene.fog.color.lerpColors(new THREE.Color('#c7bca8'), new THREE.Color('#5a6068'), k); sky.flash.value = 0; } }],
+        rosetta: [{ from: V(LH.x + 120, top.y - 20, LH.z + 120), to: V(LH.x + 90, top.y + 20, LH.z + 90), look: () => top.clone().add(V(0, 60, 0)), dur: 10, cut: true, fov: 55, onStart: () => { theme(0.1); t.beamM.color.set('#ffffff'); }, onUpdate: (k) => { t.beam.scale.set(1 - k * 0.6, 1, 1 - k * 0.6); world.scene.fog.far = lerp(700, 260, k); } }],
         ash: [{ from: V(LH.x + 160, top.y, LH.z + 160), to: V(LH.x + 200, top.y + 40, LH.z + 200), look: () => V(40, 60, -290), dur: 9, cut: true, fov: 55, onStart: () => { Sound.sfx('thunder', 1); Sound.sfx('roar', 0.6); }, onUpdate: (k, dt) => { Cam.shake = Math.max(Cam.shake, 0.6); world.scene.fog.color.lerpColors(new THREE.Color('#c7bca8'), new THREE.Color('#6a2a14'), k); world.scene.fog.far = lerp(700, 160, k); if (Math.random() < dt * 3) Sound.sfx('thud', 0.8); } }],
       };
       await Cine.play(shots[id], { skippable: true });

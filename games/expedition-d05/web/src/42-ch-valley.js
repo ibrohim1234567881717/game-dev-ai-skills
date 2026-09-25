@@ -215,7 +215,7 @@ function flightIntro(world, herd) {
       onStart: () => { crew.lena.userData.pose = { sit: true, hold: true }; crew.diego.userData.pose = { sit: true, hold: true }; Sound.sfx('thud', 0.5); setTimeout(() => lightning(world, 1.2, 0.1), 900); },
       onUpdate: (k, dt) => { sit(k, dt); Cam.shake = Math.max(Cam.shake, 0.35 * (1 - k)); if (k > 0.85 && !shake) { shake = 1; HUD.flash(0.9, 1.2); Sound.silenceAll(0.6); } } },
     { from: V(170, 9, -40), to: V(166, 11, -62), look: () => V(herd.center.x, 3, herd.center.y).lerp(heli.position, 0.28), dur: 11, cut: true, fov: 52,
-      onStart: () => { heli.userData.cabinLight.intensity = 0.3; Sound.bed('wind', 0.08); Sound.theme(0.1); setTimeout(() => HUD.big('UMBRA', 'Expedition D-05', 'title', 5), 2500); setTimeout(() => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Они живые. Они настоящие.', dur: 3 }]), 7500); } },
+      onStart: () => { heli.userData.cabinLight.intensity = 0.3; Sound.bed('wind', 0.08); if (!Music.play('island', { loop: false, fade: 1.5 })) Sound.theme(0.1); setTimeout(() => HUD.big('UMBRA', 'Expedition D-05', 'title', 5), 2500); setTimeout(() => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Они живые. Они настоящие.', dur: 3 }]), 7500); } },
     { from: loc(0.1, 2.1, 1.75), look: loc(0.62, 2.02, 0.85), dur: 5, cut: true, fov: 42, rigid: true, onUpdate: sit,
       onStart: () => { crew.lena.userData.pose = { sit: true, lookY: 1.05 }; crew.diego.userData.pose = { sit: true }; HUD.say([{ who: 'Диего', text: 'Скажи это ещё раз, когда будем внизу.', dur: 2.6 }, { who: 'Лена', text: 'Они живые, Диего.', dur: 2 }]); } },
     { from: V(-30, 14, -44), to: V(-32, 15, -36), look: () => V(-62, 15, -18).lerp(heli.position, 0.35), dur: 6, cut: true, fov: 50 },

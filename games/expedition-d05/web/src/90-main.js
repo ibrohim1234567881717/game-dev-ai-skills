@@ -70,6 +70,7 @@ async function goChapter(id, o = {}) {
   await HUD.fade(1, o.fast ? 0.3 : 0.9);
   teardown();
   if (menuWorld) { menuWorld.dispose(); menuWorld = null; }
+  MenuMusic.stop(1.5); Music.stop(1.5);
   Game.inMenu = false;
   UI.hide();
   HUD.show(false);
@@ -168,7 +169,8 @@ function openMenu(o = {}) {
   Post.setGrade(menuWorld.grade);
   UI.open('menu', 'main');
   if (o.credits) UI.push('credits');
-  MenuMusic.start();
+  // after the ending its track carries the credits; the menu theme starts when they close
+  if (!(o.credits && Music.playing('ending'))) MenuMusic.start();
   HUD.fade(0, 1.2);
 }
 
@@ -221,6 +223,7 @@ function frame(now) {
   const raw = (now - last) / 1000;
   let dt = Math.min(Game.dtCap || 0.05, raw);
   last = now;
+  Music.tick(Math.min(raw, 1)); // wall-clock fades: music does not slow down with the frame rate
   if (Settings.v.fps) { fpsN++; fpsT += raw; if (fpsT >= 0.5) { $('fps').textContent = `${Math.round(fpsN / fpsT)} FPS`; fpsN = 0; fpsT = 0; } }
   HUD.beginFrame();
   if (Input.pressed('mute')) Sound.setMuted(!Game.muted);
@@ -288,5 +291,5 @@ function boot() {
   HUD.fade(0, 1.4);
   requestAnimationFrame(frame);
 }
-window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, Settings, UI, MenuMusic, renderer, get ctx() { return Game.ctx; } };
+window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, Settings, UI, MenuMusic, Music, renderer, get ctx() { return Game.ctx; } };
 boot();

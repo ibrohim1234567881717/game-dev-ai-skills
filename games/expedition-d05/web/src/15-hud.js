@@ -133,7 +133,7 @@ const HUD = {
     o.hidden = false;
     $('observeArc').style.strokeDashoffset = (100.5 * (1 - clamp(p, 0, 1))).toFixed(1);
   },
-  danger(on) { $('danger').classList.toggle('on', !!on); },
+  danger(on) { $('danger').classList.toggle('on', !!on); Music.danger(!!on); },
   timer(text) { const t = $('timer'); if (text === null) { t.hidden = true; return; } t.hidden = false; t.textContent = text; },
   compass(yaw, markers) {
     // yaw: camera heading, 0 = looking north (-z). markers: [{x,z,label,cls}] relative to player

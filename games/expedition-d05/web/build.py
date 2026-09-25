@@ -17,7 +17,17 @@ lists is embedded as a data: URL in
 right after the three.js import. Without a manifest (or with --no-voice) the
 page gets window.VOICE_BANK = null and shows subtitles only. The speaker table
 from voice/voices.json is emitted as window.VOICE_SPEAKERS, longest prefix
-first. See voice/README.md. Stdlib only.
+first. See voice/README.md.
+
+Music (optional): audio files in music/ named after a cue (menu.mp3,
+danger.ogg, ...) are copied to dist/music/ and listed in
+
+    window.MUSIC_TRACKS = {"menu": "music/menu.mp3", ...};
+
+They stay separate files, not data: URLs, so a few minutes of music does not
+push the page past what browsers and hosts load comfortably. Keep dist/music/
+next to dist/umbra.html. The cues the game knows are MUSIC_CUES; see
+music/README.md. Stdlib only.
 """
 
 from __future__ import annotations
@@ -25,6 +35,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import shutil
 import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -34,6 +45,10 @@ SRC = ROOT / "src"
 OUT = ROOT / "dist" / "umbra.html"
 THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
 VOICE_DIR = ROOT / "voice"
+MUSIC_DIR = ROOT / "music"
+MUSIC_OUT = OUT.parent / "music"
+MUSIC_CUES = ("menu", "island", "danger", "truth", "finale", "ending")
+MUSIC_EXT = (".mp3", ".ogg", ".m4a", ".wav")
 WARN_HTML_BYTES = 15 * 1024 * 1024
 AUDIO_MIME = {
     ".mp3": "audio/mpeg",
@@ -89,6 +104,32 @@ def voice_bank(manifest_path: Path) -> Tuple[dict, int, List[str]]:
     return bank, raw, problems
 
 
+def copy_music(src: Path) -> Tuple[dict, int, List[str]]:
+    """Copy one file per known cue into dist/music/; returns (cue -> relative url, bytes, notes)."""
+    tracks: dict = {}
+    total = 0
+    notes: List[str] = []
+    if MUSIC_OUT.is_dir():
+        shutil.rmtree(MUSIC_OUT)  # build output only: the sources live in music/
+    if not src.is_dir():
+        return tracks, total, notes
+    for f in sorted(src.iterdir()):
+        if not f.is_file() or f.suffix.lower() not in MUSIC_EXT:
+            continue
+        cue = f.stem.lower()
+        if cue not in MUSIC_CUES:
+            notes.append(f"{f.name}: not a known cue ({', '.join(MUSIC_CUES)}), skipped")
+            continue
+        if cue in tracks:
+            notes.append(f"{f.name}: a second file for '{cue}', skipped")
+            continue
+        MUSIC_OUT.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(f, MUSIC_OUT / f.name)
+        tracks[cue] = f"music/{f.name}"
+        total += f.stat().st_size
+    return tracks, total, notes
+
+
 def speaker_table() -> Optional[list]:
     path = VOICE_DIR / "voices.json"
     if not path.is_file():
@@ -107,6 +148,8 @@ def main(argv=None) -> None:
     ap.add_argument("--no-voice", action="store_true", help="do not embed voice-over audio")
     ap.add_argument("--voice-dir", type=Path, default=VOICE_DIR / "audio",
                     help="folder with manifest.json (default: voice/audio)")
+    ap.add_argument("--no-music", action="store_true", help="leave music out (the game falls back to its synthesized score)")
+    ap.add_argument("--music-dir", type=Path, default=MUSIC_DIR, help="folder with the music files (default: music)")
     args = ap.parse_args(argv)
 
     page = (SRC / "page.html").read_text(encoding="utf-8")
@@ -133,6 +176,19 @@ def main(argv=None) -> None:
     speakers = speaker_table()
     if speakers is not None:
         parts.append("window.VOICE_SPEAKERS = " + _js_json(speakers) + ";")
+    if args.no_music:
+        if MUSIC_OUT.is_dir():
+            shutil.rmtree(MUSIC_OUT)
+        tracks, music_bytes, music_notes = {}, 0, []
+    else:
+        tracks, music_bytes, music_notes = copy_music(args.music_dir)
+    for n in music_notes:
+        print(f"warning: music {n}")
+    parts.append("window.MUSIC_TRACKS = " + _js_json(tracks) + ";")
+    if tracks:
+        music_note = f"music: {len(tracks)} track(s) ({', '.join(sorted(tracks))}), {music_bytes / 1048576:.2f} MB in dist/music/"
+    else:
+        music_note = "music: off (--no-music)" if args.no_music else "music: none, the synthesized score plays"
 
     for js in sorted(SRC.glob("*.js")):
         parts.append(f"// ---- {js.name} ----\n" + js.read_text(encoding="utf-8"))
@@ -144,6 +200,7 @@ def main(argv=None) -> None:
     OUT.write_text(html, encoding="utf-8")
     size = len(html.encode("utf-8"))
     print(voice_note)
+    print(music_note)
     print(f"wrote {OUT.relative_to(ROOT.parent)} ({size // 1024} KB)")
     if size > WARN_HTML_BYTES:
         print(f"warning: {OUT.name} is {size / 1048576:.1f} MB (> 15 MB); some browsers and hosts "

@@ -175,6 +175,7 @@ CHAPTERS.truth = {
 
     async function reveal() {
       S.reveal = true;
+      Music.play('truth', { loop: false, fade: 2 });
       const g = (x, z, y = 1.7) => V(x, campH(x, z) + y, z);
       npc.lena.visible = npc.halm.visible = true;
       diego.position.set(cx + 5, campH(cx + 5, cz - 4), cz - 4); diego.rotation.y = -1.8;
