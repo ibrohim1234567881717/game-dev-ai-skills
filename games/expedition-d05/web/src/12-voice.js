@@ -70,28 +70,45 @@ const Voice = {
   play(v, radio) {
     this.stop();
     if (!Sound.ctx) return;
-    const token = {};
+    const token = { radio, off: 0 };
     this.cur = token;
     this._decode(v.id).then((buf) => {
       if (!buf || this.cur !== token) return;
-      const ctx = Sound.ctx;
-      const src = ctx.createBufferSource(); src.buffer = buf;
-      const g = ctx.createGain(); g.gain.value = radio ? 0.95 : 1.0;
-      let head = src;
-      if (radio) {
-        const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 380;
-        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200;
-        const sh = ctx.createWaveShaper(); sh.curve = Voice._crunch();
-        src.connect(hp); hp.connect(lp); lp.connect(sh); head = sh;
-        Sound.noise(Math.min(buf.duration, 8), 2400, 'bandpass', 0.018);
-        Sound.sfx('click', 0.25);
-      }
-      head.connect(g); g.connect(Sound.voiceBus || Sound.master);
-      src.start();
-      token.src = src;
-      Sound.duck(true);
-      src.onended = () => { if (this.cur === token) { this.cur = null; Sound.duck(false); } };
+      token.buf = buf;
+      if (radio) { Sound.noise(Math.min(buf.duration, 8), 2400, 'bandpass', 0.018); Sound.sfx('click', 0.25); }
+      if (!token.paused) this._start(token);
     });
+  },
+  _start(token) {
+    const ctx = Sound.ctx, buf = token.buf;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const g = ctx.createGain(); g.gain.value = token.radio ? 0.95 : 1.0;
+    let head = src;
+    if (token.radio) {
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 380;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200;
+      const sh = ctx.createWaveShaper(); sh.curve = Voice._crunch();
+      src.connect(hp); hp.connect(lp); lp.connect(sh); head = sh;
+    }
+    head.connect(g); g.connect(Sound.voiceBus);
+    src.start(0, Math.min(token.off, Math.max(0, buf.duration - 0.01)));
+    token.src = src; token.t0 = ctx.currentTime - token.off;
+    Sound.duck(true);
+    src.onended = () => { if (this.cur === token && !token.paused) { this.cur = null; Sound.duck(false); } };
+  },
+  // the pause menu holds the line where it is and picks it up from the same word
+  pause() {
+    const c = this.cur;
+    if (!c || c.paused) return;
+    c.paused = true;
+    if (c.src) { c.off = Sound.ctx.currentTime - c.t0; try { c.src.stop(); } catch (e) { /* already stopped */ } c.src = null; }
+  },
+  resume() {
+    const c = this.cur;
+    if (!c || !c.paused) return;
+    c.paused = false;
+    if (c.buf && c.off < c.buf.duration - 0.05) this._start(c);
+    else if (c.buf) { this.cur = null; Sound.duck(false); }
   },
   stop() {
     const c = this.cur;

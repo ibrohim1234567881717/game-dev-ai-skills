@@ -29,7 +29,8 @@ function showCard(meta) {
     const done = () => { $('card').hidden = true; btn.onclick = null; window.removeEventListener('keydown', key); resolve(); };
     const key = (e) => { if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE') done(); };
     btn.onclick = done;
-    setTimeout(() => { window.addEventListener('keydown', key); btn.focus(); }, 350);
+    $('cardHint').hidden = IS_TOUCH;
+    setTimeout(() => { window.addEventListener('keydown', key); btn.focus({ preventScroll: true }); }, 350);
   });
 }
 function choose(eyebrow, title, text, options) {
@@ -44,6 +45,7 @@ function choose(eyebrow, title, text, options) {
     });
     if (document.pointerLockElement) document.exitPointerLock();
     $('choice').hidden = false;
+    if (!IS_TOUCH) setTimeout(() => { const b = box.querySelector('button:not([disabled])'); if (b && !$('choice').hidden) b.focus({ preventScroll: true }); }, 60);
   });
 }
 
@@ -67,10 +69,14 @@ async function goChapter(id, o = {}) {
   Input.enabled = false;
   await HUD.fade(1, o.fast ? 0.3 : 0.9);
   teardown();
+  if (menuWorld) { menuWorld.dispose(); menuWorld = null; }
   Game.inMenu = false;
-  $('menu').hidden = true;
+  UI.hide();
   HUD.show(false);
   if (!o.noCard) await showCard(CHAPTER_META[id]);
+  // building a chapter blocks for a moment: show the spinner and let it paint first
+  $('loading').hidden = false;
+  await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 30)));
   Game.currentId = id;
   if (!Game.unlocked.includes(id)) Game.unlocked.push(id);
   for (const k of CHAPTER_META[id].dna) Game.state.dna[k] = true;
@@ -91,10 +97,12 @@ async function goChapter(id, o = {}) {
   HUD.renderCase();
   HUD.show(true);
   HUD.objective('…');
+  $('loading').hidden = true;
   Game.loading = false;
   Input.enabled = true;
   Input.edges.clear();
   await HUD.fade(0, 1.1);
+  HUD.saving();
   if (ctx.start) ctx.start(o);
 }
 Game.complete = async (next, opts = {}) => {
@@ -126,7 +134,8 @@ Game.fail = async (title, sub, restore) => {
 };
 
 // ---------- menu ----------
-let menuWorld = null, menuT = 0;
+// the screens live in 88-menu.js; this part loads the save and moves between menu and game
+let menuWorld = null, menuT = 0, menuYaw = 0;
 function buildMenu() {
   const save = loadSave();
   if (save) {
@@ -134,64 +143,55 @@ function buildMenu() {
     if (save.dna) Object.assign(Game.state.dna, save.dna);
     if (save.flags) Object.assign(Game.state.flags, save.flags);
     if (save.journal) for (const [k, v] of Object.entries(save.journal)) if (SPECIES[k]) Game.state.journal[k] = new Set(v);
-    if (save.current && CHAPTER_ORDER.includes(save.current)) Game.currentId = save.current;
+    if (save.current && CHAPTERS[save.current] && CHAPTER_META[save.current]) Game.currentId = save.current;
   }
-  $('btnContinue').hidden = !(Game.currentId && Game.currentId !== 'prologue');
-  if (!$('btnContinue').hidden) $('btnContinue').textContent = `Продолжить · ${CHAPTER_META[Game.currentId].title}`;
-  $('helpDesk').hidden = IS_TOUCH; $('helpTouch').hidden = !IS_TOUCH;
-  renderChapterList();
-}
-function renderChapterList() {
-  const list = $('chapterList');
-  list.innerHTML = '';
-  CHAPTER_ORDER.forEach((id) => {
-    const m = CHAPTER_META[id];
-    const b = document.createElement('button');
-    b.className = 'btn';
-    const open = Game.unlocked.includes(id);
-    b.disabled = !open;
-    b.innerHTML = `<span>${m.eyebrow} · ${m.title}</span><span>${open ? 'открыта' : 'закрыта'}</span>`;
-    b.onclick = () => startGame(id, true);
-    list.appendChild(b);
-  });
 }
 function startGame(id, fromSelect) {
   Sound.init();
   if (fromSelect) DNA_KEYS.forEach((k) => { Game.state.dna[k] = CHAPTER_META[id].dna.includes(k); });
-  if (menuWorld) { menuWorld.dispose(); menuWorld = null; }
+  MenuMusic.stop(2);
+  UI.leave();
   goChapter(id);
 }
-$('btnStart').onclick = () => { resetState(); Game.unlocked = Game.unlocked.length ? Game.unlocked : ['prologue']; startGame('prologue'); };
-$('btnContinue').onclick = () => startGame(Game.currentId, true);
-$('btnChapters').onclick = () => { const l = $('chapterList'); l.hidden = !l.hidden; };
 
-function openMenu() {
+// o.credits: after the ending the credits roll first, then the main menu
+function openMenu(o = {}) {
   teardown();
   if (Game.player && Game.player.model.parent) Game.player.model.parent.remove(Game.player.model);
   Game.inMenu = true; Game.paused = false;
-  $('pause').hidden = true; $('journal').hidden = true; $('choice').hidden = true;
+  document.body.classList.remove('paused');
+  $('journal').hidden = true; $('choice').hidden = true;
   HUD.show(false);
+  Sound.pauseMuffle(false);
   buildMenu();
-  $('menu').hidden = false;
   if (!menuWorld) menuWorld = buildValleyWorld({ time: 'dusk', menu: true }).world;
   Post.setGrade(menuWorld.grade);
+  UI.open('menu', 'main');
+  if (o.credits) UI.push('credits');
+  MenuMusic.start();
   HUD.fade(0, 1.2);
 }
 
 // ---------- pause / journal ----------
 function setPaused(p) {
   if (Game.inMenu || Game.loading) return;
+  // a decision panel on screen owns the keyboard; the pause menu waits until it closes
+  if (p && !$('choice').hidden) return;
+  if (p === Game.paused && (!p || !$('menu').hidden)) return;
   Game.paused = p;
-  $('pause').hidden = !p;
-  if (p && document.pointerLockElement) document.exitPointerLock();
-  $('btnSound').textContent = Game.muted ? 'Звук: выкл' : 'Звук: вкл';
-  $('btnGfx').textContent = `Графика: ${GFX.names[GFX.level]}`;
-  $('btnVoice').hidden = !Voice.count();
-  $('btnVoice').textContent = Voice.enabled ? `Озвучка: вкл (${Voice.count()})` : 'Озвучка: выкл';
+  document.body.classList.toggle('paused', p);
+  if (p) {
+    if (document.pointerLockElement) document.exitPointerLock();
+    HUD.pauseRadio();
+    Sound.pauseMuffle(true);
+    Sound.ui('ok');
+    UI.open('pause', 'pause');
+  } else {
+    UI.hide();
+    Sound.pauseMuffle(false);
+    HUD.resumeRadio();
+  }
 }
-$('btnResume').onclick = () => setPaused(false);
-$('btnGfx').onclick = () => { Post.apply((GFX.level + 1) % 3); $('btnGfx').textContent = `Графика: ${GFX.names[GFX.level]}`; HUD.toast('Плотность растительности изменится при следующей загрузке главы', 3); };
-$('btnVoice').onclick = () => { Voice.enabled = !Voice.enabled; if (!Voice.enabled) Voice.stop(); $('btnVoice').textContent = Voice.enabled ? `Озвучка: вкл (${Voice.count()})` : 'Озвучка: выкл'; };
 
 // ---------- adaptive quality: step down once if frames stay slow ----------
 const Perf = {
@@ -202,36 +202,38 @@ const Perf = {
     if (this.acc < 1) return;
     const avg = this.acc / this.n; this.acc = 0; this.n = 0;
     this.slowT = avg > 1 / 28 ? this.slowT + 1 : Math.max(0, this.slowT - 1);
-    if (this.slowT >= 6 && !Game.noAutoGfx) { this.stepped = true; Post.apply(GFX.level - 1); HUD.toast(`Графика: ${GFX.names[GFX.level]} — снижено автоматически. Можно вернуть в паузе`, 4); }
+    if (this.slowT >= 6 && !Game.noAutoGfx) { this.stepped = true; Post.apply(GFX.level - 1); HUD.toast(`Графика: ${GFX.names[GFX.level]} — снижено автоматически. Можно вернуть в настройках`, 4); }
   },
 };
-$('btnSound').onclick = () => { Sound.setMuted(!Game.muted); $('btnSound').textContent = Game.muted ? 'Звук: выкл' : 'Звук: вкл'; };
-$('btnMenu').onclick = () => { setPaused(false); HUD.fade(1, 0.5).then(openMenu); };
-$('btnRestartCp').onclick = () => { setPaused(false); if (Game.ctx && Game.ctx.restore) Game.fail('Контрольная точка', '', () => Game.ctx.restore()); };
 function openJournal() {
   if (Game.inMenu) return;
   Game.paused = true;
   if (document.pointerLockElement) document.exitPointerLock();
-  Journal.open();
+  HUD.pauseRadio();
+  UI.openJournal('game');
 }
-$('btnJournalClose').onclick = () => { $('journal').hidden = true; Game.paused = false; };
 document.addEventListener('visibilitychange', () => { if (document.hidden && !Game.inMenu && !Game.paused) setPaused(true); });
 
 // ---------- loop ----------
-let last = performance.now();
+let last = performance.now(), fpsN = 0, fpsT = 0;
 function frame(now) {
   requestAnimationFrame(frame);
-  let dt = Math.min(Game.dtCap || 0.05, (now - last) / 1000);
+  const raw = (now - last) / 1000;
+  let dt = Math.min(Game.dtCap || 0.05, raw);
   last = now;
+  if (Settings.v.fps) { fpsN++; fpsT += raw; if (fpsT >= 0.5) { $('fps').textContent = `${Math.round(fpsN / fpsT)} FPS`; fpsN = 0; fpsT = 0; } }
   HUD.beginFrame();
   if (Input.pressed('mute')) Sound.setMuted(!Game.muted);
   if (Game.inMenu) {
     Game.time += dt; WindU.value = Game.time;
     if (menuWorld) {
-      menuT += dt * 0.03;
+      menuT += dt * 0.022;
       const r = 150;
-      camera.position.set(-40 + Math.sin(menuT) * r, 38, -10 + Math.cos(menuT) * r);
+      camera.position.set(-40 + Math.sin(menuT) * r, 38 + Math.sin(menuT * 2.3) * 3, -10 + Math.cos(menuT) * r);
       camera.lookAt(-10, 8, -40);
+      // the title screen is centred; menu screens push the view right, away from the text column
+      menuYaw = damp(menuYaw, !$('titleScr').hidden || IS_TOUCH ? 0 : 0.17, 1.5, dt);
+      camera.rotateY(menuYaw);
       if (camera.fov !== 55) { camera.fov = 55; camera.updateProjectionMatrix(); }
       menuWorld.update(dt);
       menuWorld.cull(camera);
@@ -239,8 +241,7 @@ function frame(now) {
       Post.render(menuWorld.scene, camera, dt);
     }
   } else if (Game.ctx && Game.world) {
-    if (!$('journal').hidden) { if (Input.pressed('journal') || Input.pressed('pause')) { $('journal').hidden = true; Game.paused = false; } }
-    else if (Input.pressed('pause')) setPaused(!Game.paused);
+    if (Input.pressed('pause')) { if ($('journal').hidden) setPaused(!Game.paused); }
     else if (!Game.paused && Input.pressed('journal')) openJournal();
     if (!Game.paused && !Game.loading) {
       dt *= Game.timeScale || 1;
@@ -278,13 +279,14 @@ function frame(now) {
 
 // ---------- boot ----------
 function boot() {
+  Settings.apply();
   buildMenu();
   menuWorld = buildValleyWorld({ time: 'dusk', menu: true }).world;
   Post.setGrade(menuWorld.grade);
   $('boot').hidden = true;
-  $('menu').hidden = false;
+  UI.title();
   HUD.fade(0, 1.4);
   requestAnimationFrame(frame);
 }
-window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, renderer, get ctx() { return Game.ctx; } };
+window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, Settings, UI, MenuMusic, renderer, get ctx() { return Game.ctx; } };
 boot();

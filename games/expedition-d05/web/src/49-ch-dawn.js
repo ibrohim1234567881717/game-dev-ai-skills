@@ -272,7 +272,7 @@ CHAPTERS.lighthouse = {
       await showCard({ eyebrow: 'Концовка', title: e.title, text: e.text });
       const pct = DNA_KEYS.reduce((s, k) => s + Journal.pct(k), 0) / 5;
       await showCard({ eyebrow: 'UMBRA · Expedition D-05', title: 'Конец экспедиции', text: `Образцы: ${dnaCount()}/5${Game.state.dna.eva ? ' + ЕВА-0' : ''}\nСредний журнал по пяти видам: ${Math.round(pct)}%\nФотографий: ${Game.state.photos.length}\n\nДругие концовки открываются другими решениями. Шестой образец — в пещерах, в убежище Мары Линд.\n\nСпасибо, что прошли экспедицию.` });
-      openMenu();
+      openMenu({ credits: true });
     }
     return ctx;
   },

@@ -12,14 +12,29 @@ const Sound = {
     const ctx = new AC();
     this.ctx = ctx;
     this.master = ctx.createGain();
-    this.master.gain.value = Game.muted ? 0 : 0.9;
+    this.master.gain.value = 0;
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 4;
     this.master.connect(comp); comp.connect(ctx.destination);
-    // buses: ambience beds duck under dialogue; positional emitters get their own bus
-    this.bedBus = ctx.createGain(); this.bedBus.connect(this.master);
-    this.sfxBus = ctx.createGain(); this.sfxBus.connect(this.master);
-    this.voiceBus = ctx.createGain(); this.voiceBus.gain.value = 1.15; this.voiceBus.connect(this.master);
+    // buses. Everything heard "in the world" goes through one low-pass that muffles it while the
+    // game is paused; menu sounds bypass it. Ambience beds duck under dialogue on bedBus, and the
+    // player's ambience volume sits after the duck on ambBus. Each bus's level is a setting.
+    this.muffle = ctx.createBiquadFilter(); this.muffle.type = 'lowpass'; this.muffle.frequency.value = 20000; this.muffle.Q.value = 0.5;
+    this.worldGain = ctx.createGain(); this.muffle.connect(this.worldGain); this.worldGain.connect(this.master);
+    this.ambBus = ctx.createGain(); this.ambBus.connect(this.muffle);
+    this.bedBus = ctx.createGain(); this.bedBus.connect(this.ambBus);
+    this.sfxBus = ctx.createGain(); this.sfxBus.connect(this.muffle);
+    this.voiceBus = ctx.createGain(); this.voiceBus.connect(this.muffle);
+    this.musicBus = ctx.createGain(); this.musicBus.connect(this.muffle);
+    this.uiBus = ctx.createGain(); this.uiBus.connect(this.master);
+    // music gets a synthesized hall: dry into the bus, a send through a noise-burst impulse response
+    this.musicIn = ctx.createGain(); this.musicIn.connect(this.musicBus);
+    const verb = ctx.createConvolver(), irLen = Math.floor(ctx.sampleRate * 3.2), ir = ctx.createBuffer(2, irLen, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < irLen; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / irLen, 3.2); }
+    verb.buffer = ir;
+    const send = ctx.createGain(); send.gain.value = 0.55;
+    this.musicIn.connect(send); send.connect(verb); verb.connect(this.musicBus);
+    this.applyVolumes();
     const len = ctx.sampleRate * 2;
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = buf.getChannelData(0);
@@ -38,6 +53,44 @@ const Sound = {
   duck(on) {
     if (!this.ctx || !this.bedBus) return;
     this.bedBus.gain.setTargetAtTime(on ? 0.5 : 1, this.ctx.currentTime, on ? 0.12 : 0.5);
+  },
+  // levels from Settings (0–100 each); the master also carries the M-key mute
+  // a reset changes every level at once: queue one update per tick instead of one per setting
+  applyVolumes() {
+    if (!this.ctx || this._volQueued) return;
+    this._volQueued = true;
+    setTimeout(() => { this._volQueued = false; this._applyVolumes(); }, 0);
+  },
+  _applyVolumes() {
+    const v = Settings.v, t = this.ctx.currentTime, set = (node, val) => { node.gain.cancelScheduledValues(t); node.gain.setTargetAtTime(val, t, 0.05); };
+    set(this.master, Game.muted ? 0 : 0.9 * (v.master / 100));
+    set(this.ambBus, v.amb / 100);
+    set(this.sfxBus, v.sfx / 100);
+    set(this.voiceBus, 1.15 * (v.voice / 100));
+    set(this.musicBus, v.music / 100);
+    set(this.uiBus, 0.8 * (v.sfx / 100));
+  },
+  // pause: the world goes muffled and quieter, menu sounds stay clear
+  pauseMuffle(on) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.muffle.frequency.setTargetAtTime(on ? 650 : 20000, t, on ? 0.08 : 0.2);
+    this.worldGain.gain.setTargetAtTime(on ? 0.45 : 1, t, 0.12);
+  },
+  // interface sounds: short, dry, on their own bus
+  ui(kind) {
+    if (!this.ctx) return;
+    const b = this.uiBus;
+    switch (kind) {
+      case 'move': this.tone(1480, 0.035, 'sine', 0.03, 0, null, b); this.noise(0.018, 3800, 'bandpass', 0.028, 0, 4, b); break;
+      case 'ok': this.tone(740, 0.08, 'triangle', 0.07, 0, null, b); this.tone(1109, 0.12, 'triangle', 0.055, 0.05, null, b); break;
+      case 'back': this.tone(660, 0.1, 'triangle', 0.055, 0, 470, b); break;
+      case 'tick': this.tone(1250, 0.025, 'sine', 0.035, 0, null, b); this.noise(0.012, 5200, 'highpass', 0.02, 0, 0.7, b); break;
+      case 'deny': this.tone(150, 0.14, 'square', 0.03, 0, 120, b); break;
+      case 'tab': this.noise(0.05, 2400, 'bandpass', 0.05, 0, 2, b); this.tone(880, 0.05, 'sine', 0.03, 0.01, null, b); break;
+      case 'title': this.tone(110, 2.2, 'sine', 0.13, 0, null, b); this.tone(220, 1.8, 'triangle', 0.05, 0.05, null, b); this.tone(1760, 1.2, 'sine', 0.018, 0.1, 1320, b); this.noise(1.6, 900, 'lowpass', 0.05, 0, 0.7, b); break;
+      case 'start': this.tone(55, 2.4, 'sine', 0.3, 0, 38, b); this.noise(1.8, 520, 'lowpass', 0.14, 0, 0.8, b); this.tone(220, 1.6, 'triangle', 0.04, 0.1, null, b); this.tone(329.6, 1.6, 'triangle', 0.03, 0.25, null, b); break;
+    }
   },
   // ---------- positional audio ----------
   emitters: [],
@@ -154,24 +207,24 @@ const Sound = {
   silenceAll(time = 1) { Object.keys(this.beds).forEach((k) => this.bed(k, 0, time)); },
   setMuted(m) {
     Game.muted = m;
-    if (this.master) this.master.gain.setTargetAtTime(m ? 0 : 0.9, this.ctx.currentTime, 0.1);
+    this.applyVolumes();
   },
-  // one-shots
+  // one-shots: effects bus unless a bus is given (music and interface pass their own)
   _env(node, t, a, peak, dcy) { node.gain.setValueAtTime(0.0001, t); node.gain.exponentialRampToValueAtTime(peak, t + a); node.gain.exponentialRampToValueAtTime(0.0001, t + a + dcy); },
-  tone(freq, dur = 0.3, type = 'sine', vol = 0.2, delay = 0, slideTo) {
+  tone(freq, dur = 0.3, type = 'sine', vol = 0.2, delay = 0, slideTo, bus) {
     if (!this.ctx) return;
     const ctx = this.ctx, t = ctx.currentTime + delay;
     const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(freq, t);
     if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
     const g = ctx.createGain(); this._env(g, t, 0.01, vol, dur);
-    o.connect(g); g.connect(this.master); o.start(t); o.stop(t + dur + 0.1);
+    o.connect(g); g.connect(bus || this.sfxBus); o.start(t); o.stop(t + dur + 0.1);
   },
-  noise(dur = 0.2, freq = 1000, type = 'lowpass', vol = 0.3, delay = 0, q = 0.7) {
+  noise(dur = 0.2, freq = 1000, type = 'lowpass', vol = 0.3, delay = 0, q = 0.7, bus) {
     if (!this.ctx) return;
     const ctx = this.ctx, t = ctx.currentTime + delay;
     const s = this._noiseSrc(); const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
     const g = ctx.createGain(); this._env(g, t, 0.005, vol, dur);
-    s.connect(f); f.connect(g); g.connect(this.master); s.start(t, Math.random()); s.stop(t + dur + 0.1);
+    s.connect(f); f.connect(g); g.connect(bus || this.sfxBus); s.start(t, Math.random()); s.stop(t + dur + 0.1);
   },
   vol(d, near = 6, far = 90) { return clamp(1 - (d - near) / (far - near), 0, 1); },
   sfx(name, v = 1) {
@@ -210,11 +263,13 @@ const Sound = {
   },
   motif(slow = 1, vol = 0.1) {
     // four-note island motif: A3 C4 E4 D4
-    [220, 261.63, 329.63, 293.66].forEach((f, i) => { this.tone(f, 1.6 * slow, 'triangle', vol, i * 0.55 * slow); this.tone(f / 2, 1.8 * slow, 'sine', vol * 0.6, i * 0.55 * slow); });
+    const b = this.musicIn;
+    [220, 261.63, 329.63, 293.66].forEach((f, i) => { this.tone(f, 1.6 * slow, 'triangle', vol, i * 0.55 * slow, null, b); this.tone(f / 2, 1.8 * slow, 'sine', vol * 0.6, i * 0.55 * slow, null, b); });
   },
   theme(vol = 0.09) {
+    const b = this.musicIn;
     const seq = [[220, 0], [261.63, 0.5], [329.63, 1], [293.66, 1.5], [329.63, 2.4], [392, 2.9], [440, 3.4], [392, 4.4], [329.63, 5.2]];
-    seq.forEach(([f, t]) => { this.tone(f, 1.8, 'triangle', vol, t); this.tone(f * 1.5, 1.8, 'sine', vol * 0.35, t); });
-    [110, 130.81, 146.83, 164.81].forEach((f, i) => this.tone(f, 2.2, 'sawtooth', vol * 0.25, i * 1.5));
+    seq.forEach(([f, t]) => { this.tone(f, 1.8, 'triangle', vol, t, null, b); this.tone(f * 1.5, 1.8, 'sine', vol * 0.35, t, null, b); });
+    [110, 130.81, 146.83, 164.81].forEach((f, i) => this.tone(f, 2.2, 'sawtooth', vol * 0.25, i * 1.5, null, b));
   },
 };

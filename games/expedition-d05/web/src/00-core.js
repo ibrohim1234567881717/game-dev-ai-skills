@@ -154,7 +154,7 @@ function writeSave() {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       unlocked: Game.unlocked, dna: Game.state.dna, flags: Game.state.flags,
       journal: Object.fromEntries(Object.entries(Game.state.journal).map(([k, v]) => [k, [...v]])),
-      current: Game.currentId,
+      current: Game.currentId, t: Date.now(),
     }));
   } catch (e) { /* storage blocked — progress lives only in this tab */ }
 }

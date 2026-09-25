@@ -34,6 +34,7 @@ const HUD = {
     if (typeof Cine !== 'undefined' && Cine.active) interrupt = true;
     if (interrupt) {
       clearTimeout(this._radioTimer);
+      this._radioPaused = false;
       Voice.stop();
       if (this._radioCur && this._radioCur.done) this._radioCur.done();
       for (const q of this._radioQ) if (q.done) q.done();
@@ -59,11 +60,44 @@ const HUD = {
     this.speaking = { key: speakerKey(l.who), radio, until: Game.time + 99 };
     let dur = l.dur ?? clamp(1.6 + l.text.length * 0.055, 2.2, 7.5);
     const v = Voice.lookup(l.who, l.text);
-    if (v && Sound.ctx && !Game.muted) { Voice.play(v, radio); dur = v.d + 0.35; }
-    this._radioTimer = setTimeout(() => { const d = l.done; l.done = null; if (d) d(); this._nextRadio(); }, dur * 1000);
+    const voiced = !!(v && Sound.ctx && !Game.muted);
+    if (voiced) { Voice.play(v, radio); dur = v.d + 0.35; }
+    // subtitles off hides voiced lines only: an unvoiced line is the only way to get its words
+    r.classList.toggle('nosub', voiced && !Settings.v.subs);
+    this._radioFn = () => { const d = l.done; l.done = null; if (d) d(); this._nextRadio(); };
+    this._radioEnd = performance.now() + dur * 1000;
+    this._radioPaused = false;
+    this._radioTimer = setTimeout(this._radioFn, dur * 1000);
+    // only the pause menu and the journal hold lines; the K-4 power panel also sets Game.paused
+    if (this._hold) this.pauseRadio();
+  },
+  // pause menu: the current line stops where it is, subtitle timer included
+  pauseRadio() {
+    this._hold = true;
+    if (!this._radioBusy || this._radioPaused) return;
+    clearTimeout(this._radioTimer);
+    this._radioLeft = Math.max(0, this._radioEnd - performance.now());
+    this._radioPaused = true;
+    Voice.pause();
+  },
+  resumeRadio() {
+    this._hold = false;
+    if (!this._radioPaused) return;
+    this._radioPaused = false;
+    Voice.resume();
+    this._radioEnd = performance.now() + this._radioLeft;
+    this._radioTimer = setTimeout(this._radioFn, this._radioLeft);
+  },
+  // checkpoint indicator, bottom right: the game saves at the start of every chapter
+  saving() {
+    const s = $('saveIcon');
+    s.hidden = false; s.classList.remove('show'); void s.offsetWidth; s.classList.add('show');
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => { s.hidden = true; }, 2600);
   },
   clearRadio() {
     clearTimeout(this._radioTimer);
+    this._radioPaused = false; this._hold = false;
     Voice.stop();
     this.speaking = null;
     if (this._radioCur && this._radioCur.done) this._radioCur.done();

@@ -83,7 +83,7 @@ const Guide = {
     $('objective').classList.remove('collapsed');
     const o = $('objective'); o.classList.remove('fresh'); void o.offsetWidth; o.classList.add('fresh');
     this.setAt = Game.time;
-    this.wpForce = 6;
+    this.wpForce = 6; this.wpRecall = 6;
     Sound.sfx('ping', 0.3);
   },
   _speaker() {
@@ -120,6 +120,7 @@ const Guide = {
     if (this.pending && !Cine.active && !Game.loading && !$('hud').hidden) this.banner(...this.pending);
     if (Game.time - this.setAt > 16 && this.hint) $('objective').classList.add('collapsed');
     this.wpForce = Math.max(0, this.wpForce - dt);
+    this.wpRecall = Math.max(0, (this.wpRecall || 0) - dt);
     // current goal: nearest marker flagged as the goal
     const p = Game.player;
     let goal = null, gd = Infinity;
@@ -135,7 +136,8 @@ const Guide = {
     if (this.stall > 25 && this.nudges === 0 && this.nudge(goal)) this.nudges = 1;
     if (this.stall > 50) { this.wpAuto = true; if (this.nudges === 1 && this.nudge(goal)) this.nudges = 2; }
     if (this.stall > 110 && this.nudges === 2 && this.nudge(goal)) this.nudges = 3;
-    const show = (this.wpForce > 0 || this.wpAuto) && !Cine.active && Cam.mode === 'third' && gd > near * 0.6 && !$('hud').hidden;
+    // with the marker turned off in settings it still answers Tab
+    const show = (((this.wpForce > 0 || this.wpAuto) && Settings.v.waypoint) || this.wpRecall > 0) && !Cine.active && Cam.mode === 'third' && gd > near * 0.6 && !$('hud').hidden;
     if (!show) { wp.hidden = true; return; }
     const gy = goal.y ?? (Game.world.groundH(goal.x, goal.z) + 2.2);
     _wpV.set(goal.x, gy, goal.z).project(camera);
@@ -158,6 +160,7 @@ const Tutorial = {
   cur: null, queue: [],
   seen(id) { return !!(Game.state.flags.tut && Game.state.flags.tut[id]); },
   show(id, html, done, o = {}) {
+    if (!Settings.v.hints) return;
     if (this.seen(id) || (this.cur && this.cur.id === id) || this.queue.some((q) => q.id === id)) return;
     // valid(): the hint only makes sense in some situation (sprint during the long walk); a queued
     // or open hint whose moment has passed is dropped unseen instead of appearing out of context

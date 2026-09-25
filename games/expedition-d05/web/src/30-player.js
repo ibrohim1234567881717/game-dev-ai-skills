@@ -137,13 +137,14 @@ const Cam = {
   setYaw(y) { this.yaw = y; },
   lookFromInput(sens = 1) {
     if (!Input.enabled) return;
+    sens *= Settings.lookMul();
     this.yaw -= Input.look.x * 0.0026 * sens;
-    this.pitch = clamp(this.pitch + Input.look.y * 0.0022 * sens, this.mode === 'third' ? -0.5 : -1.2, this.mode === 'third' ? 1.15 : 1.2);
+    this.pitch = clamp(this.pitch + Input.look.y * 0.0022 * sens * (Settings.v.invertY ? -1 : 1), this.mode === 'third' ? -0.5 : -1.2, this.mode === 'third' ? 1.15 : 1.2);
   },
   update(dt) {
     const p = Game.player, w = Game.world;
     let pos = _v1, look = _v2;
-    let targetFov = 62;
+    let targetFov = Settings.v.fov;
     if (this.mode === 'cine') {
       pos.copy(this.cinePos); look.copy(this.cineLook);
       this.curPos.lerp(pos, 1 - Math.exp(-6 * dt)); this.curLook.lerp(look, 1 - Math.exp(-6 * dt));
@@ -197,9 +198,10 @@ const Cam = {
       camera.lookAt(look);
     }
     if (this.shake > 0.001) {
-      camera.position.x += (Math.random() - 0.5) * this.shake * 0.5;
-      camera.position.y += (Math.random() - 0.5) * this.shake * 0.5;
-      camera.rotation.z += (Math.random() - 0.5) * this.shake * 0.04;
+      const sk = this.shake * (Settings.v.shake / 100);
+      camera.position.x += (Math.random() - 0.5) * sk * 0.5;
+      camera.position.y += (Math.random() - 0.5) * sk * 0.5;
+      camera.rotation.z += (Math.random() - 0.5) * sk * 0.04;
       this.shake *= Math.exp(-4 * dt);
     }
     const fovNow = damp(camera.fov, targetFov, 6, dt);

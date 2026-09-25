@@ -36,7 +36,9 @@
     </div>
     <div id="danger"></div>
     <div id="timer" class="panel" hidden></div>
+    <div id="saveIcon" hidden><i></i>Сохранено</div>
   </div>
+  <div id="fps" hidden aria-hidden="true"></div>
 
   <div id="touch" hidden>
     <div id="stick"><div id="stickKnob"></div></div>
@@ -54,44 +56,32 @@
 
   <div id="letterbox" aria-hidden="true"><div></div><div></div></div>
   <div id="fade"></div>
+  <div id="loading" hidden><i></i>Загрузка</div>
   <div id="flash"></div>
 
-  <section id="menu" class="overlay">
-    <div class="menu-inner">
-      <div class="eyebrow">ORIGO · Threshold Station · Site U</div>
-      <h1 id="logo">UMBRA</h1>
-      <div class="sub">Expedition D-05</div>
-      <p class="blurb">Остров, которого нет на картах. Пять видов. Пять образцов живой ДНК. И вопрос, который никто не задал вслух: зачем?</p>
-      <div class="menu-actions">
-        <button class="btn primary" id="btnStart">Начать экспедицию</button>
-        <button class="btn" id="btnContinue" hidden>Продолжить</button>
-        <button class="btn" id="btnChapters">Главы</button>
-      </div>
-      <div id="chapterList" hidden></div>
-      <div class="controls-help" id="helpDesk">
-        <div><kbd>W A S D</kbd> идти</div><div><kbd>Мышь</kbd> смотреть</div><div><kbd>Shift</kbd> бежать</div>
-        <div><kbd>C</kbd> присесть</div><div><kbd>E</kbd> действие</div><div><kbd>F</kbd> камера</div>
-        <div><kbd>Q</kbd> приманка</div><div><kbd>J</kbd> журнал</div><div><kbd>Tab</kbd> цель</div>
-      </div>
-      <div class="controls-help" id="helpTouch" hidden>
-        <div>Левый палец — идти</div><div>Правый палец — смотреть</div><div>Джойстик до упора — бег</div>
-      </div>
-      <p class="fine">Звук важен: насекомые замолкают, когда рядом хищник. Лучше играть в наушниках.</p>
-    </div>
-  </section>
-
-  <section id="pause" class="overlay" hidden>
-    <div class="menu-inner narrow">
-      <h2>Пауза</h2>
-      <div class="menu-actions col">
-        <button class="btn primary" id="btnResume">Продолжить</button>
-        <button class="btn" id="btnRestartCp">Вернуться к контрольной точке</button>
-        <button class="btn" id="btnSound">Звук: вкл</button>
-        <button class="btn" id="btnGfx">Графика</button>
-        <button class="btn" id="btnVoice" hidden>Озвучка</button>
-        <button class="btn" id="btnMenu">Главное меню</button>
+  <!-- title screen, main menu, chapters, settings, credits and the pause menu share this layer;
+       the screens themselves are built by 88-menu.js -->
+  <section id="menu" hidden>
+    <div class="ui-bg" aria-hidden="true"></div>
+    <div id="titleScr" hidden>
+      <div class="t-top eyebrow">ORIGO · Threshold Station · Site U</div>
+      <h1 class="t-logo" aria-label="UMBRA"><span>U</span><span>M</span><span>B</span><span>R</span><span>A</span></h1>
+      <div class="t-sub">Expedition D-05</div>
+      <div class="t-press" id="tPress">Нажмите любую клавишу</div>
+      <div class="t-notes">
+        <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4.5" height="6.5" rx="1.5"/><rect x="16.5" y="14" width="4.5" height="6.5" rx="1.5"/></svg>Лучше играть в наушниках: хищника часто слышно раньше, чем видно</div>
+        <div><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg>Игра сохраняется автоматически в начале каждой главы</div>
       </div>
     </div>
+    <div id="uiMain" hidden>
+      <header class="ui-brand" id="uiBrand">
+        <div class="eyebrow" id="uiBrandTop">ORIGO · Threshold Station · Site U</div>
+        <div class="ui-logo" id="uiBrandLogo">UMBRA</div>
+        <div class="ui-logo-sub" id="uiBrandSub">Expedition D-05</div>
+      </header>
+      <div id="uiScreens"></div>
+    </div>
+    <footer class="ui-foot" id="uiFoot" hidden><div id="uiHints"></div><div class="ui-ver">UMBRA 2.0</div></footer>
   </section>
 
   <section id="journal" class="overlay" hidden>
@@ -108,6 +98,7 @@
       <h2 id="cardTitle"></h2>
       <p id="cardText"></p>
       <button class="btn primary" id="btnCard">Дальше</button>
+      <div class="card-hint" id="cardHint"><kbd>Enter</kbd> продолжить</div>
     </div>
   </section>
 
