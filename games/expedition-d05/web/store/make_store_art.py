@@ -7,7 +7,7 @@ Reads the renders assets/blender/keyart.py writes (assets/previews/keyart/cover.
 icon.png) and writes into store/yandex/:
 
     icon-512.png           512 x 512, no lettering: at icon size a title only turns to mush
-    cover-800x470.png      the title in the open sky left of the Queen
+    cover-800x470.png      the title dark against the sunset glow, left of the Queen
     cover-1600x940.png     the same at twice the size, for screens that ask for more
 
 Check the sizes against the draft form in the Yandex Games console: its current requirements
@@ -35,8 +35,8 @@ FONTS = {
     "black": "https://raw.githubusercontent.com/google/fonts/main/ofl/firasansextracondensed/FiraSansExtraCondensed-ExtraBold.ttf",
     "semi": "https://raw.githubusercontent.com/google/fonts/main/ofl/firasansextracondensed/FiraSansExtraCondensed-SemiBold.ttf",
 }
-INK = (232, 238, 228)
-AMBER = (227, 163, 59)
+SHADE = (26, 16, 18)
+EMBER = (104, 40, 18)
 
 
 def font(kind: str, size: int) -> ImageFont.FreeTypeFont:
@@ -66,19 +66,20 @@ def cover(src: Image.Image, w: int, h: int) -> Image.Image:
     s = w / 800
     title = font("black", round(104 * s))
     sub = font("semi", round(17 * s))
-    x, y = round(46 * s), round(44 * s)
-    # a soft shadow keeps the letters off the bright sky without a visible box
-    shadow = Image.new("L", img.size, 0)
-    sd = ImageDraw.Draw(shadow)
-    spaced(sd, (x, y + round(4 * s)), "UMBRA", title, 150, 0.16)
-    shadow = shadow.filter(ImageFilter.GaussianBlur(round(14 * s)))
-    img.paste((4, 8, 10), mask=shadow)
+    x, y = round(46 * s), round(40 * s)
+    # the sun glows behind the title: the letters are the dark shape against it, a shadow on the
+    # light (the name means "shadow"), with a faint warm halo so their edges stay clean
+    halo = Image.new("L", img.size, 0)
+    hd = ImageDraw.Draw(halo)
+    spaced(hd, (x, y), "UMBRA", title, 110, 0.16)
+    halo = halo.filter(ImageFilter.GaussianBlur(round(10 * s)))
+    img.paste((255, 214, 170), mask=halo)
     d = ImageDraw.Draw(img)
-    spaced(d, (x, y), "UMBRA", title, INK, 0.16)
+    spaced(d, (x, y), "UMBRA", title, SHADE, 0.16)
     tw = spaced_width(d, "UMBRA", title, 0.16)
     sw = spaced_width(d, "EXPEDITION D-05", sub, 0.62)
     # the subtitle is centred under the title, as on the title screen
-    spaced(d, (x + (tw - sw) / 2, y + round(116 * s)), "EXPEDITION D-05", sub, AMBER, 0.62)
+    spaced(d, (x + (tw - sw) / 2, y + round(114 * s)), "EXPEDITION D-05", sub, EMBER, 0.62)
     return img
 
 
