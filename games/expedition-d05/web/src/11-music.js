@@ -104,11 +104,33 @@ const MenuMusic = {
 // seam. Every cue falls back to the synthesized score when its file is missing.
 const Music = {
   files: (typeof window !== 'undefined' && window.MUSIC_TRACKS) || {},
-  cur: null, fading: [], _dangerOff: 0, _before: null,
+  cur: null, fading: [], _dangerOff: 0, _before: null, _held: null,
   has(n) { return !!this.files[n]; },
   playing(n) { return !!(this.cur && this.cur.name === n); },
   gain() { const v = Settings.v; return Game.muted ? 0 : (v.master / 100) * (v.music / 100) * (Game.paused && !Game.inMenu ? 0.35 : 1); },
-  _el(src) { const a = new Audio(src); a.preload = 'auto'; a.volume = 0; a.play().catch(() => {}); return a; },
+  _el(src) {
+    const a = new Audio(src); a.preload = 'auto'; a.volume = 0;
+    if (this._held) this._held.push(a); else a.play().catch(() => {});
+    return a;
+  },
+  _els() {
+    const out = [];
+    for (const t of [this.cur, ...this.fading]) if (t) { out.push(t.a); if (t.next) out.push(t.next.b); }
+    return out;
+  },
+  // Platform.hold: <audio> elements live outside the audio clock, so an ad or a hidden tab pauses
+  // them by hand. Only what was playing resumes; a cue that ended on its own stays ended.
+  hold(on) {
+    if (on) {
+      if (this._held) return;
+      this._held = this._els().filter((a) => !a.paused);
+      this._held.forEach((a) => a.pause());
+    } else if (this._held) {
+      const live = new Set(this._els());
+      this._held.forEach((a) => { if (live.has(a)) a.play().catch(() => {}); });
+      this._held = null;
+    }
+  },
   play(name, o = {}) {
     if (!this.has(name)) return false;
     if (this.playing(name)) return true;

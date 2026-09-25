@@ -64,13 +64,15 @@ function teardown() {
   Sound.silenceAll(0.8);
 }
 
-async function goChapter(id, o = {}) {
+// flow.ad: a fullscreen ad in the black between two chapters (Platform decides whether one shows)
+async function goChapter(id, o = {}, flow = {}) {
   Game.loading = true;
   Input.enabled = false;
   await HUD.fade(1, o.fast ? 0.3 : 0.9);
   teardown();
   if (menuWorld) { menuWorld.dispose(); menuWorld = null; }
   MenuMusic.stop(1.5); Music.stop(1.5);
+  if (flow.ad) await Platform.interstitial();
   Game.inMenu = false;
   UI.hide();
   HUD.show(false);
@@ -114,7 +116,7 @@ Game.complete = async (next, opts = {}) => {
   writeSave();
   await wait(0.2);
   Game.completing = false;
-  goChapter(next, opts);
+  goChapter(next, opts, { ad: !opts.noCard });
 };
 Game.fail = async (title, sub, restore) => {
   if (Game.failing) return;
@@ -175,7 +177,7 @@ function openMenu(o = {}) {
 }
 
 // ---------- pause / journal ----------
-function setPaused(p) {
+function setPaused(p, o = {}) {
   if (Game.inMenu || Game.loading) return;
   // a decision panel on screen owns the keyboard; the pause menu waits until it closes
   if (p && !$('choice').hidden) return;
@@ -186,7 +188,7 @@ function setPaused(p) {
     if (document.pointerLockElement) document.exitPointerLock();
     HUD.pauseRadio();
     Sound.pauseMuffle(true);
-    Sound.ui('ok');
+    if (!o.quiet) Sound.ui('ok');
     UI.open('pause', 'pause');
   } else {
     UI.hide();
@@ -214,7 +216,11 @@ function openJournal() {
   HUD.pauseRadio();
   UI.openJournal('game');
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden && !Game.inMenu && !Game.paused) setPaused(true); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && !Game.inMenu && !Game.paused) setPaused(true, { quiet: true });
+  // silence in the menu too: the requirements want no sound from a tab the player left
+  Platform.hold('hidden', document.hidden);
+});
 
 // ---------- loop ----------
 let last = performance.now(), fpsN = 0, fpsT = 0;
@@ -225,6 +231,7 @@ function frame(now) {
   last = now;
   Music.tick(Math.min(raw, 1)); // wall-clock fades: music does not slow down with the frame rate
   if (Settings.v.fps) { fpsN++; fpsT += raw; if (fpsT >= 0.5) { $('fps').textContent = `${Math.round(fpsN / fpsT)} FPS`; fpsN = 0; fpsT = 0; } }
+  Platform.gameplay(!Game.inMenu && !Game.paused && !Game.loading && !!Game.ctx);
   HUD.beginFrame();
   if (Input.pressed('mute')) Sound.setMuted(!Game.muted);
   if (Game.inMenu) {
@@ -290,6 +297,8 @@ function boot() {
   UI.title();
   HUD.fade(0, 1.4);
   requestAnimationFrame(frame);
+  // two frames: the title screen is on screen and listening before the platform drops its loader
+  requestAnimationFrame(() => requestAnimationFrame(() => Platform.ready()));
 }
-window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, Settings, UI, MenuMusic, Music, renderer, get ctx() { return Game.ctx; } };
+window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, Settings, UI, MenuMusic, Music, Platform, renderer, get ctx() { return Game.ctx; } };
 boot();

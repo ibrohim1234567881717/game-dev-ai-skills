@@ -6,7 +6,8 @@ const Sound = {
   ctx: null, master: null, noiseBuf: null,
   beds: {}, musicGain: null, droneOsc: [],
   init() {
-    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    // a click during an ad or with the tab hidden must not wake the audio Platform put to sleep
+    if (this.ctx) { if (this.ctx.state === 'suspended' && !Platform.held()) this.ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     const ctx = new AC();

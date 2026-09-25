@@ -11,7 +11,7 @@
 const ROMAN = { prologue: '0', valley: 'I', k4: 'II', river: 'III', peaks: 'IV', truth: 'V', queen: 'VI', dawn: 'VII' };
 // edit freely: the credits roll is built from this list
 const CREDITS = [
-  { head: 'Автор игры', lines: ['ibrohim1234567881717', '<small>идея, сюжет, геймдизайн, 3D-модели</small>'] },
+  { head: 'Автор игры', lines: ['ibrohim1234567881717', '<small>идея, сюжет, геймдизайн, 3D-модели, музыка</small>'] },
   { head: 'Программирование и технический дизайн', lines: ['Claude Code'] },
   { head: 'Действующие лица', cast: [
     ['Итан Рид', 'следопыт'], ['Лена Арден', 'палеогенетик'], ['Виктор Хальм', 'руководитель экспедиции'], ['Диего Рамос', 'охрана'],
@@ -19,7 +19,7 @@ const CREDITS = [
     ['Мара Линд', 'руководитель экспедиции D-04'], ['Элиас Варн', 'создатель острова'], ['Пилот D-02', 'бортовой самописец'],
   ] },
   { head: 'Голоса', lines: ['Синтез речи Qwen3-TTS 1.7B VoiceDesign', '<small>каждому персонажу — свой голос по описанию</small>'] },
-  { head: 'Технологии', lines: ['three.js — 3D в браузере', 'Web Audio API — музыка и звук, синтезированные в реальном времени', 'Fira Sans · Fira Sans Extra Condensed · IBM Plex Mono', '<small>шрифты под лицензией SIL Open Font License</small>'] },
+  { head: 'Технологии', lines: ['three.js — 3D в браузере', 'Web Audio API — звук, синтезированный в реальном времени', 'Fira Sans · Fira Sans Extra Condensed · IBM Plex Mono', '<small>шрифты под лицензией SIL Open Font License</small>'] },
 ];
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ICON = {

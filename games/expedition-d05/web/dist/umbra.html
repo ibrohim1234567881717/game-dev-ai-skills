@@ -1,7 +1,9 @@
 <title>UMBRA</title>
+<!--fonts-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:wght@500;600;700;800&family=Fira+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!--/fonts-->
 <style>
 :root {
   color-scheme: dark;
@@ -34,6 +36,7 @@ body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 #app { position: fixed; inset: 0; overflow: hidden; background: var(--bg); }
 #game { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
@@ -1081,6 +1084,8 @@ canvas.addEventListener('mousedown', (e) => {
   }
 });
 window.addEventListener('mouseup', () => { Input.mouseDown = false; });
+// a game has no use for the browser's context menu; a right click or a long press would open it over the view
+document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('pointerlockchange', () => { Input.locked = document.pointerLockElement === canvas; });
 window.addEventListener('mousemove', (e) => {
   if (IS_TOUCH) return;
@@ -1301,6 +1306,93 @@ const Settings = {
 };
 Settings.load();
 
+// ---- 08-platform.js ----
+// ============================================================
+// 08-platform.js — the host the page runs on: Yandex Games, or a plain web page
+//
+// The --target yandex build loads the Yandex Games SDK from /sdk.js before this module. Moderation
+// then checks that the game says when it is ready to play (LoadingAPI.ready), marks when the player
+// is actually playing (GameplayAPI start/stop), and falls silent and stops while an ad or a
+// platform overlay is on screen (game_api_pause / game_api_resume). Without the SDK every call
+// here is a no-op, so the rest of the game calls it unconditionally.
+//
+// Silence is reference-counted by reason (an ad, a hidden tab, the host's pause): the audio clock
+// is suspended while any reason holds and resumes when the last one lets go.
+// ============================================================
+
+// a fullscreen ad at chapter breaks, where the screen is already black between two chapters.
+// Set to false to publish without ads; the platform also rate-limits them on its side.
+const ADS = { betweenChapters: true };
+
+const Platform = {
+  sdk: null, name: 'web', whenInit: Promise.resolve(),
+  _ready: false, _playing: false, _holds: new Set(), _adBusy: false,
+  init() {
+    if (typeof window === 'undefined' || !window.YaGames) return this.whenInit;
+    this.whenInit = window.YaGames.init().then((sdk) => {
+      this.sdk = sdk; this.name = 'yandex';
+      sdk.on('game_api_pause', () => this.hostPause(true));
+      sdk.on('game_api_resume', () => this.hostPause(false));
+    }).catch((e) => { this.sdk = null; console.info('UMBRA: Yandex SDK unavailable, running as a plain page', e); });
+    return this.whenInit;
+  },
+  // the title screen is up and answers input: from here on the player can act
+  ready() {
+    if (this._ready) return;
+    this._ready = true;
+    this.whenInit.then(() => { try { this.sdk && this.sdk.features.LoadingAPI.ready(); } catch (e) { /* older SDK */ } });
+  },
+  // true while the player is playing a chapter; false in menus, pauses, loading, ads and hidden tabs
+  gameplay(on) {
+    on = !!on && !this.held();
+    if (on === this._playing) return;
+    this._playing = on;
+    const g = this.sdk && this.sdk.features.GameplayAPI;
+    try { if (g) { if (on) g.start(); else g.stop(); } } catch (e) { /* older SDK */ }
+  },
+  held() { return this._holds.size > 0; },
+  hold(reason, on) {
+    const before = this.held();
+    if (on) this._holds.add(reason); else this._holds.delete(reason);
+    const now = this.held();
+    if (now === before) return;
+    if (now) this.gameplay(false);
+    const ctx = Sound.ctx;
+    if (ctx) { try { if (now) ctx.suspend(); else ctx.resume(); } catch (e) { /* closed */ } }
+    Music.hold(now);
+  },
+  // the host covers the game (its own menu, an ad it started): silence it and open the pause menu
+  hostPause(p) {
+    if (p && !Game.inMenu && !Game.loading) setPaused(true, { quiet: true });
+    this.hold('host', p);
+  },
+  // a fullscreen ad; resolves once it is gone, whether or not one was shown. Sound goes off before
+  // the call, as the requirements ask, and comes back when the ad closes or fails.
+  interstitial() {
+    if (!this.sdk || !ADS.betweenChapters || this._adBusy) return Promise.resolve(false);
+    this._adBusy = true;
+    this.hold('ad', true);
+    return new Promise((resolve) => {
+      let done = false, opened = false;
+      const end = (shown) => {
+        if (done) return;
+        done = true; this._adBusy = false; this.hold('ad', false); resolve(!!shown);
+      };
+      // an SDK that never answers must not leave the player on a black screen
+      setTimeout(() => { if (!opened) end(false); }, 6000);
+      try {
+        this.sdk.adv.showFullscreenAdv({ callbacks: {
+          onOpen: () => { opened = true; },
+          onClose: (wasShown) => end(wasShown),
+          onError: () => end(false),
+          onOffline: () => end(false),
+        } });
+      } catch (e) { end(false); }
+    });
+  },
+};
+Platform.init();
+
 // ---- 10-audio.js ----
 // ============================================================
 // 10-audio.js — synthesized ambience, music and effects
@@ -1310,7 +1402,8 @@ const Sound = {
   ctx: null, master: null, noiseBuf: null,
   beds: {}, musicGain: null, droneOsc: [],
   init() {
-    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    // a click during an ad or with the tab hidden must not wake the audio Platform put to sleep
+    if (this.ctx) { if (this.ctx.state === 'suspended' && !Platform.held()) this.ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     const ctx = new AC();
@@ -1685,11 +1778,33 @@ const MenuMusic = {
 // seam. Every cue falls back to the synthesized score when its file is missing.
 const Music = {
   files: (typeof window !== 'undefined' && window.MUSIC_TRACKS) || {},
-  cur: null, fading: [], _dangerOff: 0, _before: null,
+  cur: null, fading: [], _dangerOff: 0, _before: null, _held: null,
   has(n) { return !!this.files[n]; },
   playing(n) { return !!(this.cur && this.cur.name === n); },
   gain() { const v = Settings.v; return Game.muted ? 0 : (v.master / 100) * (v.music / 100) * (Game.paused && !Game.inMenu ? 0.35 : 1); },
-  _el(src) { const a = new Audio(src); a.preload = 'auto'; a.volume = 0; a.play().catch(() => {}); return a; },
+  _el(src) {
+    const a = new Audio(src); a.preload = 'auto'; a.volume = 0;
+    if (this._held) this._held.push(a); else a.play().catch(() => {});
+    return a;
+  },
+  _els() {
+    const out = [];
+    for (const t of [this.cur, ...this.fading]) if (t) { out.push(t.a); if (t.next) out.push(t.next.b); }
+    return out;
+  },
+  // Platform.hold: <audio> elements live outside the audio clock, so an ad or a hidden tab pauses
+  // them by hand. Only what was playing resumes; a cue that ended on its own stays ended.
+  hold(on) {
+    if (on) {
+      if (this._held) return;
+      this._held = this._els().filter((a) => !a.paused);
+      this._held.forEach((a) => a.pause());
+    } else if (this._held) {
+      const live = new Set(this._els());
+      this._held.forEach((a) => { if (live.has(a)) a.play().catch(() => {}); });
+      this._held = null;
+    }
+  },
   play(name, o = {}) {
     if (!this.has(name)) return false;
     if (this.playing(name)) return true;
@@ -8346,7 +8461,7 @@ CHAPTERS.lighthouse = {
 const ROMAN = { prologue: '0', valley: 'I', k4: 'II', river: 'III', peaks: 'IV', truth: 'V', queen: 'VI', dawn: 'VII' };
 // edit freely: the credits roll is built from this list
 const CREDITS = [
-  { head: 'Автор игры', lines: ['ibrohim1234567881717', '<small>идея, сюжет, геймдизайн, 3D-модели</small>'] },
+  { head: 'Автор игры', lines: ['ibrohim1234567881717', '<small>идея, сюжет, геймдизайн, 3D-модели, музыка</small>'] },
   { head: 'Программирование и технический дизайн', lines: ['Claude Code'] },
   { head: 'Действующие лица', cast: [
     ['Итан Рид', 'следопыт'], ['Лена Арден', 'палеогенетик'], ['Виктор Хальм', 'руководитель экспедиции'], ['Диего Рамос', 'охрана'],
@@ -8354,7 +8469,7 @@ const CREDITS = [
     ['Мара Линд', 'руководитель экспедиции D-04'], ['Элиас Варн', 'создатель острова'], ['Пилот D-02', 'бортовой самописец'],
   ] },
   { head: 'Голоса', lines: ['Синтез речи Qwen3-TTS 1.7B VoiceDesign', '<small>каждому персонажу — свой голос по описанию</small>'] },
-  { head: 'Технологии', lines: ['three.js — 3D в браузере', 'Web Audio API — музыка и звук, синтезированные в реальном времени', 'Fira Sans · Fira Sans Extra Condensed · IBM Plex Mono', '<small>шрифты под лицензией SIL Open Font License</small>'] },
+  { head: 'Технологии', lines: ['three.js — 3D в браузере', 'Web Audio API — звук, синтезированный в реальном времени', 'Fira Sans · Fira Sans Extra Condensed · IBM Plex Mono', '<small>шрифты под лицензией SIL Open Font License</small>'] },
 ];
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ICON = {
@@ -8930,13 +9045,15 @@ function teardown() {
   Sound.silenceAll(0.8);
 }
 
-async function goChapter(id, o = {}) {
+// flow.ad: a fullscreen ad in the black between two chapters (Platform decides whether one shows)
+async function goChapter(id, o = {}, flow = {}) {
   Game.loading = true;
   Input.enabled = false;
   await HUD.fade(1, o.fast ? 0.3 : 0.9);
   teardown();
   if (menuWorld) { menuWorld.dispose(); menuWorld = null; }
   MenuMusic.stop(1.5); Music.stop(1.5);
+  if (flow.ad) await Platform.interstitial();
   Game.inMenu = false;
   UI.hide();
   HUD.show(false);
@@ -8980,7 +9097,7 @@ Game.complete = async (next, opts = {}) => {
   writeSave();
   await wait(0.2);
   Game.completing = false;
-  goChapter(next, opts);
+  goChapter(next, opts, { ad: !opts.noCard });
 };
 Game.fail = async (title, sub, restore) => {
   if (Game.failing) return;
@@ -9041,7 +9158,7 @@ function openMenu(o = {}) {
 }
 
 // ---------- pause / journal ----------
-function setPaused(p) {
+function setPaused(p, o = {}) {
   if (Game.inMenu || Game.loading) return;
   // a decision panel on screen owns the keyboard; the pause menu waits until it closes
   if (p && !$('choice').hidden) return;
@@ -9052,7 +9169,7 @@ function setPaused(p) {
     if (document.pointerLockElement) document.exitPointerLock();
     HUD.pauseRadio();
     Sound.pauseMuffle(true);
-    Sound.ui('ok');
+    if (!o.quiet) Sound.ui('ok');
     UI.open('pause', 'pause');
   } else {
     UI.hide();
@@ -9080,7 +9197,11 @@ function openJournal() {
   HUD.pauseRadio();
   UI.openJournal('game');
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden && !Game.inMenu && !Game.paused) setPaused(true); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && !Game.inMenu && !Game.paused) setPaused(true, { quiet: true });
+  // silence in the menu too: the requirements want no sound from a tab the player left
+  Platform.hold('hidden', document.hidden);
+});
 
 // ---------- loop ----------
 let last = performance.now(), fpsN = 0, fpsT = 0;
@@ -9091,6 +9212,7 @@ function frame(now) {
   last = now;
   Music.tick(Math.min(raw, 1)); // wall-clock fades: music does not slow down with the frame rate
   if (Settings.v.fps) { fpsN++; fpsT += raw; if (fpsT >= 0.5) { $('fps').textContent = `${Math.round(fpsN / fpsT)} FPS`; fpsN = 0; fpsT = 0; } }
+  Platform.gameplay(!Game.inMenu && !Game.paused && !Game.loading && !!Game.ctx);
   HUD.beginFrame();
   if (Input.pressed('mute')) Sound.setMuted(!Game.muted);
   if (Game.inMenu) {
@@ -9156,8 +9278,10 @@ function boot() {
   UI.title();
   HUD.fade(0, 1.4);
   requestAnimationFrame(frame);
+  // two frames: the title screen is on screen and listening before the platform drops its loader
+  requestAnimationFrame(() => requestAnimationFrame(() => Platform.ready()));
 }
-window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, Settings, UI, MenuMusic, Music, renderer, get ctx() { return Game.ctx; } };
+window.__umbra = { Game, goChapter, CHAPTERS, Journal, DNA, HUD, Cam, Input, Cine, Guide, Tutorial, Cast, Sound, Voice, Settings, UI, MenuMusic, Music, Platform, renderer, get ctx() { return Game.ctx; } };
 boot();
 
 </script>

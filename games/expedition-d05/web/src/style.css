@@ -29,6 +29,7 @@ body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 #app { position: fixed; inset: 0; overflow: hidden; background: var(--bg); }
 #game { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }

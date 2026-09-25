@@ -57,6 +57,8 @@ canvas.addEventListener('mousedown', (e) => {
   }
 });
 window.addEventListener('mouseup', () => { Input.mouseDown = false; });
+// a game has no use for the browser's context menu; a right click or a long press would open it over the view
+document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('pointerlockchange', () => { Input.locked = document.pointerLockElement === canvas; });
 window.addEventListener('mousemove', (e) => {
   if (IS_TOUCH) return;
