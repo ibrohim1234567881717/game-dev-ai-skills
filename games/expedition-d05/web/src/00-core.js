@@ -2,11 +2,14 @@
 // 00-core.js — math, renderer, materials, save, game state
 // ============================================================
 const IS_TOUCH = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
-// graphics level: 0 low, 1 medium, 2 high. Stored per browser; density-based choices (vegetation,
-// grass) apply when a chapter is built, the rest (post-processing, shadows, resolution) at once.
+// graphics level: 0 low, 1 medium, 2 high, 3 ultra. Stored per browser; density-based choices
+// (vegetation, grass) apply when a chapter is built, the rest (post-processing, shadows,
+// resolution) at once. Ultra is opt-in: supersampled, 8x MSAA, 4096 shadows over a wider area,
+// denser and farther vegetation. GFX.pick([low, medium, high, ultra]) reads a per-level value.
 const GFX = {
-  level: (() => { try { const v = localStorage.getItem('umbra.gfx'); if (v !== null && !isNaN(+v)) return Math.max(0, Math.min(2, +v)); } catch (e) { /* storage blocked */ } return IS_TOUCH ? 0 : 2; })(),
-  names: ['Низкая', 'Средняя', 'Высокая'],
+  level: (() => { try { const v = localStorage.getItem('umbra.gfx'); if (v !== null && !isNaN(+v)) return Math.max(0, Math.min(3, +v)); } catch (e) { /* storage blocked */ } return IS_TOUCH ? 0 : 2; })(),
+  names: ['Низкая', 'Средняя', 'Высокая', 'Ультра'],
+  pick(arr) { return arr[Math.min(this.level, arr.length - 1)]; },
 };
 const QUALITY = GFX.level > 0 ? 1 : 0; // density tier for world building
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -63,7 +66,8 @@ try {
   $('boot').textContent = 'Этот браузер не поддерживает WebGL. Откройте игру в Chrome, Safari или Firefox.';
   throw e;
 }
-const pixelRatioFor = (lvl) => Math.min(window.devicePixelRatio || 1, [1, 1.3, 1.75][lvl]);
+// ultra renders above the screen's own density (supersampling), up to 2x
+const pixelRatioFor = (lvl) => (lvl >= 3 ? Math.min(2, (window.devicePixelRatio || 1) * 1.5) : Math.min(window.devicePixelRatio || 1, [1, 1.3, 1.75][lvl]));
 renderer.setPixelRatio(pixelRatioFor(GFX.level));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;

@@ -188,9 +188,10 @@ function setPaused(p, o = {}) {
     if (document.pointerLockElement) document.exitPointerLock();
     HUD.pauseRadio();
     Sound.pauseMuffle(true);
-    if (!o.quiet) Sound.ui('ok');
+    if (!o.quiet) Sound.ui('open');
     UI.open('pause', 'pause');
   } else {
+    if (!o.quiet && !$('menu').hidden) Sound.ui('back');
     UI.hide();
     Sound.pauseMuffle(false);
     HUD.resumeRadio();

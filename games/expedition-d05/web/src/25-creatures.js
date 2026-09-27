@@ -49,7 +49,7 @@ function bakeRig(root, keep = []) {
 // Far LOD for herd animals: the whole rig in its rest pose as one vertex-coloured mesh. World.cull
 // shows it beyond `far` metres and hides the animated parts, so a grazing herd across the valley
 // costs one draw call per animal. At that distance the missing leg swing is not readable.
-const LOD_K = () => [0.65, 0.85, 1][GFX.level];
+const LOD_K = () => GFX.pick([0.65, 0.85, 1, 1.35]);
 const _lodMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, flatShading: true, envMapIntensity: 0.55 });
 function rigLOD(root, far) {
   root.updateMatrixWorld(true);

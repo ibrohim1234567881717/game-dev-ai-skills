@@ -211,7 +211,8 @@ function buildValleyWorld(o = {}) {
   });
   scatterInstanced(world, coniferGeo(), vegMat(0.0025), con, { cast: true, chunk: 170, solid: 0.36, tints: TREE_TINTS });
   // broadleaf trees and bushes break up the conifer ring; palms stand on the lake shore
-  const L3 = (a, b, c) => [a, b, c][GFX.level];
+  // per graphics level; ultra is a third denser than high
+  const L3 = (a, b, c) => GFX.pick([a, b, c, Math.round(c * 1.35)]);
   const nearTrack = (x, z) => trackDist(x, z) < 5;
   for (let v = 0; v < 3; v++) {
     const bl = scatter(L3(18, 32, 50), () => {

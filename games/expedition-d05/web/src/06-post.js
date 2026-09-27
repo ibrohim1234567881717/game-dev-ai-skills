@@ -13,7 +13,7 @@ const Post = {
   init() {
     if (this.ready) return;
     const HF = THREE.HalfFloatType;
-    const samples = renderer.capabilities.isWebGL2 && GFX.level >= 2 ? 4 : 0;
+    const samples = !renderer.capabilities.isWebGL2 ? 0 : GFX.level >= 3 ? Math.min(8, renderer.capabilities.maxSamples || 4) : GFX.level >= 2 ? 4 : 0;
     this.rt = new THREE.WebGLRenderTarget(4, 4, { type: HF, samples });
     this.b1 = new THREE.WebGLRenderTarget(4, 4, { type: HF });
     this.b2 = new THREE.WebGLRenderTarget(4, 4, { type: HF });
@@ -64,7 +64,7 @@ const Post = {
     if (!this.ready) return;
     const v = renderer.getDrawingBufferSize(new THREE.Vector2());
     this.rt.setSize(v.x, v.y);
-    const q = GFX.level >= 2 ? 4 : 5;
+    const q = GFX.pick([5, 5, 4, 3]);
     this.b1.setSize(Math.max(1, Math.floor(v.x / q)), Math.max(1, Math.floor(v.y / q)));
     this.b2.setSize(Math.max(1, Math.floor(v.x / q)), Math.max(1, Math.floor(v.y / q)));
     this.comp.uniforms.res.value.set(v.x, v.y);
@@ -109,6 +109,6 @@ const Post = {
     if (this.ready) { this.rt.dispose(); this.b1.dispose(); this.b2.dispose(); this.ready = false; }
     resize();
     const w = Game.world || menuWorld;
-    if (w && w.sun) { const ms = [512, 1024, 2048][level]; w.sun.shadow.mapSize.set(ms, ms); if (w.sun.shadow.map) { w.sun.shadow.map.dispose(); w.sun.shadow.map = null; } }
+    if (w && w.sun) { const ms = GFX.pick([512, 1024, 2048, 4096]); w.sun.shadow.mapSize.set(ms, ms); if (w.sun.shadow.map) { w.sun.shadow.map.dispose(); w.sun.shadow.map = null; } }
   },
 };

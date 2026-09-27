@@ -132,9 +132,10 @@ function makeLights(world, o) {
   world.add(hemi);
   const sun = new THREE.DirectionalLight(o.sunColor || '#fff1d8', o.sun ?? 2.6);
   sun.castShadow = o.shadows !== false;
-  const ms = [512, 1024, 2048][GFX.level];
+  const ms = GFX.pick([512, 1024, 2048, 4096]);
   sun.shadow.mapSize.set(ms, ms);
-  const sc = sun.shadow.camera, ext = o.shadowExt ?? 42;
+  // ultra: the bigger map also covers more ground, so shadows reach further and stay as sharp
+  const sc = sun.shadow.camera, ext = (o.shadowExt ?? 42) * (GFX.level >= 3 ? 1.35 : 1);
   sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 1; sc.far = 400;
   sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.05;
   world.add(sun); world.add(sun.target);
@@ -195,6 +196,7 @@ function makeTerrain(world, o) {
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   const det = detailTexture(o.detail || 'grass').clone(); det.needsUpdate = true;
+  det.anisotropy = GFX.pick([1, 2, 4, renderer.capabilities.getMaxAnisotropy()]);
   det.repeat.set(size / (o.tile || 5), size / (o.tile || 5));
   const m = GFX.level > 0
     ? new THREE.MeshStandardMaterial({ vertexColors: true, map: det, bumpMap: det, bumpScale: 0.6, roughness: 0.95, metalness: 0, envMapIntensity: 0.3 })
@@ -474,7 +476,7 @@ function scatterInstanced(world, geo, material, list, o = {}) {
       const cells = new Map();
       for (const it of list) { const k = Math.floor(it.x / cell) + ',' + Math.floor(it.z / cell); if (!cells.has(k)) cells.set(k, []); cells.get(k).push(it); }
       const grp = new THREE.Group(); grp.name = 'scatter';
-      const k = GFX.level === 2 ? 1.25 : GFX.level === 1 ? 1 : 0.75;
+      const k = GFX.pick([0.75, 1, 1.25, 1.6]);
       if (o.far) grp.userData.far = o.far * k;
       // geometry LOD per cell: cells whose nearest edge is beyond lowD metres draw the cheap mesh
       if (o.low) Object.assign(grp.userData, { lowGeo: o.low, lowD: (o.lowD || 60) * k, highGeo: geo });

@@ -28,6 +28,14 @@ const Sound = {
     this.voiceBus = ctx.createGain(); this.voiceBus.connect(this.muffle);
     this.musicBus = ctx.createGain(); this.musicBus.connect(this.muffle);
     this.uiBus = ctx.createGain(); this.uiBus.connect(this.master);
+    // a small room for the interface: short tails make the menu sounds feel placed, not beeped
+    {
+      const rv = ctx.createConvolver(), n = Math.floor(ctx.sampleRate * 0.7), ir = ctx.createBuffer(2, n, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) { const dd = ir.getChannelData(c); for (let i = 0; i < n; i++) dd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4) * (i < 40 ? i / 40 : 1); }
+      rv.buffer = ir;
+      const snd = ctx.createGain(); snd.gain.value = 0.22;
+      this.uiBus.connect(snd); snd.connect(rv); rv.connect(this.master);
+    }
     // music gets a synthesized hall: dry into the bus, a send through a noise-burst impulse response
     this.musicIn = ctx.createGain(); this.musicIn.connect(this.musicBus);
     const verb = ctx.createConvolver(), irLen = Math.floor(ctx.sampleRate * 3.2), ir = ctx.createBuffer(2, irLen, ctx.sampleRate);
@@ -81,14 +89,32 @@ const Sound = {
     this.muffle.frequency.setTargetAtTime(on ? 650 : 20000, t, on ? 0.08 : 0.2);
     this.worldGain.gain.setTargetAtTime(on ? 0.45 : 1, t, 0.12);
   },
-  // interface sounds: short, dry, on their own bus
+  // a band of noise swept from f0 to f1: the "air" of a panel sliding in or out
+  _sweep(f0, f1, dur, vol, bus, delay = 0) {
+    const ctx = this.ctx, t = ctx.currentTime + delay;
+    const s = this._noiseSrc(), f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.4;
+    f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.45); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(bus); s.start(t, Math.random()); s.stop(t + dur + 0.05);
+  },
+  // interface sounds: short, on their own bus with a small room (see init)
   ui(kind) {
     if (!this.ctx) return;
     const b = this.uiBus;
     switch (kind) {
-      case 'move': this.tone(1480, 0.035, 'sine', 0.03, 0, null, b); this.noise(0.018, 3800, 'bandpass', 0.028, 0, 4, b); break;
-      case 'ok': this.tone(740, 0.08, 'triangle', 0.07, 0, null, b); this.tone(1109, 0.12, 'triangle', 0.055, 0.05, null, b); break;
-      case 'back': this.tone(660, 0.1, 'triangle', 0.055, 0, 470, b); break;
+      // hover: soft, and never twice the same pitch, so running down a list does not sound like a clock
+      case 'move': this.tone(1320 * (1 + (Math.random() - 0.5) * 0.05), 0.045, 'sine', 0.022, 0, null, b); this.noise(0.014, 4200, 'bandpass', 0.018, 0, 4, b); break;
+      case 'ok': this.tone(190, 0.08, 'sine', 0.06, 0, 140, b); this.tone(740, 0.09, 'triangle', 0.055, 0, null, b); this.tone(1109, 0.14, 'triangle', 0.045, 0.045, null, b); break;
+      // a screen opens (settings, chapters, credits): air rising, then a rising fifth
+      case 'open':
+        this._sweep(500, 2600, 0.24, 0.05, b);
+        this.tone(587, 0.2, 'sine', 0.05, 0.03, null, b); this.tone(880, 0.28, 'sine', 0.045, 0.09, null, b); this.tone(1318, 0.32, 'sine', 0.016, 0.14, null, b);
+        break;
+      // back / close: the same, falling, and settling on a low note
+      case 'back':
+        this._sweep(2400, 520, 0.22, 0.04, b);
+        this.tone(880, 0.12, 'sine', 0.038, 0, null, b); this.tone(587, 0.2, 'sine', 0.045, 0.06, null, b); this.tone(294, 0.22, 'sine', 0.03, 0.11, null, b);
+        break;
       case 'tick': this.tone(1250, 0.025, 'sine', 0.035, 0, null, b); this.noise(0.012, 5200, 'highpass', 0.02, 0, 0.7, b); break;
       case 'deny': this.tone(150, 0.14, 'square', 0.03, 0, 120, b); break;
       case 'tab': this.noise(0.05, 2400, 'bandpass', 0.05, 0, 2, b); this.tone(880, 0.05, 'sine', 0.03, 0.01, null, b); break;

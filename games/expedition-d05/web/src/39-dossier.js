@@ -68,7 +68,7 @@ function makeDossier(station) {
   seed(3131);
   const isle = new World();
   const H = (x, z) => dossierHeight(x, z);
-  const L3 = (a, b, c) => [a, b, c][GFX.level];
+  const L3 = (a, b, c) => GFX.pick([a, b, c, Math.round(c * 1.35)]);
   makeTerrain(isle, { size: 640, seg: 150, cz: 20, height: H, color: dossierColor });
   makeWater(isle, { y: -1.2, size: 2400, color: '#3f6d68' });
   const L0 = DOS_LOOKS.day;
@@ -77,7 +77,7 @@ function makeDossier(station) {
   const hemi = new THREE.HemisphereLight(L0.sky, L0.ground, L0.hemi); isle.add(hemi);
   const sun = new THREE.DirectionalLight(L0.sunCol, L0.sun);
   sun.castShadow = true;
-  const ms = [512, 1024, 2048][GFX.level]; sun.shadow.mapSize.set(ms, ms);
+  const ms = GFX.pick([512, 1024, 2048, 4096]); sun.shadow.mapSize.set(ms, ms);
   Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 400 });
   sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.05;
   isle.add(sun); isle.add(sun.target);

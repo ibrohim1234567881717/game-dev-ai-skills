@@ -52,8 +52,8 @@ const TOUCH_HELP = [['Левый палец', 'идти'], ['Джойстик д
 const SUB_SIZES = ['Мелкий', 'Средний', 'Крупный', 'Очень крупный'];
 const SET_TABS = [
   { name: 'Графика', rows: [
-    { k: 'gfx', label: 'Качество графики', type: 'choice', opts: ['Низкое', 'Среднее', 'Высокое'], get: () => GFX.level, set: (v) => { Post.apply(v); Perf.stepped = true; },
-      desc: 'Низкое — без пост-обработки и с простыми тенями, для слабых ноутбуков и телефонов. Высокое — сглаживание, мягкие тени и полная плотность растительности. Тени и эффекты меняются сразу, растительность — при следующей загрузке главы.' },
+    { k: 'gfx', label: 'Качество графики', type: 'choice', opts: ['Низкое', 'Среднее', 'Высокое', 'Ультра'], get: () => GFX.level, set: (v) => { Post.apply(v); Perf.stepped = true; },
+      desc: 'Низкое — без пост-обработки и с простыми тенями, для слабых ноутбуков и телефонов. Высокое — сглаживание, мягкие тени и полная плотность растительности. Ультра — для мощной видеокарты: картинка чётче экрана, тени 4096 на большем расстоянии, лес и трава гуще и видны дальше. Тени и эффекты меняются сразу, растительность — при следующей загрузке главы.' },
     { k: 'bright', label: 'Яркость', type: 'slider', min: 1, max: 10, step: 1, preview: 'bright',
       desc: 'Настройте так, чтобы левый знак был едва различим, а правый — хорошо виден. Ночные главы и пещеры задуманы тёмными.' },
     { k: 'fov', label: 'Поле зрения', type: 'slider', min: 50, max: 80, step: 1, fmt: (v) => `${v}°`,
@@ -109,10 +109,10 @@ const SCREENS = {
       const items = [];
       if (has) items.push({ id: 'btnContinue', label: 'Продолжить', sub: `${CHAPTER_META[cur].eyebrow.split(' · ')[0]} · ${CHAPTER_META[cur].title}`, snd: 'start', desc: `Глава «${CHAPTER_META[cur].title}» начнётся с начала — там, где игра сохранилась.`, act: () => startGame(cur, true) });
       items.push({ id: 'btnStart', label: has ? 'Новая игра' : 'Начать экспедицию', snd: false, desc: 'Пролог. Станция ORIGO «Порог», 04:40, южная часть Тихого океана.', act: newGame });
-      items.push({ id: 'btnChapters', label: 'Главы', desc: `Открыто глав: ${open} из ${CHAPTER_ORDER.length}. Любую открытую главу можно переиграть.`, act: () => UI.push('chapters') });
-      if (species) items.push({ id: 'btnJournalMenu', label: 'Полевой журнал', desc: `Видов в журнале: ${species}. Всё, что экспедиция узнала о животных острова.`, act: () => UI.openJournal('menu') });
-      items.push({ id: 'btnSettings', label: 'Настройки', desc: 'Графика, звук, управление, субтитры.', act: () => UI.push('settings') });
-      items.push({ id: 'btnCredits', label: 'Авторы', desc: 'Кто сделал UMBRA.', act: () => UI.push('credits') });
+      items.push({ id: 'btnChapters', label: 'Главы', desc: `Открыто глав: ${open} из ${CHAPTER_ORDER.length}. Любую открытую главу можно переиграть.`, act: () => UI.push('chapters'), snd: 'open' });
+      if (species) items.push({ id: 'btnJournalMenu', label: 'Полевой журнал', desc: `Видов в журнале: ${species}. Всё, что экспедиция узнала о животных острова.`, act: () => UI.openJournal('menu'), snd: 'open' });
+      items.push({ id: 'btnSettings', label: 'Настройки', desc: 'Графика, звук, управление, субтитры.', act: () => UI.push('settings'), snd: 'open' });
+      items.push({ id: 'btnCredits', label: 'Авторы', desc: 'Кто сделал UMBRA.', act: () => UI.push('credits'), snd: 'open' });
       const card = has
         ? `<div class="eyebrow">Последнее сохранение</div><div class="mc-title">${esc(CHAPTER_META[cur].title)}</div><div class="mc-sub">${esc(CHAPTER_META[cur].eyebrow)}</div>
            ${CHAPTER_META[cur].text ? `<p>${esc(CHAPTER_META[cur].text.split('\n')[0])}</p>` : ''}${pipsHtml(CHAPTER_META[cur].dna)}<div class="mc-meta">${save && save.t ? `Сохранено ${esc(fmtSaved(save.t))}` : ''}${species ? ` · видов в журнале: ${species}` : ''}</div>`
@@ -128,8 +128,8 @@ const SCREENS = {
     build(s) {
       const items = [{ id: 'btnResume', label: 'Продолжить', desc: 'Вернуться в игру.', act: () => setPaused(false) }];
       if (Game.ctx && Game.ctx.restore) items.push({ id: 'btnRestartCp', label: 'Контрольная точка', desc: 'Начать заново с последней контрольной точки этой главы.', act: () => { setPaused(false); Game.fail('Контрольная точка', '', () => Game.ctx.restore()); } });
-      items.push({ id: 'btnPJournal', label: 'Полевой журнал', desc: 'Всё, что вы узнали о видах острова.', act: () => UI.openJournal('pause') });
-      items.push({ id: 'btnPSettings', label: 'Настройки', desc: 'Графика, звук, управление, субтитры.', act: () => UI.push('settings') });
+      items.push({ id: 'btnPJournal', label: 'Полевой журнал', desc: 'Всё, что вы узнали о видах острова.', act: () => UI.openJournal('pause'), snd: 'open' });
+      items.push({ id: 'btnPSettings', label: 'Настройки', desc: 'Графика, звук, управление, субтитры.', act: () => UI.push('settings'), snd: 'open' });
       items.push({ id: 'btnMenu', label: 'Главное меню', desc: 'Выйти в главное меню. «Продолжить» начнёт эту главу с начала.', act: toMainMenu });
       const obj = Guide.title;
       const card = `${obj && obj !== '…' ? `<div class="eyebrow">Текущая цель</div><div class="mc-obj">${esc(obj)}</div>${Guide.hint ? `<p>${esc(Guide.hint)}</p>` : ''}` : ''}
