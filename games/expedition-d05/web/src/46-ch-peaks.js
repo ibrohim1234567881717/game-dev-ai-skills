@@ -76,7 +76,7 @@ CHAPTERS.peaks = {
     makeVeil(world, { r: 520, h: 300 });
     // sparse alpine vegetation & rocks
     makeFerns(world, scatter(QUALITY ? 700 : 350, () => { const x = rnd(-170, 170), z = rnd(-170, 170); const h = peakHeight(x, z); const { d } = nearestPeak(x, z); if (h > 60 || d < PEAK.halfW + 0.5 || d > 30) return null; return { x, y: h - 0.05, z, s: rnd(0.5, 1), ry: rnd(0, TAU), tint: '#7a8a52' }; }));
-    scatterInstanced(world, coniferGeo(), vegMat(0.003), scatter(QUALITY ? 220 : 120, () => { const x = rnd(-180, 180), z = rnd(-180, 180); const h = peakHeight(x, z); const { d } = nearestPeak(x, z); if (h > 45 || d < PEAK.halfW + 3) return null; return { x, y: h, z, s: rnd(1.2, 2), ry: rnd(0, TAU) }; }), { cast: true });
+    scatterInstanced(world, coniferGeo(), vegMat(0.003), scatter(QUALITY ? 220 : 120, () => { const x = rnd(-180, 180), z = rnd(-180, 180); const h = peakHeight(x, z); const { d } = nearestPeak(x, z); if (h > 45 || d < PEAK.halfW + 3) return null; return { x, y: h, z, s: rnd(1.2, 2), ry: rnd(0, TAU) }; }), { cast: true, solid: 0.36, tints: TREE_TINTS });
     const rockM = new THREE.MeshLambertMaterial({ color: '#7d7b72', flatShading: true });
     // D-02 wreck, relay mast
     const at = (t) => PEAK_PTS[Math.round(t * PEAK.N)];
@@ -85,7 +85,7 @@ CHAPTERS.peaks = {
     const wr = off(wreckP, 5.2);
     const wreck = makeHelicopter({ color: '#4a4a3a', wreck: true, silent: true, label: 'D-02' });
     wreck.position.set(wr.x, wreckP.y - 1.2, wr.z); wreck.rotation.set(0.5, wreckP.a, 1.1); wreck.userData.rotor.rotation.set(0.4, 0.3, 0.2);
-    world.add(wreck);
+    world.add(wreck); world.circles.push({ x: wr.x, z: wr.z, r: 2.6 });
     const rl = off(relayP, -4.2);
     const mast = new THREE.Group();
     mesh(G.cyl(0.12, 0.2, 12, 6), mat('#6b6b66', { metal: 0.5 }), { parent: mast, pos: [0, 6, 0] });

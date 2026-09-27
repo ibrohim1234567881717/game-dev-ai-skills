@@ -74,10 +74,12 @@ class Player {
     if (w.push) { const p = w.push(nx, nz, dt); nx += p.x; nz += p.z; }
     // collisions
     const r = this.radius;
-    for (const c of w.circles) {
+    const push = (c) => {
       const ddx = nx - c.x, ddz = nz - c.z, d = Math.hypot(ddx, ddz), min = c.r + r;
       if (d < min && d > 0.0001) { nx = c.x + (ddx / d) * min; nz = c.z + (ddz / d) * min; }
-    }
+    };
+    for (const c of w.circles) push(c);
+    w.forSolids(nx, nz, push);
     for (const b of w.boxes) {
       if (b.off) continue;
       if (nx > b.x0 - r && nx < b.x1 + r && nz > b.z0 - r && nz < b.z1 + r) {

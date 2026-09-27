@@ -156,6 +156,13 @@ function makeHelicopter(o = {}) {
     idle() { E.target = 0.62; },
     setRpm(r) { E.rpm = E.target = r; },
     openDoor(open = true) { E.doorTarget = open ? 1 : 0; },
+    // a helicopter standing on the ground blocks the player: the cabin, then the boom to the tail
+    // rotor, as circles placed where it stands now (call once it has landed)
+    collide(world) {
+      g.updateMatrixWorld(true);
+      const v = new THREE.Vector3();
+      for (const [x, z, r] of [[0, 1.2, 1.75], [0, -1.1, 1.5], [0.1, -3.7, 0.55], [0.15, -5.9, 0.5], [0.2, -8, 0.7]]) { v.set(x, 0, z); g.localToWorld(v); world.circles.push({ x: v.x, z: v.z, r }); }
+    },
     // seat a character: g.userData.seat(npcGroup, seatIndex)
     seat(npc, i) {
       const s = seats[i];

@@ -30,8 +30,8 @@ CHAPTERS.k4 = {
     const outside = (x, z) => z > 37 && dist2d(x, z, 24, 38) < 56 && !(Math.abs(x - 24) < 4 && z < 76);
     const ferns = scatter(QUALITY ? 1400 : 700, () => { const x = rnd(-25, 75), z = rnd(37, 95); if (!outside(x, z)) return null; return { x, y: jH(x, z) - 0.05, z, s: rnd(1, 2.2), ry: rnd(0, TAU), tint: pick(['#4f7a38', '#5d8a40', '#3f6a30']) }; });
     makeFerns(world, ferns);
-    scatterInstanced(world, treeFernGeo(), vegMat(0.01), scatter(QUALITY ? 90 : 50, () => { const x = rnd(-25, 75), z = rnd(38, 95); if (!outside(x, z)) return null; return { x, y: jH(x, z), z, s: rnd(1.1, 1.9), ry: rnd(0, TAU) }; }), { cast: false });
-    scatterInstanced(world, coniferGeo(), vegMat(0.0025), scatter(QUALITY ? 120 : 70, () => { const x = rnd(-35, 85), z = rnd(40, 110); if (!outside(x, z) && z < 90) return null; return { x, y: jH(x, z), z, s: rnd(1.6, 2.6), ry: rnd(0, TAU) }; }), { cast: false });
+    scatterInstanced(world, treeFernGeo(), vegMat(0.01), scatter(QUALITY ? 90 : 50, () => { const x = rnd(-25, 75), z = rnd(38, 95); if (!outside(x, z)) return null; return { x, y: jH(x, z), z, s: rnd(1.1, 1.9), ry: rnd(0, TAU) }; }), { cast: false, solid: 0.3, tints: TREE_TINTS });
+    scatterInstanced(world, coniferGeo(), vegMat(0.0025), scatter(QUALITY ? 120 : 70, () => { const x = rnd(-35, 85), z = rnd(40, 110); if (!outside(x, z) && z < 90) return null; return { x, y: jH(x, z), z, s: rnd(1.6, 2.6), ry: rnd(0, TAU) }; }), { cast: false, solid: 0.36, tints: TREE_TINTS });
     makeMotes(world, { color: '#cfe8b0', count: QUALITY ? 200 : 100, size: 0.07 });
     // building shell
     const wallM = mat('#3a3f3a', { rough: 0.95 }), cleanM = mat('#b9bfbb', { rough: 0.6 });

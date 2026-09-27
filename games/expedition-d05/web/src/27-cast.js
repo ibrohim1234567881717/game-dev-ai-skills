@@ -110,6 +110,7 @@ const Cast = {
 
 function companionFree(w, x, z, r) {
   for (const c of w.circles) { if (c.comp) continue; if (Math.hypot(x - c.x, z - c.z) < c.r + r) return false; }
+  if (w.forSolids(x, z, (c) => Math.hypot(x - c.x, z - c.z) < c.r + r)) return false;
   for (const b of w.boxes) { if (b.off) continue; if (x > b.x0 - r && x < b.x1 + r && z > b.z0 - r && z < b.z1 + r) return false; }
   if (w.bounds && dist2d(x, z, w.bounds.x, w.bounds.z) > w.bounds.r - 0.5) return false;
   const g = w.groundH(x, z);

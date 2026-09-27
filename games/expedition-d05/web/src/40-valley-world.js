@@ -26,7 +26,10 @@ const _tmpC = new THREE.Color();
 // runs from the pool to the lake. The creek's water level is worked out once from the bare ground
 // (valleyBase) so it only ever runs downhill.
 const fallsStreamZ = (x) => VALLEY.falls.z + Math.sin((x - VALLEY.falls.x) * 0.06) * 3;
-const fallsBed = (x) => VALLEY.falls.lip + Math.max(0, VALLEY.falls.x - 1 - x) * 0.18;
+// the lip: at least 11 m over the bare slope at the face, so the step always stands out of it
+let _lip = null;
+const fallsLip = () => (_lip ??= Math.max(VALLEY.falls.lip, valleyBase(VALLEY.falls.x - 2, VALLEY.falls.z) + 11));
+const fallsBed = (x) => fallsLip() + Math.max(0, VALLEY.falls.x - 1 - x) * 0.18;
 let _creek = null;
 function creekPath() {
   if (_creek) return _creek;
@@ -61,7 +64,7 @@ function valleyHeight(x, z) {
   if (Math.abs(z - F.z) < 90 && x < F.x + 60 && x > F.x - 120) {
     // the step: raised west of the face, rising with the stream, fading out up the ridge
     const m = smoothstep(F.x + 1.5, F.x - 1.5, x) * Math.exp(-((z - F.z) ** 2) / (2 * 24 * 24)) * (1 - smoothstep(F.x - 62, F.x - 80, x));
-    if (m > 0) h = Math.max(h, lerp(h, F.lip + 1.8 + Math.max(0, F.x - 2 - x) * 0.2 + fbm(x * 0.09, z * 0.09, 2) * 0.8, m));
+    if (m > 0) h = Math.max(h, lerp(h, fallsLip() + 1.8 + Math.max(0, F.x - 2 - x) * 0.2 + fbm(x * 0.09, z * 0.09, 2) * 0.8, m));
     if (x < F.x - 0.5 && x > F.x - 64) { const bed = fallsBed(x), k = Math.exp(-((z - fallsStreamZ(x)) ** 2) / (2 * 2.4 * 2.4)); if (h > bed) h = lerp(h, bed, k); }
   }
   if (x < -40 && x > -175 && z > -2 && z < 160) {
@@ -76,13 +79,18 @@ function valleyHeight(x, z) {
 function valleyBase(x, z) {
   const r = Math.hypot(x - VALLEY.center.x, z - VALLEY.center.z);
   let h = 3.5 + fbm(x * 0.011, z * 0.011, 4) * 4.5 + fbm(x * 0.045, z * 0.045, 2) * 0.9;
+  // the ring of mountains: ridged noise gives crests and saddles instead of round green hills
   const ring = smoothstep(205, 290, r);
-  h += ring * (52 + fbm(x * 0.018 + 5, z * 0.018, 4) * 34);
+  if (ring > 0) { const rn = 1 - Math.abs(fbm(x * 0.0125 + 5, z * 0.0125, 5)); h += ring * (34 + rn * rn * 74 + fbm(x * 0.05, z * 0.05, 3) * 5); }
   h -= smoothstep(330, 385, r) * 130;
   const dl = Math.hypot(x - VALLEY.lake.x, z - VALLEY.lake.z);
   h -= 8.6 * Math.exp(-(dl * dl) / (2 * 27 * 27));
+  // the volcano: gullies down its flanks and a crater at the top (it steams, see buildValleyWorld)
   const dv = Math.hypot(x - 40, z + 290);
-  h += 175 * Math.exp(-(dv * dv) / (2 * 62 * 62));
+  if (dv < 260) {
+    const ang = Math.atan2(z + 290, x - 40), gully = Math.pow(Math.abs(Math.sin(ang * 6 + fbm(x * 0.02, z * 0.02, 2) * 2.5)), 4) * smoothstep(12, 70, dv) * (1 - smoothstep(120, 200, dv));
+    h += 175 * Math.exp(-(dv * dv) / (2 * 62 * 62)) * (1 - 0.14 * gully) - 34 * Math.exp(-(dv * dv) / (2 * 10 * 10));
+  }
   const dc = Math.hypot(x - VALLEY.camp.x, z - VALLEY.camp.z - 8);
   h = lerp(h, 2.4, Math.exp(-(dc * dc) / (2 * 22 * 22)));
   return h;
@@ -109,6 +117,9 @@ function valleyColor(x, z, y, slope, c) {
   if (slope > 0.3) c.lerp(_tmpC.set('#66665a'), smoothstep(0.3, 0.55, slope));
   // wet stones along the creek and round the pool
   if (x < -40 && x > -175 && z > -2 && z < 160) { const cd = creekAt(x, z).d; if (cd < 4.5 && y > -1) c.lerp(_tmpC.set('#5d584a'), (1 - smoothstep(2, 4.5, cd)) * 0.7); }
+  // trampled earth round camp Echo, worn paths between the tents
+  const dcamp = Math.hypot(x - VALLEY.camp.x, z - VALLEY.camp.z - 2);
+  if (dcamp < 17) c.lerp(_tmpC.set('#6b5c43'), (1 - smoothstep(7, 17, dcamp + fbm(x * 0.3, z * 0.3, 2) * 3)) * 0.6);
   // worn track from camp Echo to the lake: bare earth that breaks up at the edges
   const td = trackDist(x, z) + fbm(x * 0.4, z * 0.4, 2) * 0.9;
   if (td < 2.2 && y > 0.3) c.lerp(_tmpC.set('#6e5d40'), (1 - smoothstep(0.9, 2.2, td)) * 0.75);
@@ -118,12 +129,15 @@ function valleyColor(x, z, y, slope, c) {
 
 // sky, light, fog and colour grade per time of day
 const TIME_PRESETS = {
-  day: { sunDir: new THREE.Vector3(-0.55, 0.62, 0.55), top: '#4f86c6', horizon: '#d6e0da', low: '#7e9290', fog: '#b9c6c0', fogNear: 70, fogFar: 560, hemi: 1.4, sun: 3.2, sunColor: '#fff0d4', skyC: '#bcd6ea', groundC: '#56603a',
+  day: { sunDir: new THREE.Vector3(-0.55, 0.62, 0.55), top: '#4f86c6', horizon: '#d6e0da', low: '#7e9290', fog: '#b3c3cb', fogNear: 110, fogFar: 860, hemi: 1.4, sun: 3.2, sunColor: '#fff0d4', skyC: '#bcd6ea', groundC: '#56603a',
     cover: 0.42, cloud: '#f4f6f8', cloudDark: 0.32, grade: { exposure: 1.02, contrast: 1.08, saturation: 1.14, lift: '#040608', gain: '#fff8ee', vignette: 0.85, bloom: 0.45 } },
-  dusk: { sunDir: new THREE.Vector3(-0.85, 0.2, 0.3), top: '#2b4670', horizon: '#eaa874', low: '#6b5a52', fog: '#a48f82', fogNear: 50, fogFar: 460, hemi: 1.1, sun: 2.3, sunColor: '#ffb47e', skyC: '#9fb2d0', groundC: '#4a4232',
+  dusk: { sunDir: new THREE.Vector3(-0.85, 0.33, 0.3), top: '#2b4670', horizon: '#eaa874', low: '#6b5a52', fog: '#a8918a', fogNear: 80, fogFar: 700, hemi: 1.1, sun: 2.3, sunColor: '#ffb47e', skyC: '#9fb2d0', groundC: '#4a4232',
     cover: 0.5, cloud: '#f0b890', cloudDark: 0.55, grade: { exposure: 1.0, contrast: 1.1, saturation: 1.1, lift: '#0a0604', gain: '#ffe8d4', bloom: 0.62 } },
-  dawn: { sunDir: new THREE.Vector3(0.1, 0.28, 0.95), top: '#4f77ad', horizon: '#f2c79a', low: '#7a7a70', fog: '#c7bca8', fogNear: 60, fogFar: 520, hemi: 1.35, sun: 2.5, sunColor: '#ffd3a0', skyC: '#b8c8e0', groundC: '#50563e',
+  dawn: { sunDir: new THREE.Vector3(0.1, 0.33, 0.95), top: '#4f77ad', horizon: '#f2c79a', low: '#7a7a70', fog: '#c7bca8', fogNear: 80, fogFar: 720, hemi: 1.35, sun: 2.5, sunColor: '#ffd3a0', skyC: '#b8c8e0', groundC: '#50563e',
     cover: 0.36, cloud: '#f6dcc0', cloudDark: 0.45, grade: { exposure: 1.03, contrast: 1.06, saturation: 1.08, lift: '#06070a', gain: '#fff0e0', bloom: 0.6 } },
+  // the title screen: late-afternoon sun low over the western ridge, warm and clear
+  golden: { sunDir: new THREE.Vector3(-0.72, 0.44, 0.4), top: '#3a6cae', horizon: '#f6cc9c', low: '#8a7a6a', fog: '#dcc8b2', fogNear: 120, fogFar: 1100, hemi: 1.55, sun: 3.3, sunColor: '#ffd29a', skyC: '#b4c8e0', groundC: '#5e5a3c',
+    cover: 0.34, cloud: '#ffe2c2', cloudDark: 0.38, grade: { exposure: 1.12, contrast: 1.06, saturation: 1.14, lift: '#0a0806', gain: '#fff2e2', vignette: 0.9, bloom: 0.7 } },
   storm: { sunDir: new THREE.Vector3(-0.3, 0.7, 0.4), top: '#252c33', horizon: '#48525a', low: '#2a2f33', fog: '#3e474e', fogNear: 20, fogFar: 170, hemi: 0.5, sun: 0.5, sunColor: '#aab4c0', skyC: '#6a7682', groundC: '#1f2420',
     cover: 0.96, cloud: '#56606a', cloudDark: 0.6, grade: { exposure: 1.06, contrast: 1.14, saturation: 0.82, lift: '#04070a', gain: '#e8f0f6', bloom: 0.4, vignette: 1.1 } },
   night: { sunDir: new THREE.Vector3(0.3, 0.6, -0.4), top: '#070b14', horizon: '#18222e', low: '#0b0f14', fog: '#121a22', fogNear: 15, fogFar: 140, hemi: 0.5, sun: 0.55, sunColor: '#8aa0c8', skyC: '#3a4a66', groundC: '#10140f', sunSize: 0.5,
@@ -146,17 +160,21 @@ function scatter(n, fn) {
   return out;
 }
 
+// the title screen's camera circles the lake at this radius (90-main.js); no tall trees on it
+const MENU_ORBIT = { x: -40, z: -10, r: 92 };
 function buildValleyWorld(o = {}) {
   seed(4242);
   const world = new World({ bounds: { x: VALLEY.center.x, z: VALLEY.center.z, r: 215 } });
   applyTime(world, o.time || 'day');
   makeTerrain(world, { size: 800, seg: 190, height: valleyHeight, color: valleyColor });
   makeWater(world, { y: -1.2, size: 4000, color: '#44706a' });
-  makeVeil(world, { r: 640, x: VALLEY.center.x, z: VALLEY.center.z, h: 360 });
+  world.veil = makeVeil(world, { r: 640, x: VALLEY.center.x, z: VALLEY.center.z, h: 230 });
   const H = (x, z) => valleyHeight(x, z);
   const wet = (x, z) => (x < -40 && x > -180 && z > -4 && z < 162 && creekAt(x, z).d < 5.5) || (Math.abs(z - VALLEY.falls.z) < 5 && x < VALLEY.falls.x && x > VALLEY.falls.x - 66);
   const inMeadow = (x, z) => { const h = H(x, z); return h > 0.4 && Math.hypot(x - VALLEY.center.x, z - VALLEY.center.z) < 205 && !wet(x, z); };
   const nearCamp = (x, z) => Math.hypot(x - VALLEY.camp.x, z - VALLEY.camp.z) < 20 || Math.hypot(x - VALLEY.pad.x, z - VALLEY.pad.z) < 12;
+  // tall trees keep off the title camera's path (the menu's world only)
+  const onOrbit = (x, z) => o.menu && Math.abs(Math.hypot(x - MENU_ORBIT.x, z - MENU_ORBIT.z) - MENU_ORBIT.r) < 14;
 
   // ferns
   const fernN = QUALITY ? 3200 : 1500;
@@ -171,27 +189,27 @@ function buildValleyWorld(o = {}) {
   // cycads & tree ferns
   const cyc = scatter(QUALITY ? 170 : 110, () => {
     const x = rnd(-190, 210), z = rnd(-200, 190);
-    if (!inMeadow(x, z) || nearCamp(x, z)) return null;
+    if (!inMeadow(x, z) || nearCamp(x, z) || onOrbit(x, z)) return null;
     return { x, y: H(x, z) - 0.1, z, s: rnd(0.8, 1.4), ry: rnd(0, TAU) };
   });
-  scatterInstanced(world, cycadGeo(), vegMat(0.02), cyc, { cast: true, far: 230 });
+  scatterInstanced(world, cycadGeo(), vegMat(0.02), cyc, { cast: true, far: 230, solid: 0.45, tints: TREE_TINTS });
   const tf = scatter(QUALITY ? 90 : 50, () => {
     const a = rnd(0, TAU), rr = rnd(36, 60);
     const x = VALLEY.lake.x + Math.cos(a) * rr, z = VALLEY.lake.z + Math.sin(a) * rr;
-    if (H(x, z) < 0.3) return null;
+    if (H(x, z) < 0.3 || onOrbit(x, z)) return null;
     return { x, y: H(x, z) - 0.1, z, s: rnd(0.9, 1.5), ry: rnd(0, TAU) };
   });
-  scatterInstanced(world, treeFernGeo(), vegMat(0.01), tf, { cast: true, far: 260 });
+  scatterInstanced(world, treeFernGeo(), vegMat(0.01), tf, { cast: true, far: 260, solid: 0.3, tints: TREE_TINTS });
   // conifers — dense ring and scattered stands
   const con = scatter(QUALITY ? 700 : 380, () => {
     const a = rnd(0, TAU), rr = rng() < 0.8 ? rnd(175, 330) : rnd(40, 200);
     const x = VALLEY.center.x + Math.cos(a) * rr, z = VALLEY.center.z + Math.sin(a) * rr;
     const h = H(x, z);
-    if (h < 0.6 || h > 150 || nearCamp(x, z) || wet(x, z)) return null;
+    if (h < 0.6 || h > 150 || nearCamp(x, z) || wet(x, z) || onOrbit(x, z)) return null;
     if (rr < 175 && Math.hypot(x - 120, z + 110) < 60) return null;
     return { x, y: h - 0.2, z, s: rnd(1.1, 2.3), ry: rnd(0, TAU) };
   });
-  scatterInstanced(world, coniferGeo(), vegMat(0.0025), con, { cast: true, chunk: 170 });
+  scatterInstanced(world, coniferGeo(), vegMat(0.0025), con, { cast: true, chunk: 170, solid: 0.36, tints: TREE_TINTS });
   // broadleaf trees and bushes break up the conifer ring; palms stand on the lake shore
   const L3 = (a, b, c) => [a, b, c][GFX.level];
   const nearTrack = (x, z) => trackDist(x, z) < 5;
@@ -200,20 +218,20 @@ function buildValleyWorld(o = {}) {
       const a = rnd(0, TAU), rr = rng() < 0.6 ? rnd(120, 200) : rnd(30, 150);
       const x = VALLEY.center.x + Math.cos(a) * rr, z = VALLEY.center.z + Math.sin(a) * rr;
       const h = H(x, z);
-      if (h < 0.6 || h > 40 || nearCamp(x, z) || nearTrack(x, z) || wet(x, z)) return null;
+      if (h < 0.6 || h > 40 || nearCamp(x, z) || nearTrack(x, z) || wet(x, z) || onOrbit(x, z)) return null;
       if (Math.hypot(x - 120, z + 110) < 55) return null;
       return { x, y: h - 0.2, z, s: rnd(0.85, 1.35), ry: rnd(0, TAU) };
     });
-    scatterInstanced(world, broadleafGeo(v + 1), leafMat(0.006), bl, { cast: true, low: broadleafGeo(v + 1, 0), lowD: 70 });
+    scatterInstanced(world, broadleafGeo(v + 1), leafMat(0.006), bl, { cast: true, low: broadleafGeo(v + 1, 0), lowD: 70, solid: 0.36, tints: TREE_TINTS });
     const bu = scatter(L3(45, 90, 140), () => { const x = rnd(-190, 210), z = rnd(-200, 190); if (!inMeadow(x, z) || nearCamp(x, z) || nearTrack(x, z)) return null; return { x, y: H(x, z) - 0.1, z, s: rnd(0.7, 1.5), ry: rnd(0, TAU) }; });
     // bushes sit in the grass; their shadows did not read but cost as much as the trees'
-    scatterInstanced(world, bushGeo(v + 1), leafMat(0.01), bu, { cast: false, far: 190, low: bushGeo(v + 1, 0), lowD: 40 });
+    scatterInstanced(world, bushGeo(v + 1), leafMat(0.01), bu, { cast: false, far: 190, low: bushGeo(v + 1, 0), lowD: 40, tints: TREE_TINTS });
   }
   makePalms(world, scatter(L3(14, 24, 36), () => {
     const a = rnd(0, TAU), rr = rnd(30, 44);
     const x = VALLEY.lake.x + Math.cos(a) * rr, z = VALLEY.lake.z + Math.sin(a) * rr;
     const h = H(x, z);
-    if (h < 0.3 || h > 6) return null;
+    if (h < 0.3 || h > 6 || onOrbit(x, z)) return null;
     return { x, y: h - 0.1, z, s: rnd(0.85, 1.25), ry: rnd(0, TAU) };
   }));
   if (!o.menu) makeGrassField(world, {
@@ -266,8 +284,8 @@ function buildValleyWorld(o = {}) {
   makeCrate(world, cx - 2, cz - 1, 1, '#4f5a3c', 0.4);
   makeCrate(world, cx - 1, cz + 0.6, 0.8, '#5d573f', 0.9);
   makeCrate(world, cx + 3, cz + 1, 1.1, '#44503a', -0.2);
-  const shed = mesh(G.box(3, 2.4, 2.4), mat('#5a5f55'), { pos: [cx + 10, H(cx + 10, cz + 3) + 1.2, cz + 3], receive: true });
-  world.add(shed); world.circles.push({ x: cx + 10, z: cz + 3, r: 1.9 });
+  // the radio hut D-04 put up (it was a grey box): prefab walls, roof, door, window, mast
+  makeHut(world, cx + 10, cz + 3, -Math.PI / 2, 'ECHO · D-04');
   const sign = new THREE.Group();
   mesh(G.box(0.12, 2.2, 0.12), mat('#3a3024'), { parent: sign, pos: [-1, 1.1, 0] });
   mesh(G.box(0.12, 2.2, 0.12), mat('#3a3024'), { parent: sign, pos: [1, 1.1, 0] });
@@ -298,12 +316,39 @@ function buildValleyWorld(o = {}) {
       const len = Math.hypot(bx - ax, bz - az); P(G.cyl(0.006, 0.006, len, 3), '#ddd', (ax + bx) / 2, (ay + by) / 2 + 1.9, (az + bz) / 2, 0, -Math.atan2(bz - az, bx - ax), Math.PI / 2);
       [['#8a4a2a', 0.3], ['#c8c0a8', 0.55], ['#3e5a6a', 0.78]].forEach(([c, k]) => P(G.box(0.5, 0.55, 0.02), c, lerp(ax, bx, k), lerp(ay, by, k) + 1.6, lerp(az, bz, k), 0, -Math.atan2(bz - az, bx - ax), 0)); }
     { const [x, y, z] = at(cx, cz + 3); for (let k = 0; k < 9; k++) { const a = k * TAU / 9; P(G.sphere(0.22, 7, 5), '#6a6a62', x + Math.cos(a) * 0.9, y + 0.1, z + Math.sin(a) * 0.9); } P(G.cyl(0.08, 0.08, 1.2, 6), '#2a1e14', x, y + 0.12, z, 0, 0.6, Math.PI / 2); P(G.cyl(0.08, 0.08, 1.1, 6), '#2a1e14', x, y + 0.14, z, 0, -0.7, Math.PI / 2); }
+    // folding chairs round the fire, and a pot on a tripod over it
+    for (const a of [2.6, 3.5, 4.4]) {
+      const [x, y, z] = at(cx + Math.cos(a) * 2.2, cz + 3 + Math.sin(a) * 2.2), f = Math.atan2(cx - x, cz + 3 - z);
+      const fx = Math.sin(f), fz = Math.cos(f), px = -fz, pz = fx;
+      P(G.box(0.5, 0.04, 0.45), '#3c5a6a', x, y + 0.45, z, 0, f, 0);
+      P(G.box(0.5, 0.46, 0.04), '#3c5a6a', x - fx * 0.24, y + 0.7, z - fz * 0.24, 0, f, 0);
+      for (const sd of [-1, 1]) P(G.cyl(0.015, 0.015, 0.62, 4), '#222', x + px * sd * 0.23, y + 0.3, z + pz * sd * 0.23, fz * 0.5, 0, -fx * 0.5);
+    }
+    { const [x, y, z] = at(cx, cz + 3); for (let k = 0; k < 3; k++) { const a = k * TAU / 3 + 0.4; P(G.cyl(0.025, 0.025, 1.7, 4), '#3a2a1a', x + Math.cos(a) * 0.45, y + 0.78, z + Math.sin(a) * 0.45, Math.sin(a) * 0.28, 0, -Math.cos(a) * 0.28); }
+      P(G.cyl(0.2, 0.16, 0.26, 10), '#2a2a28', x, y + 0.72, z); P(G.cyl(0.004, 0.004, 0.55, 3), '#555', x, y + 1.12, z);
+      P(G.cyl(0.62, 0.62, 0.02, 12), '#2a2622', x, y + 0.04, z); }
+    // sandbags round the generator, a solar panel by the hut, a rope and tape round the camp
+    for (let k = 0; k < 9; k++) { const a = -0.5 + k * 0.22, [x, y, z] = at(cx + 9 + Math.cos(a) * 1.9, cz + 7 + Math.sin(a) * 1.9); P(G.box(0.62, 0.26, 0.36), '#8a7a58', x, y + 0.13 + (k % 2) * 0.02, z, 0, -a, 0); if (k % 2) P(G.box(0.62, 0.26, 0.36), '#857554', x, y + 0.39, z, 0, -a + 0.1, 0); }
+    world.circles.push({ x: cx + 10.6, z: cz + 7.4, r: 1.2 });
+    { const [x, y, z] = at(cx + 13.5, cz - 1.5); P(G.box(1.7, 0.05, 1.05), '#1c2c44', x, y + 1.0, z, -0.6, -0.3, 0); P(G.box(1.75, 0.03, 1.1), '#8a8a84', x, y + 0.97, z, -0.6, -0.3, 0); for (const d of [-0.6, 0.6]) P(G.cyl(0.03, 0.03, 1.0, 4), '#555', x + d, y + 0.5, z, 0, 0, 0); world.circles.push({ x, z, r: 0.95 }); }
+    { const ring = 17.5, n = 14, pts = [];
+      for (let k = 0; k <= n; k++) { const a = -2.3 + (k / n) * 4.2; pts.push([cx + Math.cos(a) * ring, cz + 2 + Math.sin(a) * ring]); }
+      pts.forEach(([x, z], k) => { const y = H(x, z); P(G.cyl(0.035, 0.045, 1.1, 5), '#8a7a5a', x, y + 0.55, z); if (k) { const [ax, az] = pts[k - 1], ay = H(ax, az), len = Math.hypot(x - ax, z - az); P(G.cyl(0.008, 0.008, len, 3), '#d0c8a8', (x + ax) / 2, (y + ay) / 2 + 0.95, (z + az) / 2, 0, -Math.atan2(z - az, x - ax), Math.PI / 2); if (k % 3 === 0) P(G.box(0.03, 0.22, 0.05), '#e0662a', ax, ay + 0.82, az); } }); }
     // along the track: a camera trap on a stake, a drum, a sign at the lake
     { const [x, y, z] = at(-8.6, 96); P(G.cyl(0.05, 0.06, 1.5, 6), '#6a5a40', x, y + 0.75, z); P(G.box(0.18, 0.24, 0.12), '#3a4a2e', x, y + 1.25, z + 0.08); }
     { const [x, y, z] = at(1.5, 62); P(G.cyl(0.3, 0.3, 0.9, 12), '#6a3624', x, y + 0.2, z, 0.2, 0.5, Math.PI / 2 - 0.1); world.circles.push({ x, z, r: 0.6 }); }
     { const [x, y, z] = at(7, 6); P(G.cyl(0.05, 0.06, 1.8, 6), '#6a5a40', x, y + 0.9, z); P(G.box(1.1, 0.3, 0.04), '#c9c1a6', x + 0.35, y + 1.6, z, 0, -0.5, 0); }
     const m = new THREE.Mesh(mergeColored(parts), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, envMapIntensity: 0.4 }));
     m.castShadow = true; m.receiveShadow = true; world.add(m);
+    {
+      const fx = cx - 10, fz = cz + 11, fy = H(fx, fz);
+      mesh(G.cyl(0.04, 0.05, 6.2, 6), mat('#8a8a84', { metal: 0.5 }), { parent: world.scene, pos: [fx, fy + 3.1, fz] });
+      const ft = canvasTex(128, 80, (g, w, h) => { g.fillStyle = '#c9c3ae'; g.fillRect(0, 0, w, h); g.fillStyle = '#6a3a2c'; g.fillRect(0, h * 0.7, w, h * 0.3); g.fillStyle = '#2c3a44'; g.font = 'bold 30px Arial Narrow, Arial'; g.textAlign = 'center'; g.fillText('ORIGO', w / 2, 44); });
+      const fg = new THREE.PlaneGeometry(1.5, 0.95, 8, 3); fg.translate(0.75, 0, 0);
+      // the flag waves: the wind shader bends by height, so the cloth is stood on its edge
+      const flag = mesh(fg, windMaterial(new THREE.MeshLambertMaterial({ map: ft, side: THREE.DoubleSide }), 0.35), { parent: world.scene, pos: [fx, fy + 5.6, fz], rot: [0, 0.4, 0], cast: true });
+      world.onUpdate(() => { flag.rotation.y = 0.4 + Math.sin(Game.time * 1.1) * 0.25; flag.scale.y = 0.96 + Math.sin(Game.time * 2.3) * 0.04; });
+    }
     const lakeSign = canvasTex(256, 64, (g, w, h) => { g.fillStyle = '#c9c1a6'; g.fillRect(0, 0, w, h); g.fillStyle = '#26221a'; g.font = 'bold 34px Arial'; g.textAlign = 'center'; g.fillText('ОЗЕРО · LAKE →', w / 2, 44); });
     mesh(new THREE.PlaneGeometry(1.05, 0.28), new THREE.MeshLambertMaterial({ map: lakeSign }), { parent: world.scene, pos: [7.35 + Math.cos(0.5) * 0.02, H(7, 6) + 1.6, 6 - 0.03], rot: [0, -0.5, 0], cast: false });
     const trapLed = mesh(G.sphere(0.02, 6, 4), new THREE.MeshBasicMaterial({ color: '#ff3020' }), { parent: world.scene, pos: [-8.6, H(-8.6, 96) + 1.3, 96.15], cast: false });
@@ -316,9 +361,12 @@ function buildValleyWorld(o = {}) {
   {
     const logGeo = mergeColored([{ geo: G.cyl(0.22, 0.28, 4.2, 9), color: '#5a4632', m: M4(0, 0, 0, 0, 0, Math.PI / 2) }, { geo: G.cyl(0.06, 0.09, 1.2, 5), color: '#5a4632', m: M4(0.6, 0.35, 0, 0.6, 0, 0.3) }]);
     const inMeadowEdge = (x, z) => { const h = H(x, z); return h > 0.5 && h < 30 && !nearCamp(x, z) && !nearTrack(x, z); };
-    scatterInstanced(world, logGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), scatter(L3(14, 26, 40), () => { const x = rnd(-190, 210), z = rnd(-200, 190); if (!inMeadowEdge(x, z)) return null; const s = rnd(0.5, 0.95); return { x, y: H(x, z) + 0.2 * s, z, s, ry: rnd(0, TAU) }; }), { cast: true });
+    const logs = scatter(L3(14, 26, 40), () => { const x = rnd(-190, 210), z = rnd(-200, 190); if (!inMeadowEdge(x, z)) return null; const s = rnd(0.5, 0.95); return { x, y: H(x, z) + 0.2 * s, z, s, ry: rnd(0, TAU) }; });
+    // a fallen log blocks along its length: three trunks' worth of collider down its axis
+    for (const l of logs) for (const k of [-1.5, 0, 1.5]) world.addSolid(l.x + Math.cos(l.ry) * k * l.s, l.z - Math.sin(l.ry) * k * l.s, 0.32 * l.s);
+    scatterInstanced(world, logGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), logs, { cast: true });
     const stumpGeo = mergeColored([{ geo: G.cyl(0.32, 0.42, 0.6, 9), color: '#5e4a34', m: M4(0, 0.3, 0) }, { geo: G.cyl(0.3, 0.3, 0.02, 9), color: '#b09a70', m: M4(0, 0.61, 0) }]);
-    scatterInstanced(world, stumpGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), scatter(L3(12, 22, 34), () => { const x = rnd(-190, 210), z = rnd(-200, 190); if (!inMeadowEdge(x, z)) return null; return { x, y: H(x, z) - 0.05, z, s: rnd(0.7, 1.4), ry: rnd(0, TAU) }; }), { cast: true });
+    scatterInstanced(world, stumpGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), scatter(L3(12, 22, 34), () => { const x = rnd(-190, 210), z = rnd(-200, 190); if (!inMeadowEdge(x, z)) return null; return { x, y: H(x, z) - 0.05, z, s: rnd(0.7, 1.4), ry: rnd(0, TAU) }; }), { cast: true, solid: 0.42 });
     const stone = mossRock(rockGeo(7, 0), 7);
     scatterInstanced(world, stone, rockM, scatter(L3(120, 260, 420), () => { const x = rnd(-190, 210), z = rnd(-200, 190); const h = H(x, z); if (h < 0.1 || h > 60 || nearCamp(x, z)) return null; return { x, y: h + 0.02, z, s: rnd(0.12, 0.38), ry: rnd(0, TAU), tilt: rnd(0, 0.5) }; }), { cast: false, far: 90 });
   }
@@ -344,7 +392,7 @@ function buildValleyWorld(o = {}) {
     let poolY = C.pool;
     for (let a = 0; a < 8; a++) poolY = Math.max(poolY, T.sample(px + Math.cos(a * TAU / 8) * 2.5, pz + Math.sin(a * TAU / 8) * 2.5) + 0.08);
     mesh(new THREE.CircleGeometry(6.4, 24).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#35584f', roughness: 0.08, transparent: true, opacity: 0.88, envMapIntensity: 0.6, polygonOffset: true, polygonOffsetFactor: -2 }), { parent: world.scene, pos: [px, poolY, pz], cast: false, receive: true });
-    makeFalls(world, { x: F.x - 0.6, z: fallsStreamZ(F.x - 0.6), top: F.lip + 0.4, bottom: poolY, width: 3.6, ry: Math.PI / 2, level: o.menu ? 0 : 1 });
+    makeFalls(world, { x: F.x - 0.6, z: fallsStreamZ(F.x - 0.6), top: fallsLip() + 0.4, bottom: poolY, width: 3.6, ry: Math.PI / 2, level: o.menu ? 0 : 1 });
     // the creek's surface never dips under the ground it runs over (the terrain mesh is coarser
     // than the carve), and it meets the lake at the lake's level
     makeStream(world, C.pts.map(([x, y, z], i) => [x, Math.max(y, Math.max(T.sample(x, z), T.sample(x + 1.2, z), T.sample(x - 1.2, z), T.sample(x, z + 1.2), T.sample(x, z - 1.2)) + 0.06), z, i === 0 ? 4.5 : 3.4]), { speed: 0.8, tile: 4 });
@@ -358,6 +406,20 @@ function buildValleyWorld(o = {}) {
     world.add(bakeRig(fr));
   }
 
+  // steam off the volcano's crater: the island runs on geothermal heat (and ORIGO's charges sit in
+  // those wells); slow, wind-bent, fading as it climbs
+  {
+    const cx = 40, cz = -290, cy = valleyBase(cx, cz) + 4, puffs = [];
+    const m = new THREE.SpriteMaterial({ map: foamTexture(), color: '#e6e2dc', transparent: true, depthWrite: false, opacity: 0.3 });
+    for (let i = 0; i < (GFX.level ? 16 : 9); i++) { const sp = new THREE.Sprite(m.clone()); sp.userData.ph = i / (GFX.level ? 16 : 9); world.add(sp); puffs.push(sp); }
+    world.onUpdate(() => {
+      for (const sp of puffs) {
+        const k = (sp.userData.ph + Game.time * 0.012) % 1;
+        sp.position.set(cx + k * 60 * world.wind.x + Math.sin(k * 9 + sp.userData.ph * 20) * 6, cy + k * 95, cz + k * 60 * world.wind.y);
+        sp.scale.setScalar(18 + k * 70); sp.material.opacity = 0.32 * smoothstep(0, 0.12, k) * (1 - k);
+      }
+    });
+  }
   makeMotes(world, { color: '#fff3c4', count: QUALITY ? 450 : 220 });
   world.wind.set(0.8, -0.6).normalize();
   world.noiseMul = 1;
@@ -379,13 +441,25 @@ function buildValleyWorld(o = {}) {
   });
 
   if (o.menu) {
-    // a small herd grazing for the menu view
-    for (let i = 0; i < 5; i++) {
-      const t = makeTriceratops({ scale: i === 4 ? 0.5 : 1 });
-      const x = -5 + i * 9, z = -70 + (i % 2) * 8;
-      t.position.set(x, H(x, z), z); t.rotation.y = 1.8 + i * 0.2; world.add(t);
-      world.onUpdate((dt) => t.userData.anim(dt, 0, { graze: Math.sin(Game.time * 0.3 + i) > -0.3 }));
+    // the title screen's life: a herd grazing on the lake's east shore, Pteranodons wheeling over
+    // the water, the brachiosaurs drinking
+    for (let i = 0; i < 7; i++) {
+      const t = makeTriceratops({ scale: i >= 5 ? 0.48 : rnd(0.92, 1.05), broken: i === 0, skin: pick(['#6d6a4f', '#666248', '#72694c']), frill: pick(['#8a4b2c', '#94532e', '#7c4a30']) });
+      const a = -0.9 + i * 0.32, rr = 36 + (i % 3) * 5, x = VALLEY.lake.x + Math.cos(a) * rr, z = VALLEY.lake.z + Math.sin(a) * rr;
+      t.position.set(x, H(x, z), z); t.rotation.y = a + Math.PI * 0.6 + rnd(-0.4, 0.4); world.add(t);
+      world.onUpdate((dt) => t.userData.anim(dt, 0, { graze: Math.sin(Game.time * 0.3 + i * 1.7) > -0.3, look: Math.sin(Game.time * 0.2 + i) * 0.3 }));
     }
+    for (let i = 0; i < 3; i++) {
+      const pt = makePtera({ scale: 1.2 }); world.add(pt);
+      const r0 = 26 + i * 9, y0 = 34 + i * 6, w = (i % 2 ? -1 : 1) * (0.16 - i * 0.02), a0 = i * 2.1;
+      world.onUpdate((dt) => {
+        const a = a0 + Game.time * w, sg = Math.sign(w);
+        pt.position.set(VALLEY.lake.x + Math.cos(a) * r0, y0 + Math.sin(Game.time * 0.4 + i) * 3, VALLEY.lake.z + Math.sin(a) * r0);
+        pt.rotation.set(0, Math.atan2(-Math.sin(a) * sg, Math.cos(a) * sg), sg * 0.32);
+        pt.userData.anim(dt, 0, { flap: Math.sin(Game.time * 0.5 + i * 2) > 0.7 });
+      });
+    }
+    brachios.forEach((b) => { b.userData.menu = true; });
     Sound.bed('wind', 0.05);
   }
   return { world, brachios };

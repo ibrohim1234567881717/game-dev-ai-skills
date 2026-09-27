@@ -25,18 +25,20 @@ function mergeColored(parts) {
     g.applyMatrix4(p.m);
     if (!g.index) { const idx = new Array(g.attributes.position.count); for (let i = 0; i < idx.length; i++) idx[i] = i; g.setIndex(idx); }
     nv += g.attributes.position.count; ni += g.index.count;
-    return { g, c: new THREE.Color(p.color) };
+    return { g, c: new THREE.Color(p.color), shade: p.shade };
   });
   const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), C = new Float32Array(nv * 3);
   const I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
   let vo = 0, io = 0;
-  for (const { g, c } of gs) {
+  for (const { g, c, shade } of gs) {
     const pa = g.attributes.position, na = g.attributes.normal, idx = g.index;
     for (let i = 0; i < pa.count; i++) {
       const k = (vo + i) * 3;
       P[k] = pa.getX(i); P[k + 1] = pa.getY(i); P[k + 2] = pa.getZ(i);
       N[k] = na.getX(i); N[k + 1] = na.getY(i); N[k + 2] = na.getZ(i);
-      C[k] = c.r; C[k + 1] = c.g; C[k + 2] = c.b;
+      // shade(y, normalY) scales the part's colour per vertex (canopies darker underneath)
+      const f = shade ? shade(P[k + 1], N[k + 1]) : 1;
+      C[k] = c.r * f; C[k + 1] = c.g * f; C[k + 2] = c.b * f;
     }
     for (let k = 0; k < idx.count; k++) I[io + k] = idx.getX(k) + vo;
     vo += pa.count; io += idx.count;

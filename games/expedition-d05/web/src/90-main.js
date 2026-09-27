@@ -167,7 +167,7 @@ function openMenu(o = {}) {
   HUD.show(false);
   Sound.pauseMuffle(false);
   buildMenu();
-  if (!menuWorld) menuWorld = buildValleyWorld({ time: 'dusk', menu: true }).world;
+  if (!menuWorld) menuWorld = buildValleyWorld({ time: 'golden', menu: true }).world;
   Post.setGrade(menuWorld.grade);
   UI.open('menu', 'main');
   if (o.credits) UI.push('credits');
@@ -237,10 +237,12 @@ function frame(now) {
   if (Game.inMenu) {
     Game.time += dt; WindU.value = Game.time;
     if (menuWorld) {
-      menuT += dt * 0.022;
-      const r = 150;
-      camera.position.set(-40 + Math.sin(menuT) * r, 38 + Math.sin(menuT * 2.3) * 3, -10 + Math.cos(menuT) * r);
-      camera.lookAt(-10, 8, -40);
+      // a slow circle round the lake, low enough for the animals to read, clear of the trees
+      // (buildValleyWorld keeps them off this circle) and looking a little ahead across the water
+      menuT += dt * 0.016;
+      const O = MENU_ORBIT, mx = O.x + Math.sin(menuT) * O.r, mz = O.z + Math.cos(menuT) * O.r;
+      camera.position.set(mx, Math.max(valleyHeight(mx, mz) + 12, 20) + Math.sin(menuT * 2.3) * 2, mz);
+      camera.lookAt(O.x - Math.sin(menuT - 0.35) * 48, 13, O.z - Math.cos(menuT - 0.35) * 48);
       // the title screen is centred; menu screens push the view right, away from the text column
       menuYaw = damp(menuYaw, !$('titleScr').hidden || IS_TOUCH ? 0 : 0.17, 1.5, dt);
       camera.rotateY(menuYaw);
@@ -291,7 +293,7 @@ function frame(now) {
 function boot() {
   Settings.apply();
   buildMenu();
-  menuWorld = buildValleyWorld({ time: 'dusk', menu: true }).world;
+  menuWorld = buildValleyWorld({ time: 'golden', menu: true }).world;
   Post.setGrade(menuWorld.grade);
   $('boot').hidden = true;
   UI.title();

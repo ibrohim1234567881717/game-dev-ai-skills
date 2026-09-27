@@ -26,8 +26,8 @@ CHAPTERS.queen = {
     makeRain(world);
     const H = queenH;
     // broken forest & carcasses
-    scatterInstanced(world, deadTreeGeo(), vegMat(0.003), scatter(QUALITY ? 140 : 80, () => { const x = rnd(-150, 150), z = rnd(30, 220); if (Math.hypot(x, z - 6) < 55) return null; return { x, y: H(x, z) - 0.2, z, s: rnd(1, 1.8), ry: rnd(0, TAU), tilt: rnd(-0.6, 0.6), tiltZ: rnd(-0.5, 0.5) }; }), { cast: true });
-    scatterInstanced(world, coniferGeo(), vegMat(0.003), scatter(QUALITY ? 200 : 110, () => { const x = rnd(-200, 200), z = rnd(-80, 240); if (Math.hypot(x, z - 60) < 120) return null; return { x, y: H(x, z), z, s: rnd(1.5, 2.5), ry: rnd(0, TAU) }; }), { cast: false });
+    scatterInstanced(world, deadTreeGeo(), vegMat(0.003), scatter(QUALITY ? 140 : 80, () => { const x = rnd(-150, 150), z = rnd(30, 220); if (Math.hypot(x, z - 6) < 55) return null; return { x, y: H(x, z) - 0.2, z, s: rnd(1, 1.8), ry: rnd(0, TAU), tilt: rnd(-0.6, 0.6), tiltZ: rnd(-0.5, 0.5) }; }), { cast: true, solid: 0.4 });
+    scatterInstanced(world, coniferGeo(), vegMat(0.003), scatter(QUALITY ? 200 : 110, () => { const x = rnd(-200, 200), z = rnd(-80, 240); if (Math.hypot(x, z - 60) < 120) return null; return { x, y: H(x, z), z, s: rnd(1.5, 2.5), ry: rnd(0, TAU) }; }), { cast: false, solid: 0.36, tints: TREE_TINTS });
     makeFerns(world, scatter(QUALITY ? 1100 : 550, () => { const x = rnd(-150, 150), z = rnd(30, 220); if (Math.hypot(x, z - 6) < 50) return null; return { x, y: H(x, z) - 0.05, z, s: rnd(0.8, 1.6), ry: rnd(0, TAU), tint: pick(['#4a6a36', '#56703a']) }; }));
     const carcasses = [[-30, 110], [48, 76]];
     carcasses.forEach(([x, z]) => makeCarcass(world, x, z));

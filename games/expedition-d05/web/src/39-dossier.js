@@ -114,7 +114,7 @@ function makeDossier(station) {
     if (!forest && rng() > slope * 0.9 + 0.05) return null;
     return { x, y: h - 0.2, z, s: rnd(1.2, 2.4), ry: rnd(0, TAU) };
   });
-  scatterInstanced(isle, coniferGeo(), vegMat(0.0025), con, { cast: true, chunk: 120 });
+  scatterInstanced(isle, coniferGeo(), vegMat(0.0025), con, { cast: true, chunk: 120, tints: TREE_TINTS });
   for (let v = 0; v < 3; v++) {
     const bl = scatter(L3(40, 70, 100), () => {
       // the jungle round the ruins is dense; the meadow is ringed; the river banks are wooded
@@ -126,9 +126,9 @@ function makeDossier(station) {
       if (!land(x, z, 1, 40) || onRiver(x, z) || inSet(x, z, 9) || inSight(x, z, 7)) return null;
       return { x, y: H(x, z) - 0.2, z, s: rnd(0.9, 1.5), ry: rnd(0, TAU) };
     });
-    scatterInstanced(isle, broadleafGeo(v + 1), leafMat(0.006), bl, { cast: true, low: broadleafGeo(v + 1, 0), lowD: 80 });
+    scatterInstanced(isle, broadleafGeo(v + 1), leafMat(0.006), bl, { cast: true, low: broadleafGeo(v + 1, 0), lowD: 80, tints: TREE_TINTS });
     const bu = scatter(L3(40, 70, 110), () => { const x = rnd(-220, 220), z = rnd(-80, 170); if (!land(x, z, 1, 40) || onRiver(x, z) || inSet(x, z, 7) || inSight(x, z)) return null; return { x, y: H(x, z) - 0.1, z, s: rnd(0.7, 1.5), ry: rnd(0, TAU) }; });
-    scatterInstanced(isle, bushGeo(v + 1), leafMat(0.01), bu, { cast: false, low: bushGeo(v + 1, 0), lowD: 50 });
+    scatterInstanced(isle, bushGeo(v + 1), leafMat(0.01), bu, { cast: false, low: bushGeo(v + 1, 0), lowD: 50, tints: TREE_TINTS });
   }
   const tf = scatter(L3(40, 60, 90), () => {
     const nearR = rng() < 0.5, z = rnd(-50, 120);
@@ -137,8 +137,8 @@ function makeDossier(station) {
     if (!land(x, zz, 0.5, 30) || onRiver(x, zz) || inSet(x, zz, 7) || inSight(x, zz, 6)) return null;
     return { x, y: H(x, zz) - 0.1, z: zz, s: rnd(0.9, 1.5), ry: rnd(0, TAU) };
   });
-  scatterInstanced(isle, treeFernGeo(), vegMat(0.01), tf, { cast: true });
-  scatterInstanced(isle, cycadGeo(), vegMat(0.02), scatter(L3(40, 70, 100), () => { const x = rnd(-200, 200), z = rnd(-60, 160); if (!land(x, z, 0.6, 30) || onRiver(x, z) || inSet(x, z, 6) || inSight(x, z)) return null; return { x, y: H(x, z) - 0.1, z, s: rnd(0.8, 1.4), ry: rnd(0, TAU) }; }), { cast: true });
+  scatterInstanced(isle, treeFernGeo(), vegMat(0.01), tf, { cast: true, tints: TREE_TINTS });
+  scatterInstanced(isle, cycadGeo(), vegMat(0.02), scatter(L3(40, 70, 100), () => { const x = rnd(-200, 200), z = rnd(-60, 160); if (!land(x, z, 0.6, 30) || onRiver(x, z) || inSet(x, z, 6) || inSight(x, z)) return null; return { x, y: H(x, z) - 0.1, z, s: rnd(0.8, 1.4), ry: rnd(0, TAU) }; }), { cast: true, tints: TREE_TINTS });
   makePalms(isle, scatter(L3(10, 16, 24), () => { const z = rnd(-30, 160), x = dosRiverX(z) + (rng() < 0.5 ? -1 : 1) * rnd(8, 14); if (!land(x, z, 0.3, 8)) return null; return { x, y: H(x, z) - 0.1, z, s: rnd(0.9, 1.3), ry: rnd(0, TAU) }; }));
   makeFerns(isle, scatter(L3(500, 900, 1400), () => {
     const k = pick(['tri', 'tri', 'rap', 'rap', 'spi', 'rex']), p = DOS[k], a = rnd(0, TAU), r = rnd(3, k === 'tri' ? 40 : 30);

@@ -64,9 +64,9 @@ CHAPTERS.river = {
     // swamp dressing
     const H = riverH;
     const swamp = (x, z) => z > 60 && z < 180;
-    scatterInstanced(world, deadTreeGeo(), vegMat(0.003), scatter(QUALITY ? 90 : 55, () => { const x = rnd(-80, 140), z = rnd(62, 185); return { x, y: H(x, z) - 0.3, z, s: rnd(0.9, 1.6), ry: rnd(0, TAU), tilt: rnd(-0.15, 0.15) }; }), { cast: true });
-    scatterInstanced(world, treeFernGeo(), vegMat(0.01), scatter(QUALITY ? 110 : 60, () => { const x = rnd(-80, 160), z = rnd(-40, 185); const h = H(x, z); if (h < 0.4) return null; return { x, y: h, z, s: rnd(1, 1.6), ry: rnd(0, TAU) }; }), { cast: false });
-    scatterInstanced(world, coniferGeo(), vegMat(0.0025), scatter(QUALITY ? 260 : 140, () => { const x = rnd(-120, 200), z = rnd(-130, 40); const h = H(x, z); if (h < 1.5 || Math.abs(z - RIVER.riverZ(x)) < 24) return null; return { x, y: h, z, s: rnd(1.3, 2.4), ry: rnd(0, TAU) }; }), { cast: true });
+    scatterInstanced(world, deadTreeGeo(), vegMat(0.003), scatter(QUALITY ? 90 : 55, () => { const x = rnd(-80, 140), z = rnd(62, 185); return { x, y: H(x, z) - 0.3, z, s: rnd(0.9, 1.6), ry: rnd(0, TAU), tilt: rnd(-0.15, 0.15) }; }), { cast: true, solid: 0.4 });
+    scatterInstanced(world, treeFernGeo(), vegMat(0.01), scatter(QUALITY ? 110 : 60, () => { const x = rnd(-80, 160), z = rnd(-40, 185); const h = H(x, z); if (h < 0.4) return null; return { x, y: h, z, s: rnd(1, 1.6), ry: rnd(0, TAU) }; }), { cast: false, solid: 0.3, tints: TREE_TINTS });
+    scatterInstanced(world, coniferGeo(), vegMat(0.0025), scatter(QUALITY ? 260 : 140, () => { const x = rnd(-120, 200), z = rnd(-130, 40); const h = H(x, z); if (h < 1.5 || Math.abs(z - RIVER.riverZ(x)) < 24) return null; return { x, y: h, z, s: rnd(1.3, 2.4), ry: rnd(0, TAU) }; }), { cast: true, solid: 0.36, tints: TREE_TINTS });
     makeFerns(world, scatter(QUALITY ? 1800 : 900, () => { const x = rnd(-80, 160), z = rnd(-40, 190); const h = H(x, z); if (h < 0.15) return null; return { x, y: h - 0.05, z, s: rnd(0.8, 1.5), ry: rnd(0, TAU), tint: swamp(x, z) ? pick(['#6a7a40', '#7a8446']) : pick(['#5e8a3e', '#6f9a45']) }; }));
     const reeds = scatter(QUALITY ? 600 : 300, () => { const x = rnd(-80, 160), z = rnd(-12, 190); const h = H(x, z); if (h > 0.2 || h < -0.8) return null; return { x, y: h, z, s: rnd(0.8, 1.4), ry: rnd(0, TAU), tint: '#8a8a52' }; });
     makeFerns(world, reeds, { color: '#c8c080' });

@@ -55,6 +55,17 @@ class World {
     return 0;
   }
   interact(o) { this.interactables.push({ r: 2.2, hold: 0, enabled: () => true, ...o }); return this.interactables[this.interactables.length - 1]; }
+  // Static round colliders (tree trunks, stumps, logs) on an 8 m grid: the player and the
+  // companions' paths test only the cells around them, so a forest of them costs what the few
+  // nearby trees cost. world.circles stays for the handful that move or come and go.
+  addSolid(x, z, r) { const S = this._solid ||= new Map(), k = (Math.floor(x / 8) + 4096) * 8192 + Math.floor(z / 8) + 4096; let c = S.get(k); if (!c) S.set(k, (c = [])); c.push({ x, z, r: Math.min(r, 3) }); }
+  // calls fn for each solid near (x, z); stops and returns true as soon as fn returns true
+  forSolids(x, z, fn) {
+    const S = this._solid; if (!S) return false;
+    const cx = Math.floor(x / 8) + 4096, cz = Math.floor(z / 8) + 4096;
+    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const c = S.get((cx + i) * 8192 + cz + j); if (c) for (const s of c) if (fn(s)) return true; }
+    return false;
+  }
   emitNoise(x, z, radius, kind = 'noise') { for (const l of this.noiseListeners) l(x, z, radius, kind); }
   dispose() { disposeScene(this.scene); if (this.envRT) { this.envRT.dispose(); this.envRT = null; } }
 }
@@ -67,10 +78,12 @@ function makeSky(world, o) {
       top: { value: new THREE.Color(o.top) }, hor: { value: new THREE.Color(o.horizon) }, low: { value: new THREE.Color(o.low || o.horizon) },
       sunDir: { value: o.sunDir.clone().normalize() }, sunCol: { value: new THREE.Color(o.sunColor || '#fff2d6') }, flash: { value: 0 }, sunSize: { value: o.sunSize ?? 1 },
       time: { value: 0 }, cover: { value: o.cover ?? 0.4 }, cloudCol: { value: new THREE.Color(o.cloud || '#f2f4f6') }, cloudDark: { value: o.cloudDark ?? 0.35 },
+      // inside cloud (the Veil on the flight in) the whole sky goes to the fog's colour
+      haze: { value: 0 }, hazeCol: { value: new THREE.Color('#5a6168') },
     },
     vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
     fragmentShader: `uniform vec3 top; uniform vec3 hor; uniform vec3 low; uniform vec3 sunDir; uniform vec3 sunCol; uniform float flash; uniform float sunSize;
-      uniform float time; uniform float cover; uniform vec3 cloudCol; uniform float cloudDark; varying vec3 vDir;
+      uniform float time; uniform float cover; uniform vec3 cloudCol; uniform float cloudDark; uniform float haze; uniform vec3 hazeCol; varying vec3 vDir;
       float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
       float vn(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
         return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), u.x), mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), u.x), u.y); }
@@ -87,6 +100,7 @@ function makeSky(world, o) {
           vec3 cc = mix(cloudCol * (1.0 - cloudDark), cloudCol, lit) + sunCol * pow(s, 8.0) * 0.25 * (1.0 - cl);
           c = mix(c, cc, cl * 0.93);
         }
+        c = mix(c, hazeCol, haze);
         c = mix(c, vec3(0.8, 0.86, 1.0), flash);
         gl_FragColor = vec4(c, 1.0);
         #include <tonemapping_fragment>
@@ -309,16 +323,17 @@ function makeFalls(world, o) {
 function mergeParts(parts) {
   // parts: [{geo, color, m: Matrix4}]
   let total = 0;
-  const flat = parts.map((p) => { const g = p.geo.index ? p.geo.toNonIndexed() : p.geo; g.applyMatrix4(p.m || new THREE.Matrix4()); total += g.attributes.position.count; return { g, color: new THREE.Color(p.color) }; });
+  const flat = parts.map((p) => { const g = p.geo.index ? p.geo.toNonIndexed() : p.geo; g.applyMatrix4(p.m || new THREE.Matrix4()); total += g.attributes.position.count; return { g, color: new THREE.Color(p.color), shade: p.shade }; });
   const P = new Float32Array(total * 3), N = new Float32Array(total * 3), C = new Float32Array(total * 3), UV = new Float32Array(total * 2);
   let o = 0;
-  for (const { g, color } of flat) {
+  for (const { g, color, shade } of flat) {
     g.computeVertexNormals();
     const pa = g.attributes.position, na = g.attributes.normal, ua = g.attributes.uv;
     for (let i = 0; i < pa.count; i++) {
       P[(o + i) * 3] = pa.getX(i); P[(o + i) * 3 + 1] = pa.getY(i); P[(o + i) * 3 + 2] = pa.getZ(i);
       N[(o + i) * 3] = na.getX(i); N[(o + i) * 3 + 1] = na.getY(i); N[(o + i) * 3 + 2] = na.getZ(i);
-      C[(o + i) * 3] = color.r; C[(o + i) * 3 + 1] = color.g; C[(o + i) * 3 + 2] = color.b;
+      const f = shade ? shade(pa.getY(i), na.getY(i)) : 1;
+      C[(o + i) * 3] = color.r * f; C[(o + i) * 3 + 1] = color.g * f; C[(o + i) * 3 + 2] = color.b * f;
       UV[(o + i) * 2] = ua ? ua.getX(i) : 0; UV[(o + i) * 2 + 1] = ua ? ua.getY(i) : 0;
     }
     o += pa.count;
@@ -448,7 +463,9 @@ function fernGeometry() {
 // Large scatters are split into square cells: one InstancedMesh over a whole valley has a bounding
 // sphere that is always on screen and always inside the shadow camera, so every instance was drawn
 // twice a frame. Per-cell meshes let the camera and the shadow frustum skip what they cannot see.
+// o.solid: the trunk's radius at scale 1 — each instance then blocks the player (addSolid)
 function scatterInstanced(world, geo, material, list, o = {}) {
+  if (o.solid) for (const it of list) world.addSolid(it.x, it.z, it.s * o.solid);
   const cell = o.chunk ?? 110;
   if (cell && list.length >= 48) {
     let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
@@ -470,7 +487,10 @@ function scatterInstanced(world, geo, material, list, o = {}) {
   world.add(im);
   return im;
 }
+// slight per-tree colour differences, so a forest is not one tree copied (o.tints on a scatter)
+const TREE_TINTS = ['#ffffff', '#eef4e0', '#f6ffe8', '#dde8cc', '#fff3dc', '#d2dec2', '#e6f0f0', '#f2e8d0'];
 function _instanced(geo, material, list, o) {
+  if (o.tints) for (const it of list) if (!it.tint) it.tint = o.tints[(Math.abs(Math.floor(it.x * 7.3 + it.z * 3.1))) % o.tints.length];
   const im = new THREE.InstancedMesh(geo, material, list.length);
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), e = new THREE.Euler();
   const col = new THREE.Color();
@@ -493,13 +513,24 @@ function makeFerns(world, list, o = {}) {
   const m = windMaterial(new THREE.MeshLambertMaterial({ map: fernTexture(), alphaTest: 0.45, side: THREE.DoubleSide, color: o.color || '#ffffff' }));
   return scatterInstanced(world, fernGeometry(), m, list, { cast: false, far: o.far ?? 150 });
 }
-function coniferGeo() {
-  const g = mergeParts([
-    { geo: G.cyl(0.18, 0.32, 3, 6), color: '#4a3526', m: M4(0, 1.5, 0) },
-    { geo: G.cone(2.2, 3.6, 7), color: '#284834', m: M4(0, 3.8, 0) },
-    { geo: G.cone(1.7, 3.0, 7), color: '#2d5139', m: M4(0, 5.6, 0) },
-    { geo: G.cone(1.1, 2.6, 7), color: '#345a3f', m: M4(0, 7.3, 0) },
-  ]);
+// a conifer: five drooping tiers with ragged rims, darker toward the bottom and the inside
+function coniferGeo(seedv = 1) {
+  const r = mulberry32(seedv * 53 + 11);
+  const parts = [{ geo: G.cyl(0.13, 0.3, 3.6, 6), color: '#4a3526', m: M4(0, 1.8, 0) }];
+  const tiers = 5;
+  for (let i = 0; i < tiers; i++) {
+    const t = i / (tiers - 1), rad = lerp(2.35, 0.75, t), hgt = lerp(2.5, 1.9, t), y = 2.3 + i * 1.3 + hgt / 2;
+    const g = new THREE.ConeGeometry(rad, hgt, 9, 2);
+    const p = g.attributes.position;
+    for (let k = 0; k < p.count; k++) {
+      const vy = p.getY(k), px = p.getX(k), pz = p.getZ(k), rr = Math.hypot(px, pz);
+      if (rr > 0.01) { const j = 1 + (r() - 0.5) * 0.28, droop = (rr / rad) ** 2 * 0.45; p.setXYZ(k, px * j, vy - droop, pz * j); }
+    }
+    const y0 = y - hgt / 2, y1 = y + hgt / 2, lo = 0.62 + t * 0.2;
+    parts.push({ geo: g, color: i % 2 ? '#2b4d36' : '#2f5439', m: M4(0, y, 0, (r() - 0.5) * 0.06, r() * TAU, (r() - 0.5) * 0.06),
+      shade: (vy, ny) => (ny < -0.5 ? 1.25 : lo + (1.08 - lo) * smoothstep(y0, y1, vy)) });
+  }
+  const g = mergeParts(parts);
   // the undersides of the tiers only see ground bounce; lighter vertex colour keeps them from
   // reading as black holes when the camera is under a tree
   const n = g.attributes.normal, c = g.attributes.color, under = new THREE.Color('#4a6e48');
@@ -558,15 +589,24 @@ function _blob(r, detail, rnd01, jit = 0.14) {
   }
   return g;
 }
+// a broadleaf tree: a trunk that forks into limbs, and a canopy of many clumps, lighter on top and
+// darker underneath where it shades itself (instead of one lollipop blob)
 function broadleafGeo(seedv = 1, detail = 1) {
   const r = mulberry32(seedv * 131 + 7);
-  const parts = [{ geo: G.cyl(0.17, 0.32, 4.4, 8), color: '#4d3b2a', m: M4(0, 2.2, 0, 0, 0, 0.03) }];
-  parts.push({ geo: G.cyl(0.05, 0.1, 2.0, 6), color: '#4d3b2a', m: M4(0.55, 3.7, 0.1, 0, 0, -0.75) });
-  parts.push({ geo: G.cyl(0.05, 0.09, 1.7, 6), color: '#4d3b2a', m: M4(-0.45, 3.9, -0.2, 0.3, 0, 0.8) });
-  const greens = ['#557f3a', '#5f8a40', '#4d7536', '#6a9448', '#5a8440'];
-  for (let i = 0; i < 7; i++) {
-    const a = r() * TAU, rr = i === 0 ? 0 : 0.8 + r() * 1.3, y = i === 0 ? 5.6 : 4.4 + r() * 1.9;
-    parts.push({ geo: _blob(1.15 + r() * 0.6, detail, mulberry32((r() * 4294967296) >>> 0)), color: greens[(i + seedv) % greens.length], m: M4(Math.cos(a) * rr, y, Math.sin(a) * rr, 0, r() * TAU, 0, 1.25, 0.82, 1.25) });
+  const bark = '#4d3b2a';
+  const parts = [{ geo: G.cyl(0.16, 0.34, 3.6, 8), color: bark, m: M4(0, 1.8, 0, 0, 0, 0.03) }];
+  const limbs = 3 + (seedv % 2);
+  for (let i = 0; i < limbs; i++) {
+    const a = (i / limbs) * TAU + r() * 0.8, lean = 0.55 + r() * 0.35, len = 1.8 + r() * 1.0;
+    parts.push({ geo: G.cyl(0.06, 0.13, len, 6), color: bark, m: M4(Math.cos(a) * Math.sin(lean) * len * 0.5, 3.5 + Math.cos(lean) * len * 0.5, Math.sin(a) * Math.sin(lean) * len * 0.5, Math.sin(a) * lean, 0, -Math.cos(a) * lean) });
+  }
+  const greens = ['#557f3a', '#5f8a40', '#4d7536', '#6a9448', '#5a8440', '#4a6e34'];
+  const n = 11 + (seedv % 3) * 2, top = 7.2, bot = 4.0;
+  for (let i = 0; i < n; i++) {
+    const a = r() * TAU, k = i / n, rr = k < 0.15 ? r() * 0.5 : 0.9 + r() * 1.7, y = k < 0.15 ? 6.4 + r() * 0.6 : 4.5 + r() * 2.2 - rr * 0.35;
+    parts.push({ geo: _blob(0.85 + r() * 0.55, detail, mulberry32((r() * 4294967296) >>> 0)), color: greens[(i + seedv) % greens.length],
+      m: M4(Math.cos(a) * rr, y, Math.sin(a) * rr, 0, r() * TAU, 0, 1.25, 0.85, 1.25),
+      shade: (vy, ny) => (0.58 + 0.5 * smoothstep(bot, top, vy)) * (0.86 + 0.18 * ny) });
   }
   return mergeColored(parts);
 }
@@ -574,7 +614,7 @@ function bushGeo(seedv = 1, detail = 1) {
   const r = mulberry32(seedv * 71 + 3);
   const parts = [];
   const greens = ['#4f7535', '#5a803c', '#648a44', '#527a38'];
-  for (let i = 0; i < 4; i++) { const a = r() * TAU, rr = r() * 0.6; parts.push({ geo: _blob(0.55 + r() * 0.35, detail, mulberry32((r() * 4294967296) >>> 0), 0.2), color: greens[(i + seedv) % 4], m: M4(Math.cos(a) * rr, 0.45 + r() * 0.3, Math.sin(a) * rr, 0, 0, 0, 1.2, 0.8, 1.2) }); }
+  for (let i = 0; i < 5; i++) { const a = r() * TAU, rr = r() * 0.7; parts.push({ geo: _blob(0.5 + r() * 0.35, detail, mulberry32((r() * 4294967296) >>> 0), 0.2), color: greens[(i + seedv) % 4], m: M4(Math.cos(a) * rr, 0.42 + r() * 0.35, Math.sin(a) * rr, 0, 0, 0, 1.2, 0.8, 1.2), shade: (vy, ny) => (0.62 + 0.45 * smoothstep(0, 1.2, vy)) * (0.88 + 0.14 * ny) }); }
   return mergeColored(parts);
 }
 function palmTrunkGeo() {
@@ -612,7 +652,7 @@ function palmFrondGeo(top) {
 function makePalms(world, list) {
   if (!list.length) return;
   const trunk = palmTrunkGeo();
-  scatterInstanced(world, trunk, leafMat(0.004), list, { cast: true });
+  scatterInstanced(world, trunk, leafMat(0.004), list, { cast: true, solid: 0.3 });
   const fm = windMaterial(new THREE.MeshLambertMaterial({ map: fernTexture(), alphaTest: 0.45, side: THREE.DoubleSide, color: '#7fa650' }), 0.012);
   scatterInstanced(world, palmFrondGeo(trunk.userData.top), fm, list, { cast: true });
 }
@@ -842,48 +882,147 @@ function makeWake(world) {
 }
 
 // ---------- the Veil (cloud wall on the horizon) ----------
+// The Veil: the storm wall that hides the island, seen from inside as a bank of cloud on the
+// horizon. It used to be a grey band up to 29 degrees with a hard top edge, and at dusk it hid
+// the sun: the sky read as fog. Now it is lit cloud: billowing, soft-topped, brighter toward the
+// sun and thin where the sun stands behind it, coloured from the time of day's cloud and haze.
 function makeVeil(world, o = {}) {
-  const tex = canvasTex(1024, 256, (g, w, h) => {
-    const grd = g.createLinearGradient(0, 0, 0, h);
-    grd.addColorStop(0, 'rgba(70,76,84,0)');
-    grd.addColorStop(0.3, 'rgba(66,72,80,0.55)');
-    grd.addColorStop(0.7, 'rgba(52,57,64,0.9)');
-    grd.addColorStop(1, 'rgba(40,44,50,0.96)');
-    g.fillStyle = grd; g.fillRect(0, 0, w, h);
-    for (let i = 0; i < 260; i++) {
-      const x = rnd(-60, w + 60), y = rnd(h * 0.08, h * 0.75), r = rnd(18, 70);
-      const v = Math.floor(rnd(70, 128));
-      const rg = g.createRadialGradient(x, y, 0, x, y, r);
-      rg.addColorStop(0, `rgba(${v},${v + 4},${v + 12},${rnd(0.18, 0.4)})`);
-      rg.addColorStop(1, `rgba(${v},${v + 4},${v + 12},0)`);
-      g.fillStyle = rg; g.fillRect(x - r, y - r, r * 2, r * 2);
-    }
+  const t = TIME_PRESETS[world.timeKey] || TIME_PRESETS.day;
+  const lit = new THREE.Color(o.lit || t.cloud), base = new THREE.Color(o.base || t.fog).lerp(new THREE.Color(t.low || t.fog), 0.5).multiplyScalar(0.8);
+  const m = new THREE.ShaderMaterial({
+    // both sides: from inside the island it is the horizon, from the sea on the way in it is a wall
+    transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
+    uniforms: { time: { value: 0 }, sunDir: { value: (world.sunDir || t.sunDir).clone().normalize() }, sunCol: { value: new THREE.Color(t.sunColor) }, lit: { value: lit }, base: { value: base }, opacity: { value: o.opacity ?? 0.95 } },
+    vertexShader: 'varying vec3 vW; varying vec2 vUv; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: `uniform float time, opacity; uniform vec3 sunDir, sunCol, lit, base; varying vec3 vW; varying vec2 vUv;
+      float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+      float vn(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), u.x), mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), u.x), u.y); }
+      float fbm(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * vn(p); p = p * 2.07 + 13.7; a *= 0.5; } return s; }
+      void main(){
+        float h = vUv.y;
+        // x wraps: the noise is taken on a circle so the seam at u = 0 / 1 does not show
+        float ang = vUv.x * 6.2831853;
+        vec2 q = vec2(cos(ang), sin(ang)) * 7.0;
+        float n = fbm(q + vec2(time * 0.004, h * 3.2)), n2 = fbm(q * 2.3 + vec2(h * 5.0, -time * 0.006));
+        float top = 0.42 + 0.42 * n;
+        float a = smoothstep(top + 0.02, top - 0.22, h) * (0.6 + 0.4 * n2) * opacity;
+        vec3 dir = normalize(vW - cameraPosition), sd = normalize(sunDir);
+        float toward = max(dot(normalize(vec3(dir.x, 0.0, dir.z)), normalize(vec3(sd.x, 0.0, sd.z))), 0.0);
+        float glow = pow(max(dot(dir, sd), 0.0), 18.0);
+        vec3 c = mix(base, lit, smoothstep(0.0, 0.85, h + (n2 - 0.5) * 0.4));
+        c *= 0.78 + 0.42 * pow(toward, 3.0);
+        c += sunCol * glow * 0.9;
+        a *= 1.0 - 0.75 * pow(max(dot(dir, sd), 0.0), 90.0);
+        gl_FragColor = vec4(c, a);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
   });
-  tex.wrapS = THREE.RepeatWrapping; tex.repeat.set(3, 1);
-  const m = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.BackSide, depthWrite: false, fog: false, color: o.color || '#ffffff', opacity: o.opacity ?? 1 });
-  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(o.r || 900, o.r || 900, o.h || 320, 48, 1, true), m);
-  cyl.position.set(o.x || 0, (o.h || 320) / 2 - 40, o.z || 0);
+  const R = o.r || 900, Hh = o.h || 320;
+  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(R, R, Hh, 64, 1, true), m);
+  cyl.position.set(o.x || 0, Hh / 2 - 40, o.z || 0);
   cyl.renderOrder = -5;
   world.add(cyl);
-  world.onUpdate((dt) => { tex.offset.x += dt * 0.002; });
+  world.onUpdate(() => { m.uniforms.time.value = Game.time; });
   return cyl;
 }
 
 // ---------- props ----------
+// canvas: fabric with seams (tents, tarps); wood planks with a frame and a stencil (crates)
+let _fabricTex = null, _crateTex = null;
+function fabricTexture() {
+  return (_fabricTex ||= (() => {
+    const t = canvasTex(128, 128, (g, w, h) => {
+      g.fillStyle = '#d8d8d8'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 1400; i++) { const v = 200 + rnd(-24, 24); g.fillStyle = `rgba(${v | 0},${v | 0},${v | 0},0.5)`; g.fillRect(rnd(0, w), rnd(0, h), rnd(1, 3), 1); }
+      g.fillStyle = 'rgba(90,90,90,0.5)'; for (const y of [0, 64]) g.fillRect(0, y, w, 2);
+      for (let i = 0; i < 6; i++) { g.fillStyle = `rgba(60,50,40,${rnd(0.05, 0.14)})`; g.beginPath(); g.ellipse(rnd(0, w), rnd(h * 0.6, h), rnd(8, 26), rnd(4, 12), 0, 0, TAU); g.fill(); }
+    });
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+  })());
+}
+function crateTexture() {
+  return (_crateTex ||= canvasTex(128, 128, (g, w, h) => {
+    g.fillStyle = '#c8b89a'; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 21) { g.fillStyle = 'rgba(70,50,30,0.55)'; g.fillRect(0, y, w, 2); for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(90,64,40,${rnd(0.05, 0.2)})`; g.fillRect(rnd(0, w), y + rnd(2, 19), rnd(8, 40), 1); } }
+    g.strokeStyle = 'rgba(60,44,28,0.9)'; g.lineWidth = 9; g.strokeRect(4, 4, w - 8, h - 8);
+    g.lineWidth = 6; g.beginPath(); g.moveTo(8, 8); g.lineTo(w - 8, h - 8); g.stroke();
+    g.fillStyle = 'rgba(30,30,28,0.8)'; g.font = 'bold 15px Arial Narrow, Arial'; g.textAlign = 'center'; g.fillText('ORIGO · D-04', w / 2, h / 2 - 12);
+  }));
+}
+// A ridge tent: two sagging fabric panels over a ridge pole, a closed back, an open front with one
+// flap rolled up, guy ropes to pegs, and a groundsheet. Blocks the player like a boulder.
 function makeTent(world, x, z, ry = 0, color = '#5d6647') {
   const g = new THREE.Group();
-  const shape = new THREE.Shape(); shape.moveTo(-1.6, 0); shape.lineTo(0, 2.1); shape.lineTo(1.6, 0); shape.lineTo(-1.6, 0);
-  const geo = new THREE.ExtrudeGeometry(shape, { depth: 3.4, bevelEnabled: false }); geo.translate(0, 0, -1.7);
-  mesh(geo, mat(color), { parent: g, receive: true });
+  const W = 1.6, Hh = 2.05, L = 3.4, slant = Math.hypot(W, Hh);
+  const cloth = new THREE.MeshStandardMaterial({ color, map: fabricTexture(), roughness: 0.92, side: THREE.DoubleSide, envMapIntensity: 0.35 });
+  for (const sx of [-1, 1]) {
+    const pg = new THREE.PlaneGeometry(L, slant, 8, 4); const pp = pg.attributes.position;
+    // sag between the poles and toward the eave
+    for (let i = 0; i < pp.count; i++) { const u = pp.getX(i) / L + 0.5, v = pp.getY(i) / slant + 0.5; pp.setZ(i, -Math.sin(Math.PI * u) * Math.sin(Math.PI * v) * 0.12); }
+    pg.computeVertexNormals();
+    // the plane's x runs along the ridge, its y from the eave up to the ridge, its normal outward
+    const m = mesh(pg, cloth, { parent: g, pos: [sx * W / 2, Hh / 2, 0], receive: true });
+    const up = new THREE.Vector3(-sx * W, Hh, 0).normalize(), out = new THREE.Vector3(sx * Hh, W, 0).normalize();
+    m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, -sx), up, out));
+  }
+  const tri = new THREE.Shape(); tri.moveTo(-W, 0); tri.lineTo(0, Hh); tri.lineTo(W, 0); tri.lineTo(-W, 0);
+  mesh(new THREE.ShapeGeometry(tri), cloth, { parent: g, pos: [0, 0, -L / 2], receive: true });
+  // the front: a dark opening, one flap down, the other rolled up under the ridge
+  const door = new THREE.Shape(); door.moveTo(-W * 0.62, 0); door.lineTo(0, Hh * 0.92); door.lineTo(W * 0.62, 0); door.lineTo(-W * 0.62, 0);
+  mesh(new THREE.ShapeGeometry(door), new THREE.MeshBasicMaterial({ color: '#141610' }), { parent: g, pos: [0, 0, L / 2 - 0.25], cast: false });
+  const flap = new THREE.Shape(); flap.moveTo(-W, 0); flap.lineTo(0, Hh); flap.lineTo(-0.05, 0); flap.lineTo(-W, 0);
+  mesh(new THREE.ShapeGeometry(flap), cloth, { parent: g, pos: [0, 0, L / 2], receive: true });
+  mesh(G.cyl(0.13, 0.13, 1.1, 8), cloth, { parent: g, pos: [W * 0.35, Hh * 0.62, L / 2 + 0.05], rot: [0, 0, 0.9] });
+  const pole = mat('#2e2a24', { metal: 0.3, rough: 0.5 });
+  mesh(G.cyl(0.025, 0.025, L + 0.5, 5), pole, { parent: g, pos: [0, Hh + 0.02, 0], rot: [Math.PI / 2, 0, 0] });
+  for (const zz of [-L / 2 - 0.02, L / 2 + 0.02]) mesh(G.cyl(0.03, 0.03, Hh + 0.12, 5), pole, { parent: g, pos: [0, (Hh + 0.12) / 2, zz] });
+  mesh(G.box(W * 2 + 0.5, 0.02, L + 0.6), mat('#3a3a30', { rough: 0.9 }), { parent: g, pos: [0, 0.01, 0.1], cast: false, receive: true });
+  // guy ropes and pegs
+  const ropes = [], peg = mat('#8a8070');
+  for (const zz of [-1, 1]) for (const sx of [-1, 0.001, 1]) {
+    const px = sx * (W + 0.9), pz = zz * (L / 2 + (sx === 0.001 ? 1.3 : 0.5));
+    const ax = sx === 0.001 ? 0 : sx * W * 0.2, ay = sx === 0.001 ? Hh : Hh * 0.82, az = zz * L / 2;
+    ropes.push(ax, ay, az, px, 0.05, pz);
+    mesh(G.box(0.04, 0.2, 0.04), peg, { parent: g, pos: [px, 0.06, pz], cast: false });
+  }
+  const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(ropes, 3));
+  g.add(new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: '#cfc6a8', transparent: true, opacity: 0.7 })));
   g.position.set(x, world.groundH(x, z), z); g.rotation.y = ry;
-  world.add(g);
+  world.add(bakeRig(g));
   world.circles.push({ x, z, r: 1.9 });
   return g;
 }
+const _crateMats = new Map();
 function makeCrate(world, x, z, s = 1, color = '#4f5a3c', ry = 0) {
-  const c = mesh(G.box(1.2 * s, 0.8 * s, 0.9 * s), mat(color), { pos: [x, world.groundH(x, z) + 0.4 * s, z], rot: [0, ry, 0], receive: true });
+  let m = _crateMats.get(color);
+  if (!m) _crateMats.set(color, (m = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).lerp(new THREE.Color('#ffffff'), 0.45), map: crateTexture(), roughness: 0.85, envMapIntensity: 0.4 })));
+  const c = mesh(G.box(1.2 * s, 0.8 * s, 0.9 * s), m, { pos: [x, world.groundH(x, z) + 0.4 * s, z], rot: [0, ry, 0], receive: true });
   world.add(c);
   world.circles.push({ x, z, r: 0.75 * s });
   return c;
+}
+// A prefab field hut: corrugated walls, a roof that overhangs, a door, a window, a radio mast.
+function makeHut(world, x, z, ry = 0, label = '') {
+  const g = new THREE.Group();
+  const wall = new THREE.MeshStandardMaterial({ color: '#c4c8bc', map: corrugatedTexture(), roughness: 0.75, metalness: 0.12, envMapIntensity: 0.5 });
+  mesh(G.box(3.2, 2.4, 2.6), wall, { parent: g, pos: [0, 1.2, 0], receive: true });
+  mesh(G.box(3.8, 0.1, 3.3), mat('#4a4e48', { metal: 0.3 }), { parent: g, pos: [0, 2.55, 0.15], rot: [0.08, 0, 0], receive: true });
+  mesh(G.box(3.4, 0.25, 2.8), mat('#3a3a34'), { parent: g, pos: [0, 0.12, 0], receive: true });
+  mesh(G.box(0.85, 1.9, 0.06), mat('#4a4a40'), { parent: g, pos: [-0.7, 1.05, 1.31] });
+  mesh(G.box(0.06, 0.06, 0.1), mat('#b0a890', { metal: 0.6 }), { parent: g, pos: [-0.4, 1.05, 1.36], cast: false });
+  mesh(G.box(0.95, 0.65, 0.06), mat('#2a3a40', { rough: 0.2, metal: 0.4 }), { parent: g, pos: [0.75, 1.5, 1.31], cast: false });
+  mesh(G.box(1.05, 0.08, 0.1), mat('#6a6a5e'), { parent: g, pos: [0.75, 1.15, 1.34], cast: false });
+  mesh(G.cyl(0.03, 0.04, 3.4, 5), mat('#5a5a54', { metal: 0.5 }), { parent: g, pos: [1.35, 4.2, -0.9] });
+  mesh(G.cyl(0.35, 0.35, 0.05, 12), mat('#c8c8c0', { metal: 0.4 }), { parent: g, pos: [1.35, 5.3, -0.75], rot: [1.1, 0, 0] });
+  if (label) {
+    const t = canvasTex(256, 64, (gg, w, h) => { gg.fillStyle = '#c9c1a6'; gg.fillRect(0, 0, w, h); gg.fillStyle = '#26221a'; gg.font = 'bold 36px Arial Narrow, Arial'; gg.textAlign = 'center'; gg.fillText(label, w / 2, 45); });
+    mesh(new THREE.PlaneGeometry(1.4, 0.35), new THREE.MeshLambertMaterial({ map: t }), { parent: g, pos: [0.75, 2.1, 1.34], cast: false });
+  }
+  g.position.set(x, world.groundH(x, z), z); g.rotation.y = ry;
+  world.add(bakeRig(g));
+  world.circles.push({ x, z, r: 1.95 });
+  return g;
 }
 // makeHelicopter: see 28-heli.js

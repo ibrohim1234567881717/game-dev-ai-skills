@@ -213,9 +213,12 @@ function flightIntro(world, herd) {
     const inVeil = smoothstep(11, 15, t) * (1 - smoothstep(23.5, 26.5, t));
     fog.near = lerp(baseNear, 2, inVeil); fog.far = lerp(baseFar + 300, 38, inVeil);
     fog.color.set(inVeil > 0.5 ? '#5a6168' : TIME_PRESETS[world.timeKey].fog);
+    // inside the cloud there is no sky, and the cloud bank is all around, not a wall ahead
+    if (world.sky) { const u = world.sky.material.uniforms; u.haze.value = smoothstep(0.15, 0.7, inVeil) * 0.97; u.hazeCol.value.set('#5a6168'); }
+    if (world.veil) world.veil.material.uniforms.opacity.value = 0.95 * (1 - smoothstep(0.05, 0.4, inVeil));
     if (world.rain) world.rain.visible = inVeil > 0.2;
     heli.userData.body.rotation.z = Math.sin(t * 7) * 0.02 * inVeil;
-    if (k >= 1) { active = false; heli.position.y = valleyHeight(heli.position.x, heli.position.z); heli.rotation.set(0, heading, 0); }
+    if (k >= 1) { active = false; heli.position.y = valleyHeight(heli.position.x, heli.position.z); heli.rotation.set(0, heading, 0); heli.userData.collide(world); }
   });
   const sit = (k, dt) => pm().userData.anim(dt || 0.016, 0, { sit: true });
   const shots = [
@@ -312,7 +315,7 @@ CHAPTERS.valley = {
     const HEAD = 0.51; // landing heading: the cabin door faces the camp side
     if (o.flight) flight = flightIntro(world, herd);
     else {
-      const h = makeHelicopter({ label: 'D-05' }); h.position.set(VALLEY.pad.x, world.groundH(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z); h.rotation.y = HEAD; world.add(h); world.onUpdate((dt) => h.userData.update(dt));
+      const h = makeHelicopter({ label: 'D-05' }); h.position.set(VALLEY.pad.x, world.groundH(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z); h.rotation.y = HEAD; world.add(h); h.userData.collide(world); world.onUpdate((dt) => h.userData.update(dt));
       const pilot = makeNPC('lucas'); world.add(pilot); h.userData.seat(pilot, 0);
       [['halm', -14, 152], ['diego', -11, 143], ['lena', -10, 158]].forEach(([k, x, z]) => { const n = makeNPC(k); n.position.set(x, world.groundH(x, z), z); world.add(n); team[k] = new Companion(world, n); });
     }
