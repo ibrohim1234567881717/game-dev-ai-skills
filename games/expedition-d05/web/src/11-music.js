@@ -8,7 +8,7 @@
 // clock a chord ahead, so a busy main thread cannot make it stutter.
 // ============================================================
 const MenuMusic = {
-  on: false, out: null, drone: null, _t: 0, _i: 0, _timer: null, _callTimer: null,
+  on: false, out: null, drone: null, _t: 0, _i: 0, _timer: null, _callTimer: null, _birdTimer: null,
   CHORDS: [
     [110, 164.81, 220, 261.63],
     [87.31, 130.81, 220, 329.63],
@@ -21,7 +21,7 @@ const MenuMusic = {
     if (this.on && this.file && !Music.playing('menu')) { this.on = false; this.file = false; }
     if (this.on) return;
     // a recorded menu theme wins over the synthesized one
-    if (Music.play('menu', { fade: 3 })) { this.on = true; this.file = true; Sound.bed('wind', 0.05, 3); Sound.bed('insects', 0.022, 4); return; }
+    if (Music.play('menu', { fade: 3 })) { this.on = true; this.file = true; this._ambience(); return; }
     const ctx = Sound.ctx;
     if (!ctx) return;
     Music.stop(2);
@@ -38,14 +38,28 @@ const MenuMusic = {
     this.drone = [d, lfo];
     this._t = ctx.currentTime + 0.1; this._i = 0;
     this._next();
-    this._call();
-    Sound.bed('wind', 0.05, 3); Sound.bed('insects', 0.022, 4);
+    this._ambience();
+  },
+  // the valley under the music: a breeze, crickets, songbirds in the trees, and now and then
+  // something large calling far off. Both music modes share it.
+  _ambience() {
+    Sound.bed('wind', 0.04, 3); Sound.bed('insects', 0.02, 4);
+    this._call(); this._birds();
+  },
+  _birds() {
+    if (!this.on) return;
+    this._birdTimer = setTimeout(() => {
+      if (!this.on || !Sound.ctx) return;
+      Sound.bird(0.018 + Math.random() * 0.02, Math.random() * 1.6 - 0.8);
+      if (Math.random() < 0.35) setTimeout(() => this.on && Sound.bird(0.012, Math.random() * 1.6 - 0.8), 900 + Math.random() * 1400);
+      this._birds();
+    }, (4 + Math.random() * 9) * 1000);
   },
   stop(fade = 1.6) {
     if (!this.on) return;
     this.on = false;
+    clearTimeout(this._timer); clearTimeout(this._callTimer); clearTimeout(this._birdTimer);
     if (this.file) { this.file = false; Music.stop(fade); return; }
-    clearTimeout(this._timer); clearTimeout(this._callTimer);
     const ctx = Sound.ctx, out = this.out, drone = this.drone;
     out.gain.cancelScheduledValues(ctx.currentTime);
     out.gain.setTargetAtTime(0, ctx.currentTime, fade / 3);
@@ -88,7 +102,7 @@ const MenuMusic = {
       if (!this.on || !Sound.ctx) return;
       const ctx = Sound.ctx, t = ctx.currentTime;
       const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 380;
-      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.09, t + 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.07, t + 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
       const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(96, t); o.frequency.linearRampToValueAtTime(122, t + 0.8); o.frequency.exponentialRampToValueAtTime(70, t + 3);
       o.connect(lp); lp.connect(g); g.connect(Sound.bedBus); o.start(t); o.stop(t + 3.3);
       this._call();

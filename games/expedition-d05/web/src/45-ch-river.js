@@ -8,17 +8,23 @@ const RIVER = {
   station: [42, 12],
   dam: { x0: 88, x1: 92, z0: -44, z1: 4, gz0: -24, gz1: -16 },
   shelf: [111, -5],
-  riverZ: (x) => -20 + Math.sin(x * 0.012) * 4,
+  // beyond the play area the river turns south into gorges at both ends, so it is seen to come
+  // from somewhere and go somewhere (it used to run into a flat wall at each end of the map)
+  riverZ: (x) => -20 + Math.sin(x * 0.012) * 4 - (x < -92 ? (-92 - x) ** 2 * 0.012 : 0) - (x > 172 ? (x - 172) ** 2 * 0.014 : 0),
+  cascadeX: -114, upper: 8, // upstream it comes over a cascade from a river 8 m higher
 };
 function riverH(x, z) {
   let h = 1.3 + fbm(x * 0.02, z * 0.02, 3) * 1.4;
   const sw = smoothstep(52, 72, z) * (1 - smoothstep(175, 195, z));
   h = lerp(h, -0.3 + fbm(x * 0.06 + 3, z * 0.06, 3) * 0.95, sw);
   for (const [px, pz, r] of RIVER.pools) { const d = dist2d(x, z, px, pz); h = Math.min(h, lerp(-2.4, h, smoothstep(r - 3, r + 1.5, d))); }
-  const dr = Math.abs(z - RIVER.riverZ(x));
-  h = lerp(-4.6, h, smoothstep(12, 23, dr));
-  h += smoothstep(-48, -120, z) * 34;
-  h += smoothstep(150, 200, Math.abs(x - 40)) * 30;
+  // the hills south of the river and at both ends: ridged, so they read as hills, not a wall
+  const south = smoothstep(-48, -120, z), ends = smoothstep(150, 200, Math.abs(x - 40));
+  if (south + ends > 0) { const r = 1 - Math.abs(fbm(x * 0.014 + 7, z * 0.014 - 3, 4)); h += south * (24 + r * 22) + ends * (20 + r * 28); }
+  // the river cuts through them: a gorge where the hills close in, the cascade upstream
+  const dr = Math.abs(z - RIVER.riverZ(x)), walls = clamp(south + ends, 0, 1);
+  const bed = -4.6 + (RIVER.upper + 0.2) * smoothstep(RIVER.cascadeX + 1.5, RIVER.cascadeX - 2.5, x);
+  h = lerp(bed, h, smoothstep(12, lerp(23, 17, walls), dr));
   return h;
 }
 
@@ -100,6 +106,14 @@ CHAPTERS.river = {
     for (let i = 0; i < 9; i++) { const x = rnd(98, 135), z = rnd(-28, -6); const r = mesh(rockGeo(i + 50), new THREE.MeshLambertMaterial({ color: '#6c6a60', flatShading: true }), { parent: world.scene, pos: [x, -0.3, z], scale: [rnd(0.8, 1.6), 0.9, rnd(0.8, 1.6)] }); }
     const shelf = mesh(G.box(5, 0.4, 3), mat('#6a675c'), { parent: world.scene, pos: [RIVER.shelf[0], 0.25, RIVER.shelf[1]], receive: true });
     world.onUpdate((dt) => { foamTex.offset.y -= dt * 1.6; rapTex.offset.x -= dt * 0.35; });
+    // upstream, out of reach: the higher river and the cascade it comes down
+    {
+      const up = [];
+      for (let x = -172; x <= RIVER.cascadeX - 0.8; x += 3) up.push([x, RIVER.upper, RIVER.riverZ(x), 25]);
+      makeStream(world, up, { speed: 0.6, color: '#4a6758', tile: 8 });
+      const cx = RIVER.cascadeX - 0.8, cz = RIVER.riverZ(cx), fall = RIVER.riverZ(cx + 3) - RIVER.riverZ(cx - 3);
+      makeFalls(world, { x: cx, z: cz, top: RIVER.upper + 0.05, bottom: 0, width: 25, ry: Math.atan2(6, fall), out: 1.6 });
+    }
     // floor: pier & dam walkways
     let pierBroken = false;
     world.floor = (x, z) => {

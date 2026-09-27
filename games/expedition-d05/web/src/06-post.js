@@ -69,10 +69,12 @@ const Post = {
     this.b2.setSize(Math.max(1, Math.floor(v.x / q)), Math.max(1, Math.floor(v.y / q)));
     this.comp.uniforms.res.value.set(v.x, v.y);
   },
-  setGrade(g) {
+  // snap: take the grade now instead of easing to it (a cut to another place)
+  setGrade(g, snap = false) {
     const d = { exposure: 1, contrast: 1.06, saturation: 1.08, lift: '#000000', gain: '#ffffff', vignette: 0.9, bloom: 0.55, grain: 0.022 };
     const o = { ...d, ...(g || {}) };
     this._target = { exposure: o.exposure, contrast: o.contrast, saturation: o.saturation, lift: new THREE.Color(o.lift), gain: new THREE.Color(o.gain), vignette: o.vignette, bloom: o.bloom, grain: o.grain };
+    if (snap) { const t = this._target, c = this.grade; for (const k of ['exposure', 'contrast', 'saturation', 'vignette', 'bloom', 'grain']) c[k] = t[k]; c.lift.copy(t.lift); c.gain.copy(t.gain); }
   },
   _pass(mat, target) { this.quad.material = mat; renderer.setRenderTarget(target); renderer.render(this.scene, this.cam); },
   render(scene, cam, dt = 0.016) {

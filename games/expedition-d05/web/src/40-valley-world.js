@@ -14,10 +14,66 @@ const VALLEY = {
   brachio: [[-66, -22], [-58, 6]],
   // the track D-04 walked from camp Echo to the lake shore
   track: [[-10, 150], [-10, 122], [-6, 94], [-2, 64], [2, 34], [4, 4], [5, -24]],
+  // the lake's source: a stream off the western ridge falls from a rock step into a pool (lip is
+  // its height), and a creek carries the water down the meadow into the lake
+  falls: { x: -171, z: 150, lip: 44 },
+  creek: [[-164, 150], [-148, 143], [-128, 128], [-110, 108], [-94, 86], [-80, 62], [-70, 38], [-62, 18], [-56, 6]],
 };
 const LEAD_PATH = VALLEY.track.slice(1);
 const _tmpC = new THREE.Color();
+// The falls: west of the face (x < falls.x) the ground is raised to a step, the stream runs along
+// its top from a spring 60 m up the ridge, and falls into the pool at the step's foot; the creek
+// runs from the pool to the lake. The creek's water level is worked out once from the bare ground
+// (valleyBase) so it only ever runs downhill.
+const fallsStreamZ = (x) => VALLEY.falls.z + Math.sin((x - VALLEY.falls.x) * 0.06) * 3;
+const fallsBed = (x) => VALLEY.falls.lip + Math.max(0, VALLEY.falls.x - 1 - x) * 0.18;
+let _creek = null;
+function creekPath() {
+  if (_creek) return _creek;
+  const pts = [], c = VALLEY.creek;
+  for (let i = 0; i < c.length - 1; i++) {
+    const [ax, az] = c[i], [bx, bz] = c[i + 1], n = Math.ceil(Math.hypot(bx - ax, bz - az) / 3);
+    for (let k = 0; k < n; k++) pts.push([lerp(ax, bx, k / n), lerp(az, bz, k / n)]);
+  }
+  pts.push(c[c.length - 1]);
+  // the pool sits a metre under the ground in front of the face; downstream the level follows the
+  // ground but never climbs, and it meets the lake at -1.2
+  let lvl = valleyBase(pts[0][0], pts[0][1]) - 1.0;
+  const out = pts.map(([x, z], i) => { lvl = Math.min(lvl, valleyBase(x, z) - 0.45); return [x, i === pts.length - 1 ? -1.2 : Math.max(-1.2, lvl), z]; });
+  _creek = { pts: out, pool: out[0][1] };
+  return _creek;
+}
+// distance to the creek's centre line and the water level there
+function creekAt(x, z) {
+  const P = creekPath().pts;
+  let best = 1e9, y = 0;
+  for (let i = 0; i < P.length - 1; i++) {
+    const a = P[i], b = P[i + 1], dx = b[0] - a[0], dz = b[2] - a[2];
+    const k = clamp(((x - a[0]) * dx + (z - a[2]) * dz) / (dx * dx + dz * dz), 0, 1);
+    const d = Math.hypot(x - a[0] - dx * k, z - a[2] - dz * k);
+    if (d < best) { best = d; y = lerp(a[1], b[1], k); }
+  }
+  return { d: best, y };
+}
 function valleyHeight(x, z) {
+  let h = valleyBase(x, z);
+  const F = VALLEY.falls;
+  if (Math.abs(z - F.z) < 90 && x < F.x + 60 && x > F.x - 120) {
+    // the step: raised west of the face, rising with the stream, fading out up the ridge
+    const m = smoothstep(F.x + 1.5, F.x - 1.5, x) * Math.exp(-((z - F.z) ** 2) / (2 * 24 * 24)) * (1 - smoothstep(F.x - 62, F.x - 80, x));
+    if (m > 0) h = Math.max(h, lerp(h, F.lip + 1.8 + Math.max(0, F.x - 2 - x) * 0.2 + fbm(x * 0.09, z * 0.09, 2) * 0.8, m));
+    if (x < F.x - 0.5 && x > F.x - 64) { const bed = fallsBed(x), k = Math.exp(-((z - fallsStreamZ(x)) ** 2) / (2 * 2.4 * 2.4)); if (h > bed) h = lerp(h, bed, k); }
+  }
+  if (x < -40 && x > -175 && z > -2 && z < 160) {
+    // the pool below the falls, then the creek bed
+    const c = creekAt(x, z), C = creekPath();
+    const pd = Math.hypot(x - VALLEY.creek[0][0], z - VALLEY.creek[0][1]);
+    if (pd < 9 && x > VALLEY.falls.x + 0.5) h = Math.min(h, lerp(C.pool - 1.3, h, smoothstep(4, 8.5, pd)));
+    if (c.d < 7) h = Math.min(h, lerp(c.y - 0.7, h, smoothstep(1.6, 6.5, c.d)));
+  }
+  return h;
+}
+function valleyBase(x, z) {
   const r = Math.hypot(x - VALLEY.center.x, z - VALLEY.center.z);
   let h = 3.5 + fbm(x * 0.011, z * 0.011, 4) * 4.5 + fbm(x * 0.045, z * 0.045, 2) * 0.9;
   const ring = smoothstep(205, 290, r);
@@ -51,6 +107,8 @@ function valleyColor(x, z, y, slope, c) {
     if (m < -0.35) c.lerp(_tmpC.set('#5a5236'), 0.3);
   }
   if (slope > 0.3) c.lerp(_tmpC.set('#66665a'), smoothstep(0.3, 0.55, slope));
+  // wet stones along the creek and round the pool
+  if (x < -40 && x > -175 && z > -2 && z < 160) { const cd = creekAt(x, z).d; if (cd < 4.5 && y > -1) c.lerp(_tmpC.set('#5d584a'), (1 - smoothstep(2, 4.5, cd)) * 0.7); }
   // worn track from camp Echo to the lake: bare earth that breaks up at the edges
   const td = trackDist(x, z) + fbm(x * 0.4, z * 0.4, 2) * 0.9;
   if (td < 2.2 && y > 0.3) c.lerp(_tmpC.set('#6e5d40'), (1 - smoothstep(0.9, 2.2, td)) * 0.75);
@@ -96,7 +154,8 @@ function buildValleyWorld(o = {}) {
   makeWater(world, { y: -1.2, size: 4000, color: '#44706a' });
   makeVeil(world, { r: 640, x: VALLEY.center.x, z: VALLEY.center.z, h: 360 });
   const H = (x, z) => valleyHeight(x, z);
-  const inMeadow = (x, z) => { const h = H(x, z); return h > 0.4 && Math.hypot(x - VALLEY.center.x, z - VALLEY.center.z) < 205; };
+  const wet = (x, z) => (x < -40 && x > -180 && z > -4 && z < 162 && creekAt(x, z).d < 5.5) || (Math.abs(z - VALLEY.falls.z) < 5 && x < VALLEY.falls.x && x > VALLEY.falls.x - 66);
+  const inMeadow = (x, z) => { const h = H(x, z); return h > 0.4 && Math.hypot(x - VALLEY.center.x, z - VALLEY.center.z) < 205 && !wet(x, z); };
   const nearCamp = (x, z) => Math.hypot(x - VALLEY.camp.x, z - VALLEY.camp.z) < 20 || Math.hypot(x - VALLEY.pad.x, z - VALLEY.pad.z) < 12;
 
   // ferns
@@ -128,7 +187,7 @@ function buildValleyWorld(o = {}) {
     const a = rnd(0, TAU), rr = rng() < 0.8 ? rnd(175, 330) : rnd(40, 200);
     const x = VALLEY.center.x + Math.cos(a) * rr, z = VALLEY.center.z + Math.sin(a) * rr;
     const h = H(x, z);
-    if (h < 0.6 || h > 150 || nearCamp(x, z)) return null;
+    if (h < 0.6 || h > 150 || nearCamp(x, z) || wet(x, z)) return null;
     if (rr < 175 && Math.hypot(x - 120, z + 110) < 60) return null;
     return { x, y: h - 0.2, z, s: rnd(1.1, 2.3), ry: rnd(0, TAU) };
   });
@@ -141,7 +200,7 @@ function buildValleyWorld(o = {}) {
       const a = rnd(0, TAU), rr = rng() < 0.6 ? rnd(120, 200) : rnd(30, 150);
       const x = VALLEY.center.x + Math.cos(a) * rr, z = VALLEY.center.z + Math.sin(a) * rr;
       const h = H(x, z);
-      if (h < 0.6 || h > 40 || nearCamp(x, z) || nearTrack(x, z)) return null;
+      if (h < 0.6 || h > 40 || nearCamp(x, z) || nearTrack(x, z) || wet(x, z)) return null;
       if (Math.hypot(x - 120, z + 110) < 55) return null;
       return { x, y: h - 0.2, z, s: rnd(0.85, 1.35), ry: rnd(0, TAU) };
     });
@@ -273,12 +332,31 @@ function buildValleyWorld(o = {}) {
   tw.position.set(tx, th, tz);
   world.add(tw);
   world.circles.push({ x: tx, z: tz, r: 2.2 });
-  // waterfall on the south-west cliff
-  const wfTex = canvasTex(64, 256, (g, w, h) => { for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(255,255,255,${rnd(0.2, 0.7)})`; g.fillRect(rnd(0, w), rnd(0, h), rnd(2, 6), rnd(20, 80)); } });
-  wfTex.wrapT = THREE.RepeatWrapping;
-  const wf = mesh(new THREE.PlaneGeometry(10, 70), new THREE.MeshBasicMaterial({ map: wfTex, transparent: true, opacity: 0.75, depthWrite: false, fog: true }), { pos: [-150, 42, 150], rot: [0, 0.9, 0], cast: false });
-  world.add(wf);
-  world.onUpdate((dt) => { wfTex.offset.y += dt * 0.9; });
+  // the falls on the west wall, with the stream that feeds them and the creek they feed. This
+  // used to be a sheet standing in the air over the meadow, with no rock and no water under it.
+  {
+    const F = VALLEY.falls, C = creekPath(), T = world.terrain;
+    const top = [];
+    for (let x = F.x - 62; x <= F.x - 0.6; x += 2) top.push([x, fallsBed(x) + 0.4, fallsStreamZ(x), 3.2]);
+    makeStream(world, top, { speed: 0.9 });
+    // the pool: at its level, or just over the terrain mesh where that is coarser than the bowl
+    const [px, pz] = VALLEY.creek[0];
+    let poolY = C.pool;
+    for (let a = 0; a < 8; a++) poolY = Math.max(poolY, T.sample(px + Math.cos(a * TAU / 8) * 2.5, pz + Math.sin(a * TAU / 8) * 2.5) + 0.08);
+    mesh(new THREE.CircleGeometry(6.4, 24).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#35584f', roughness: 0.08, transparent: true, opacity: 0.88, envMapIntensity: 0.6, polygonOffset: true, polygonOffsetFactor: -2 }), { parent: world.scene, pos: [px, poolY, pz], cast: false, receive: true });
+    makeFalls(world, { x: F.x - 0.6, z: fallsStreamZ(F.x - 0.6), top: F.lip + 0.4, bottom: poolY, width: 3.6, ry: Math.PI / 2, level: o.menu ? 0 : 1 });
+    // the creek's surface never dips under the ground it runs over (the terrain mesh is coarser
+    // than the carve), and it meets the lake at the lake's level
+    makeStream(world, C.pts.map(([x, y, z], i) => [x, Math.max(y, Math.max(T.sample(x, z), T.sample(x + 1.2, z), T.sample(x - 1.2, z), T.sample(x, z + 1.2), T.sample(x, z - 1.2)) + 0.06), z, i === 0 ? 4.5 : 3.4]), { speed: 0.8, tile: 4 });
+    // boulders that frame the lip and the pool, and stones along the creek
+    const fr = new THREE.Group();
+    [[F.x - 1.5, F.z - 6, 3.4, 4], [F.x - 1.5, F.z + 6.5, 3.6, 4.4], [F.x + 5, F.z - 7, 2.2, 1.6], [F.x + 6, F.z + 7, 2.4, 1.8], [F.x - 30, fallsStreamZ(F.x - 30) + 4, 1.6, 1.2], [F.x - 52, fallsStreamZ(F.x - 52) - 4, 2.2, 1.8]].forEach(([x, z, sx, sy], i) => {
+      mesh(mossRock(rockGeo(i + 70), i + 70), rockM, { parent: fr, pos: [x, H(x, z) + sy * 0.3, z], rot: [rnd(0, 0.3), rnd(0, TAU), 0], scale: [sx, sy, sx * 0.9], receive: true });
+      world.circles.push({ x, z, r: sx * 0.9 });
+    });
+    for (let i = 3; i < C.pts.length - 2; i += 4) { const [x, , z] = C.pts[i], a = rnd(0, TAU), x2 = x + Math.cos(a) * 2.6, z2 = z + Math.sin(a) * 2.6; mesh(mossRock(rockGeo(i + 90, 0), i + 90), rockM, { parent: fr, pos: [x2, H(x2, z2) + 0.1, z2], rot: [0, rnd(0, TAU), 0], scale: rnd(0.35, 0.7), receive: true }); }
+    world.add(bakeRig(fr));
+  }
 
   makeMotes(world, { color: '#fff3c4', count: QUALITY ? 450 : 220 });
   world.wind.set(0.8, -0.6).normalize();

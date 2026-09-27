@@ -216,7 +216,7 @@ const Cine = {
   active: false, shots: [], i: 0, t: 0, resolve: null, fov: 55, snap: false, prevMode: 'third', speed: 1,
   play(shots, o = {}) {
     return new Promise((resolve) => {
-      this.shots = shots; this.i = 0; this.t = 0; this.resolve = resolve; this.active = true; this.speed = 1;
+      this.shots = shots; this.i = 0; this.t = 0; this.hold = 0; this.holding = false; this.stretch = 1; this.resolve = resolve; this.active = true; this.speed = 1;
       this.prevMode = Cam.mode === 'cine' ? this.prevMode : Cam.mode;
       Cam.mode = 'cine';
       this.snap = o.snap !== false;
@@ -226,14 +226,34 @@ const Cine = {
       this._start();
     });
   },
-  _start() { const s = this.shots[this.i]; if (s && s.onStart) s.onStart(); if (s && s.fov) this.fov = s.fov; if (s && s.cut) this.snap = true; this.rigid = !!(s && s.rigid); },
+  // Shots were timed to their subtitles, and the recorded voices run longer: a shot that starts a
+  // line it cannot finish would have it cut by the next shot's. So a shot is stretched to fit what
+  // its onStart says: the camera moves more slowly, it does not freeze. Lines said later (from a
+  // timer) are covered by the hold in update().
+  _start() {
+    const s = this.shots[this.i];
+    this.stretch = 1; this.hold = 0;
+    if (s && s.onStart) {
+      this._said = [];
+      try { s.onStart(); } finally {
+        const said = this._said; this._said = null;
+        if (said.length && s.dur) this.stretch = Math.max(1, (HUD.airTime(said) + 0.35) / s.dur);
+      }
+    }
+    if (s && s.fov) this.fov = s.fov; if (s && s.cut) this.snap = true; this.rigid = !!(s && s.rigid);
+  },
+  // how fast a scene should run its own clock (a helicopter flying a path in step with the shots):
+  // slower while a shot is stretched, normal outside cutscenes. A hold does not stop it: a
+  // helicopter frozen in the air would look worse than a path a second out of step.
+  rate() { return !this.active ? 1 : this.speed > 1 ? this.speed : 1 / (this.stretch || 1); },
   _eval(v, k) { return typeof v === 'function' ? v(k) : v; },
   update(dt) {
     if (!this.active) return;
     if (this.skippable && (Input.pressed('confirm') || Input.pressed('interact') || Input.pressed('shoot'))) this.speed = 6;
     const s = this.shots[this.i];
     this.t += dt * this.speed;
-    const k = s.dur ? clamp(this.t / s.dur, 0, 1) : 1;
+    // skipping drops the stretch: it was only there to let the lines finish
+    const k = s.dur ? clamp(this.t / (s.dur * (this.speed > 1 ? 1 : this.stretch)), 0, 1) : 1;
     const e = s.linear ? k : ease(k);
     const from = this._eval(s.from, e), to = this._eval(s.to || s.from, e);
     Cam.cinePos.lerpVectors(from, to, e);
@@ -241,13 +261,19 @@ const Cine = {
     Cam.cineLook.lerpVectors(lf, lt, e);
     if (s.onUpdate) s.onUpdate(k, dt);
     if (k >= 1) {
+      // a line said during a cutscene is cut by the next shot's (HUD.say interrupts while Cine is
+      // active), so a shot that ends mid-sentence holds its last frame until the line is over. Not
+      // when skipping, not on the last shot (nothing cuts it there), and never longer than 8 s.
+      this.holding = this.speed <= 1 && this.i < this.shots.length - 1 && HUD.talking() && this.hold < 8;
+      if (this.holding) { this.hold += dt; return; }
+      this.hold = 0;
       if (s.onEnd) s.onEnd();
       this.i++; this.t = 0;
       if (this.i >= this.shots.length) this.stop(); else this._start();
     }
   },
   stop() {
-    this.active = false; this.rigid = false;
+    this.active = false; this.rigid = false; this.holding = false; this.stretch = 1;
     Cam.mode = this.prevMode === 'cine' ? 'third' : this.prevMode;
     HUD.letterbox(false);
     Input.enabled = true;

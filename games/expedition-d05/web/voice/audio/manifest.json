@@ -374,6 +374,26 @@
   "text_hash": "17d479e6",
   "voice": "voice_design"
  },
+ "18b81e24": {
+  "bytes": 12716,
+  "created": "2026-09-27T18:23:07",
+  "cut_from": {
+   "end": 4.8,
+   "id": "8231a5e5",
+   "start": 3.3
+  },
+  "dur": 1.5,
+  "emotion": "neutral",
+  "file": "halm/18b81e24.mp3",
+  "instruct": true,
+  "mode": "voice_design",
+  "model": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+  "say": "Спинозавр.",
+  "seed": 41882919,
+  "speaker": "halm",
+  "text_hash": "18b81e24",
+  "voice": "voice_design"
+ },
  "18fc1137": {
   "bytes": 32472,
   "created": "2026-09-25T16:52:11",
@@ -1469,6 +1489,26 @@
   "text_hash": "707f1ec2",
   "voice": "voice_design"
  },
+ "740b4e03": {
+  "bytes": 11180,
+  "created": "2026-09-27T18:23:07",
+  "cut_from": {
+   "end": 6.17,
+   "id": "8231a5e5",
+   "start": 4.8
+  },
+  "dur": 1.31,
+  "emotion": "neutral",
+  "file": "halm/740b4e03.mp3",
+  "instruct": true,
+  "mode": "voice_design",
+  "model": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+  "say": "Птеранодон.",
+  "seed": 41882919,
+  "speaker": "halm",
+  "text_hash": "740b4e03",
+  "voice": "voice_design"
+ },
  "749c2734": {
   "bytes": 14784,
   "created": "2026-09-25T16:41:07",
@@ -2399,6 +2439,26 @@
   "text_hash": "bd0cf19a",
   "voice": "voice_design"
  },
+ "be4851c7": {
+  "bytes": 12716,
+  "created": "2026-09-27T18:23:07",
+  "cut_from": {
+   "end": 1.5,
+   "id": "8231a5e5",
+   "start": 0.0
+  },
+  "dur": 1.5,
+  "emotion": "neutral",
+  "file": "halm/be4851c7.mp3",
+  "instruct": true,
+  "mode": "voice_design",
+  "model": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+  "say": "Трицератопс.",
+  "seed": 41882919,
+  "speaker": "halm",
+  "text_hash": "be4851c7",
+  "voice": "voice_design"
+ },
  "c0ba41f4": {
   "bytes": 45264,
   "created": "2026-09-25T16:32:44",
@@ -3072,6 +3132,26 @@
   "seed": 926080878,
   "speaker": "diego",
   "text_hash": "ea4fb212",
+  "voice": "voice_design"
+ },
+ "ea6eeb18": {
+  "bytes": 15020,
+  "created": "2026-09-27T18:23:07",
+  "cut_from": {
+   "end": 3.3,
+   "id": "8231a5e5",
+   "start": 1.5
+  },
+  "dur": 1.8,
+  "emotion": "neutral",
+  "file": "halm/ea6eeb18.mp3",
+  "instruct": true,
+  "mode": "voice_design",
+  "model": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+  "say": "Велоцираптор.",
+  "seed": 41882919,
+  "speaker": "halm",
+  "text_hash": "ea6eeb18",
   "voice": "voice_design"
  },
  "eb8f97bb": {

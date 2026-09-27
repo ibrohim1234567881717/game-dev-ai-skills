@@ -272,7 +272,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "41-ch-prologue.js:229"
+  "source": "41-ch-prologue.js:234"
  },
  {
   "id": "d091b2c0",
@@ -283,7 +283,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "41-ch-prologue.js:240"
+  "source": "41-ch-prologue.js:245"
  },
  {
   "id": "af1f65a4",
@@ -294,7 +294,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:257"
+  "source": "41-ch-prologue.js:261"
  },
  {
   "id": "12fbd71b",
@@ -305,7 +305,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:280"
+  "source": "41-ch-prologue.js:285"
  },
  {
   "id": "2052deae",
@@ -316,7 +316,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:281"
+  "source": "41-ch-prologue.js:286"
  },
  {
   "id": "5262faac",
@@ -327,7 +327,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:281"
+  "source": "41-ch-prologue.js:286"
  },
  {
   "id": "334ff3ed",
@@ -338,7 +338,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:282"
+  "source": "41-ch-prologue.js:287"
  },
  {
   "id": "2f624a20",
@@ -349,7 +349,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:282"
+  "source": "41-ch-prologue.js:287"
  },
  {
   "id": "e48fdf45",
@@ -360,18 +360,51 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:284"
+  "source": "41-ch-prologue.js:291"
  },
  {
-  "id": "8231a5e5",
+  "id": "be4851c7",
   "speaker": "halm",
   "who": "Хальм",
-  "text": "Трицератопс. Велоцираптор. Спинозавр. Птеранодон.",
-  "say": "Трицератопс. Велоцираптор. Спинозавр. Птеранодон.",
+  "text": "Трицератопс.",
+  "say": "Трицератопс.",
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:284"
+  "source": "41-ch-prologue.js:297"
+ },
+ {
+  "id": "ea6eeb18",
+  "speaker": "halm",
+  "who": "Хальм",
+  "text": "Велоцираптор.",
+  "say": "Велоцираптор.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "41-ch-prologue.js:298"
+ },
+ {
+  "id": "18b81e24",
+  "speaker": "halm",
+  "who": "Хальм",
+  "text": "Спинозавр.",
+  "say": "Спинозавр.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "41-ch-prologue.js:299"
+ },
+ {
+  "id": "740b4e03",
+  "speaker": "halm",
+  "who": "Хальм",
+  "text": "Птеранодон.",
+  "say": "Птеранодон.",
+  "emotion": "neutral",
+  "directions": [],
+  "radio": false,
+  "source": "41-ch-prologue.js:300"
  },
  {
   "id": "76b435ef",
@@ -382,7 +415,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:288"
+  "source": "41-ch-prologue.js:301"
  },
  {
   "id": "02ece47d",
@@ -393,7 +426,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:289"
+  "source": "41-ch-prologue.js:310"
  },
  {
   "id": "dfd9918c",
@@ -404,7 +437,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:290"
+  "source": "41-ch-prologue.js:311"
  },
  {
   "id": "04ad9461",
@@ -415,7 +448,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:291"
+  "source": "41-ch-prologue.js:312"
  },
  {
   "id": "98346812",
@@ -426,7 +459,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:300"
+  "source": "41-ch-prologue.js:321"
  },
  {
   "id": "0cec2972",
@@ -439,7 +472,7 @@
    "пауза"
   ],
   "radio": false,
-  "source": "41-ch-prologue.js:301"
+  "source": "41-ch-prologue.js:322"
  },
  {
   "id": "8f16bcde",
@@ -450,7 +483,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:306"
+  "source": "41-ch-prologue.js:327"
  },
  {
   "id": "d8410628",
@@ -461,7 +494,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:306"
+  "source": "41-ch-prologue.js:327"
  },
  {
   "id": "88ee6d29",
@@ -472,7 +505,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:307"
+  "source": "41-ch-prologue.js:328"
  },
  {
   "id": "af3583c9",
@@ -483,7 +516,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:318"
+  "source": "41-ch-prologue.js:339"
  },
  {
   "id": "7af7e198",
@@ -494,7 +527,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:320"
+  "source": "41-ch-prologue.js:341"
  },
  {
   "id": "48f9572e",
@@ -505,7 +538,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:323"
+  "source": "41-ch-prologue.js:344"
  },
  {
   "id": "82ed3e68",
@@ -516,7 +549,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:323"
+  "source": "41-ch-prologue.js:344"
  },
  {
   "id": "c3e9d871",
@@ -529,7 +562,7 @@
    "тихо"
   ],
   "radio": false,
-  "source": "41-ch-prologue.js:324"
+  "source": "41-ch-prologue.js:345"
  },
  {
   "id": "02fb6a1e",
@@ -540,7 +573,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:332"
+  "source": "41-ch-prologue.js:353"
  },
  {
   "id": "40408e14",
@@ -551,7 +584,7 @@
   "emotion": "urgent",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:332"
+  "source": "41-ch-prologue.js:353"
  },
  {
   "id": "d5b4e804",
@@ -562,7 +595,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:352"
+  "source": "41-ch-prologue.js:373"
  },
  {
   "id": "f2927599",
@@ -573,7 +606,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:355"
+  "source": "41-ch-prologue.js:376"
  },
  {
   "id": "e679962e",
@@ -584,7 +617,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "41-ch-prologue.js:355"
+  "source": "41-ch-prologue.js:376"
  },
  {
   "id": "e31a92da",
@@ -597,7 +630,7 @@
    "тихо"
   ],
   "radio": false,
-  "source": "41-ch-prologue.js:358"
+  "source": "41-ch-prologue.js:379"
  },
  {
   "id": "1be357ee",
@@ -608,7 +641,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:362"
+  "source": "41-ch-prologue.js:383"
  },
  {
   "id": "a680a976",
@@ -619,7 +652,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:371"
+  "source": "41-ch-prologue.js:392"
  },
  {
   "id": "df044459",
@@ -630,7 +663,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:377"
+  "source": "41-ch-prologue.js:398"
  },
  {
   "id": "acc60920",
@@ -641,7 +674,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:377"
+  "source": "41-ch-prologue.js:398"
  },
  {
   "id": "1059ac99",
@@ -652,7 +685,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:378"
+  "source": "41-ch-prologue.js:399"
  },
  {
   "id": "60183372",
@@ -663,7 +696,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:378"
+  "source": "41-ch-prologue.js:399"
  },
  {
   "id": "8eb99cbb",
@@ -674,7 +707,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:379"
+  "source": "41-ch-prologue.js:400"
  },
  {
   "id": "89b893d8",
@@ -685,7 +718,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:379"
+  "source": "41-ch-prologue.js:400"
  },
  {
   "id": "db4933b3",
@@ -696,7 +729,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "41-ch-prologue.js:380"
+  "source": "41-ch-prologue.js:401"
  },
  {
   "id": "fa29e3f1",
@@ -707,7 +740,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:206"
+  "source": "42-ch-valley.js:223"
  },
  {
   "id": "9b6421bd",
@@ -718,7 +751,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "42-ch-valley.js:206"
+  "source": "42-ch-valley.js:223"
  },
  {
   "id": "a2d06f3e",
@@ -729,7 +762,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:208"
+  "source": "42-ch-valley.js:225"
  },
  {
   "id": "d2c99d67",
@@ -740,7 +773,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:208"
+  "source": "42-ch-valley.js:225"
  },
  {
   "id": "07c5a4a3",
@@ -751,7 +784,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:210"
+  "source": "42-ch-valley.js:227"
  },
  {
   "id": "4433cc87",
@@ -762,7 +795,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "42-ch-valley.js:210"
+  "source": "42-ch-valley.js:227"
  },
  {
   "id": "89114b5e",
@@ -773,7 +806,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:212"
+  "source": "42-ch-valley.js:229"
  },
  {
   "id": "2aa8c6f4",
@@ -784,7 +817,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:212"
+  "source": "42-ch-valley.js:229"
  },
  {
   "id": "5e815f46",
@@ -797,7 +830,7 @@
    "шёпотом"
   ],
   "radio": false,
-  "source": "42-ch-valley.js:218"
+  "source": "42-ch-valley.js:235"
  },
  {
   "id": "e34e5a95",
@@ -808,7 +841,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:220"
+  "source": "42-ch-valley.js:237"
  },
  {
   "id": "23c9eb5f",
@@ -819,7 +852,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:220"
+  "source": "42-ch-valley.js:237"
  },
  {
   "id": "5ca44844",
@@ -830,7 +863,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:323"
+  "source": "42-ch-valley.js:340"
  },
  {
   "id": "2ce3f0bc",
@@ -841,7 +874,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:324"
+  "source": "42-ch-valley.js:341"
  },
  {
   "id": "c0ba41f4",
@@ -852,7 +885,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:325"
+  "source": "42-ch-valley.js:342"
  },
  {
   "id": "ba67ccd0",
@@ -863,7 +896,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:355"
+  "source": "42-ch-valley.js:372"
  },
  {
   "id": "2cbc4b52",
@@ -874,7 +907,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:355"
+  "source": "42-ch-valley.js:372"
  },
  {
   "id": "2d0bdea5",
@@ -885,7 +918,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:371"
+  "source": "42-ch-valley.js:388"
  },
  {
   "id": "defc5ce7",
@@ -896,7 +929,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "42-ch-valley.js:371"
+  "source": "42-ch-valley.js:388"
  },
  {
   "id": "b88426ac",
@@ -907,7 +940,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "42-ch-valley.js:373"
+  "source": "42-ch-valley.js:390"
  },
  {
   "id": "dbcfb800",
@@ -918,7 +951,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "42-ch-valley.js:373"
+  "source": "42-ch-valley.js:390"
  },
  {
   "id": "959c9080",
@@ -929,7 +962,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:373"
+  "source": "42-ch-valley.js:390"
  },
  {
   "id": "7f68a92a",
@@ -940,7 +973,7 @@
   "emotion": "urgent",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:391"
+  "source": "42-ch-valley.js:408"
  },
  {
   "id": "e6b69a16",
@@ -951,7 +984,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:395"
+  "source": "42-ch-valley.js:412"
  },
  {
   "id": "8cabb3aa",
@@ -962,7 +995,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:429"
+  "source": "42-ch-valley.js:446"
  },
  {
   "id": "9c439b8e",
@@ -973,7 +1006,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:439"
+  "source": "42-ch-valley.js:456"
  },
  {
   "id": "13de9725",
@@ -984,7 +1017,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:444"
+  "source": "42-ch-valley.js:461"
  },
  {
   "id": "1a848bce",
@@ -995,7 +1028,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:466"
+  "source": "42-ch-valley.js:483"
  },
  {
   "id": "4b47c41d",
@@ -1006,7 +1039,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:466"
+  "source": "42-ch-valley.js:483"
  },
  {
   "id": "df30b9d0",
@@ -1019,7 +1052,7 @@
    "вдыхает"
   ],
   "radio": false,
-  "source": "42-ch-valley.js:466"
+  "source": "42-ch-valley.js:483"
  },
  {
   "id": "78e6d54b",
@@ -1030,7 +1063,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:470"
+  "source": "42-ch-valley.js:487"
  },
  {
   "id": "47d24660",
@@ -1041,7 +1074,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:472"
+  "source": "42-ch-valley.js:489"
  },
  {
   "id": "e5ed28e5",
@@ -1052,7 +1085,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:472"
+  "source": "42-ch-valley.js:489"
  },
  {
   "id": "873ac611",
@@ -1063,7 +1096,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:478"
+  "source": "42-ch-valley.js:495"
  },
  {
   "id": "017aa49f",
@@ -1074,7 +1107,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:510"
+  "source": "42-ch-valley.js:527"
  },
  {
   "id": "0ea78eaa",
@@ -1085,7 +1118,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:511"
+  "source": "42-ch-valley.js:528"
  },
  {
   "id": "5fc64f93",
@@ -1096,7 +1129,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:531"
+  "source": "42-ch-valley.js:548"
  },
  {
   "id": "a0f2f8b3",
@@ -1107,7 +1140,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:531"
+  "source": "42-ch-valley.js:548"
  },
  {
   "id": "6bf3387f",
@@ -1118,7 +1151,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:531"
+  "source": "42-ch-valley.js:548"
  },
  {
   "id": "c40317c7",
@@ -1131,7 +1164,7 @@
    "шёпотом"
   ],
   "radio": false,
-  "source": "42-ch-valley.js:546"
+  "source": "42-ch-valley.js:563"
  },
  {
   "id": "5ced67be",
@@ -1142,7 +1175,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:559"
+  "source": "42-ch-valley.js:576"
  },
  {
   "id": "ab8aede4",
@@ -1155,7 +1188,7 @@
    "шёпотом"
   ],
   "radio": false,
-  "source": "42-ch-valley.js:567"
+  "source": "42-ch-valley.js:584"
  },
  {
   "id": "bd0cf19a",
@@ -1166,7 +1199,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:582"
+  "source": "42-ch-valley.js:599"
  },
  {
   "id": "aceb2f59",
@@ -1177,7 +1210,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "42-ch-valley.js:583"
+  "source": "42-ch-valley.js:600"
  },
  {
   "id": "e9c5e7d1",
@@ -1856,7 +1889,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:182"
+  "source": "47-ch-truth.js:183"
  },
  {
   "id": "caaf7555",
@@ -1867,7 +1900,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:183"
+  "source": "47-ch-truth.js:184"
  },
  {
   "id": "8a20b7df",
@@ -1878,7 +1911,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:184"
+  "source": "47-ch-truth.js:185"
  },
  {
   "id": "21fc3cf6",
@@ -1889,7 +1922,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:185"
+  "source": "47-ch-truth.js:186"
  },
  {
   "id": "0aa04a08",
@@ -1900,7 +1933,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:185"
+  "source": "47-ch-truth.js:186"
  },
  {
   "id": "d307956e",
@@ -1911,7 +1944,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:186"
+  "source": "47-ch-truth.js:187"
  },
  {
   "id": "cca06d34",
@@ -1922,7 +1955,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:186"
+  "source": "47-ch-truth.js:187"
  },
  {
   "id": "468ec445",
@@ -1933,7 +1966,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:187"
+  "source": "47-ch-truth.js:188"
  },
  {
   "id": "b3ae322b",
@@ -1944,7 +1977,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:188"
+  "source": "47-ch-truth.js:189"
  },
  {
   "id": "e75b4700",
@@ -1955,7 +1988,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:191"
+  "source": "47-ch-truth.js:192"
  },
  {
   "id": "1306dd8d",
@@ -1966,7 +1999,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "47-ch-truth.js:211"
+  "source": "47-ch-truth.js:212"
  },
  {
   "id": "48727f86",
@@ -1977,7 +2010,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "47-ch-truth.js:211"
+  "source": "47-ch-truth.js:212"
  },
  {
   "id": "707f1ec2",
@@ -1988,7 +2021,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": true,
-  "source": "47-ch-truth.js:211"
+  "source": "47-ch-truth.js:212"
  },
  {
   "id": "f1dc655f",
@@ -1999,7 +2032,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "47-ch-truth.js:231"
+  "source": "47-ch-truth.js:232"
  },
  {
   "id": "d94f1aa3",
@@ -2010,7 +2043,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:236"
+  "source": "47-ch-truth.js:237"
  },
  {
   "id": "84e92eed",
@@ -2021,7 +2054,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:236"
+  "source": "47-ch-truth.js:237"
  },
  {
   "id": "d5aa0f0f",
@@ -2032,7 +2065,7 @@
   "emotion": "neutral",
   "directions": [],
   "radio": false,
-  "source": "47-ch-truth.js:236"
+  "source": "47-ch-truth.js:237"
  },
  {
   "id": "562005cf",
@@ -2045,7 +2078,7 @@
    "шорох бумаги"
   ],
   "radio": false,
-  "source": "47-ch-truth.js:236"
+  "source": "47-ch-truth.js:237"
  },
  {
   "id": "463d87bf",
@@ -2056,7 +2089,7 @@
   "emotion": "hesitant",
   "directions": [],
   "radio": true,
-  "source": "47-ch-truth.js:247"
+  "source": "47-ch-truth.js:248"
  },
  {
   "id": "07d1d80a",
@@ -2069,7 +2102,7 @@
    "шёпотом"
   ],
   "radio": false,
-  "source": "47-ch-truth.js:269"
+  "source": "47-ch-truth.js:270"
  },
  {
   "id": "dde07832",

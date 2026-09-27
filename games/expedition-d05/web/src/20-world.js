@@ -225,6 +225,86 @@ function makeWater(world, o) {
   return w;
 }
 
+// ---------- running water ----------
+// A ribbon of water along a path, pts = [[x, surfaceY, z, width], ...] from upstream to
+// downstream. Its normal map scrolls downstream, so the water visibly runs; the terrain under it
+// has to be carved by the chapter's height function (this only draws the surface).
+function makeStream(world, pts, o = {}) {
+  const g = makeStreamGeo(pts, o.tile || 5);
+  const nm = waterNormalTexture().clone(); nm.needsUpdate = true;
+  const m = new THREE.MeshStandardMaterial({ color: o.color || '#3b625c', roughness: 0.12, transparent: true, opacity: o.opacity ?? 0.84,
+    normalMap: GFX.level > 0 ? nm : null, normalScale: new THREE.Vector2(0.4, 0.4), envMapIntensity: 0.55, polygonOffset: true, polygonOffsetFactor: -2 });
+  const s = new THREE.Mesh(g, m); s.receiveShadow = true;
+  world.add(s);
+  // white water where the stream runs steeply: an overlay of streaks on those stretches only
+  const steep = [];
+  for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; steep.push((a[1] - b[1]) / Math.max(0.1, Math.hypot(b[0] - a[0], b[2] - a[2])) > (o.rapids ?? 0.14)); }
+  let foamTex = null;
+  for (let i = 0; i < steep.length; i++) {
+    if (!steep[i]) continue;
+    let j = i; while (j < steep.length && steep[j]) j++;
+    const run = pts.slice(Math.max(0, i - 1), Math.min(pts.length, j + 2)).map(([x, y, z, w]) => [x, y + 0.05, z, w * 0.85]);
+    if (!foamTex) {
+      foamTex = canvasTex(128, 256, (gg, w, h) => { gg.clearRect(0, 0, w, h); for (let k = 0; k < 90; k++) { gg.fillStyle = `rgba(255,255,255,${rnd(0.25, 0.8)})`; gg.beginPath(); gg.ellipse(rnd(0, w), rnd(0, h), rnd(2, 7), rnd(8, 26), 0, 0, TAU); gg.fill(); } });
+      foamTex.wrapS = foamTex.wrapT = THREE.RepeatWrapping;
+      world.onUpdate((dt) => { foamTex.offset.y -= dt * 1.4; });
+    }
+    const f = makeStreamGeo(run, o.tile || 5);
+    world.add(new THREE.Mesh(f, new THREE.MeshBasicMaterial({ map: foamTex, transparent: true, opacity: 0.75, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 })));
+    i = j;
+  }
+  world.onUpdate((dt) => { nm.offset.y -= dt * (o.speed ?? 0.7); });
+  return s;
+}
+function makeStreamGeo(pts, tile) {
+  const P = [], U = [], I = [];
+  let v = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [x, y, z, w] = pts[i], a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    let tx = b[0] - a[0], tz = b[2] - a[2]; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l;
+    if (i) v += Math.hypot(x - pts[i - 1][0], z - pts[i - 1][2]) / tile;
+    P.push(x - tz * w / 2, y, z + tx * w / 2, x + tz * w / 2, y, z - tx * w / 2); U.push(0, v, w / tile, v);
+    if (i < pts.length - 1) { const k = i * 2; I.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+  g.setIndex(I); g.computeVertexNormals();
+  return g;
+}
+// A waterfall: a sheet from the lip at (x, top, z) down to the pool surface at `bottom`, facing
+// `ry` (the direction the water falls away from the rock), with foam, spray and its sound.
+let _foamTex = null;
+function foamTexture() {
+  if (_foamTex) return _foamTex;
+  _foamTex = canvasTex(128, 128, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 4, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.6, 'rgba(240,248,250,0.5)'); gr.addColorStop(1, 'rgba(240,248,250,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+  return _foamTex;
+}
+function makeFalls(world, o) {
+  const { x, z, top, bottom } = o, width = o.width || 4, ry = o.ry || 0, drop = top - bottom, out = o.out ?? Math.min(3, drop * 0.14);
+  const tex = canvasTex(64, 256, (g, w, h) => { g.fillStyle = 'rgba(214,232,236,0.5)'; g.fillRect(0, 0, w, h); for (let i = 0; i < 80; i++) { g.fillStyle = `rgba(255,255,255,${rnd(0.25, 0.85)})`; g.fillRect(rnd(0, w), rnd(0, h), rnd(1.5, 5), rnd(24, 90)); } });
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(Math.max(1, width / 5), Math.max(1, drop / 14));
+  // the sheet leaves the lip, then falls away from the rock
+  const sheet = new THREE.PlaneGeometry(width, drop, 1, 10); sheet.translate(0, -drop / 2, 0);
+  { const p = sheet.attributes.position; for (let i = 0; i < p.count; i++) { const k = Math.max(0, -p.getY(i) / drop); p.setZ(i, Math.sqrt(k) * out); } sheet.computeVertexNormals(); }
+  const grp = new THREE.Group(); grp.position.set(x, top, z); grp.rotation.y = ry; world.add(grp);
+  mesh(sheet, new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.86, depthWrite: false, side: THREE.DoubleSide }), { parent: grp, cast: false });
+  const foamM = new THREE.MeshBasicMaterial({ map: foamTexture(), transparent: true, depthWrite: false });
+  const foam = mesh(new THREE.PlaneGeometry(width * 1.8, width * 1.3).rotateX(-Math.PI / 2), foamM, { parent: grp, pos: [0, -drop + 0.06, out + 0.4], cast: false });
+  const sprayM = new THREE.SpriteMaterial({ map: foamTexture(), transparent: true, opacity: 0.2, depthWrite: false });
+  const spray = [];
+  for (let i = 0, n = Math.ceil((GFX.level ? 10 : 5) * Math.max(1, width / 8)); i < n; i++) { const s = new THREE.Sprite(sprayM); s.userData.ph = rnd(0, 1); s.userData.dx = rnd(-0.5, 0.5) * width; grp.add(s); spray.push(s); }
+  world.onUpdate((dt) => {
+    tex.offset.y += dt * (o.speed ?? 1.5);
+    foam.rotation.y += dt * 0.08; foamM.opacity = 0.72 + Math.sin(Game.time * 5) * 0.08;
+    for (const s of spray) { const k = (s.userData.ph + Game.time * 0.35) % 1; s.position.set(s.userData.dx * (0.6 + k), -drop + 0.2 + k * Math.min(6, drop * 0.3), out + 1 + k * 2.4); s.scale.setScalar(Math.min(width, 5) * (0.3 + k * 0.6)); }
+  });
+  if (o.sound !== false) {
+    const e = Sound.emitter('falls', { ref: 8, rolloff: 1, level: o.level ?? 1 });
+    e.setPos(new THREE.Vector3(x, bottom + 1, z));
+  }
+  return grp;
+}
+
 // ---------- geometry merge (vertex colored) ----------
 function mergeParts(parts) {
   // parts: [{geo, color, m: Matrix4}]

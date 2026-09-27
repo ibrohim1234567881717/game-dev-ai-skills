@@ -495,7 +495,9 @@ def find_candidates(src: str, key_pairs=None) -> Tuple[List[Candidate], List[str
         elif opener == "[":
             # ['Хальм', 'text', 4.2] (the prologue's lines() helper). Without
             # the numeric duration, only accept a sentence-like second item,
-            # so lookup tables such as ['Хальм', 'halm'] are not dialogue.
+            # so lookup tables such as ['Хальм', 'halm'] are not dialogue, nor
+            # the credits' cast list (['Юсуф', 'техник базы']): a spoken line
+            # starts with a capital or markup, or ends like a sentence.
             if len(elements) in (2, 3):
                 who = _literal_value(elements[0])
                 text = _literal_value(elements[1])
@@ -503,7 +505,8 @@ def find_candidates(src: str, key_pairs=None) -> Tuple[List[Candidate], List[str
                     shape_ok = _number_value(elements[2]) is not None
                 else:
                     shape_ok = isinstance(text, str) and bool(
-                        re.search(r"\s", text) and re.search(r"[А-Яа-яЁё]", text))
+                        re.search(r"\s", text) and re.search(r"[А-Яа-яЁё]", text)
+                        and (re.match(r"[<(«\"'А-ЯЁA-Z]", text) or re.search(r"[.!?…]$", text)))
                 if isinstance(who, str) and isinstance(text, str) and shape_ok:
                     found.append(Candidate(who, text, elements[1][0].line, "array", None))
             if name:
@@ -809,6 +812,7 @@ class SelfTest(unittest.TestCase):
     HUD.say([{ who: `Лукас`, text: `Держитесь!` }]);
     lines([['Хальм', 'Доброе утро. Это Умбра.', 4], ['Лена', '«Не должно» — в каком смысле?', 2.6]]);
     const MAP = [['Хальм', 'halm'], ['diary', cx + 8, 'x']];
+    const CAST = [['Юсуф', 'техник базы'], ['Нора Квист', 'оператор связи станции «Порог»']];
     const tpl = `a ${ { who: 'Лена', text: 'внутри шаблона' }.text } b`;
     const after = { print: 'Отпечатки! Идите по следу.', dung: "Два часа.", n: 3 };
     HUD.say([{ who: 'Лена', text: after[key] }, { who: 'Хальм', text: nope[key] }]);
@@ -843,6 +847,8 @@ class SelfTest(unittest.TestCase):
         self.assertNotIn("внутри шаблона", texts)
         self.assertNotIn("Сюда, Итан.", texts)  # nudge pair not configured here
         self.assertNotIn(("Хальм", "halm"), [(c.who, c.text) for c in cands])
+        self.assertNotIn("техник базы", texts)  # a credits entry, not a line
+        self.assertNotIn("оператор связи станции «Порог»", texts)
 
     def test_extract_and_map(self):
         import tempfile

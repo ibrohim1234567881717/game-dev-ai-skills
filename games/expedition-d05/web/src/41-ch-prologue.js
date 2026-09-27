@@ -109,7 +109,10 @@ CHAPTERS.prologue = {
     // holotable
     mesh(G.cyl(1.6, 1.8, 0.9, 20), mat('#1c2426', { metal: 0.5, rough: 0.4 }), { parent: world.scene, pos: [0, 0.45, -1.6] });
     const holo = mesh(G.cyl(1.4, 1.4, 0.02, 24), new THREE.MeshBasicMaterial({ color: '#4fc3e8', transparent: true, opacity: 0.35 }), { parent: world.scene, pos: [0, 0.95, -1.6], cast: false });
-    const holoIsland = mesh(G.cone(1.0, 0.6, 10), new THREE.MeshBasicMaterial({ color: '#56d6a0', wireframe: true, transparent: true, opacity: 0.6 }), { parent: world.scene, pos: [0, 1.3, -1.6], cast: false });
+    // the island in miniature: the same ground the briefing's footage is shot on (39-dossier.js)
+    const holoGeo = new THREE.PlaneGeometry(2.3, 2.3, 44, 44).rotateX(-Math.PI / 2);
+    { const p = holoGeo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), r = Math.hypot(x, z) / 1.15; p.setY(i, r > 1 ? 0 : Math.max(0, dossierHeight(x * 280, z * 280 + 20) + 1.2) * 0.0042 * (1 - smoothstep(0.85, 1, r))); } }
+    const holoIsland = mesh(holoGeo, new THREE.MeshBasicMaterial({ color: '#56d6a0', wireframe: true, transparent: true, opacity: 0.5 }), { parent: world.scene, pos: [0, 1.0, -1.6], cast: false });
     world.circles.push({ x: 0, z: -1.6, r: 1.9 });
     world.onUpdate((dt) => { holoIsland.rotation.y += dt * 0.3; holo.material.opacity = 0.3 + Math.sin(Game.time * 3) * 0.05; });
     // desks & monitors
@@ -220,6 +223,8 @@ CHAPTERS.prologue = {
     const board = (k, seat) => { if (!npc[k].userData.seated) { if (comp[k] && !comp[k].detached) comp[k].detach(); heli.userData.seat(npc[k], seat); } };
 
     Sound.bed('rain', 0.04); Sound.bed('hum', 0.035);
+    // the briefing's footage of the five species, built now behind the loading screen
+    const dossier = world.dossier = makeDossier(world);
     const S = { stage: 0, moved: 0, engine: false };
     const spawn = { x: 0, z: 3.2 };
     const ctx = {
@@ -247,8 +252,7 @@ CHAPTERS.prologue = {
         fog.near = outside ? 22 : hangar ? 24 : 18; fog.far = outside ? 120 : hangar ? 80 : 40;
         fog.color.set(outside || hangar ? '#0b1116' : '#07090a');
         rain.visible = camera.position.x > HX1 - 2;
-        Sound.bed('rain', outside ? 0.17 : hangar ? 0.09 : 0.04);
-        Sound.bed('hum', hangar ? 0.01 : 0.035);
+        if (!dossier.on) { Sound.bed('rain', outside ? 0.17 : hangar ? 0.09 : 0.04); Sound.bed('hum', hangar ? 0.01 : 0.035); }
         caseSpot.intensity = damp(caseSpot.intensity, S.stage === 1 ? 26 : 0, 2, dt);
         doorLamp.intensity = S.stage === 2 ? 4 + Math.sin(Game.time * 4) * 2 : 0;
         if (S.stage === 2 && x > HX0 + 0.4) {
@@ -260,6 +264,7 @@ CHAPTERS.prologue = {
         if (S.stage === 3 && comp.diego && !comp.diego.detached && dist2d(P.pos.x, P.pos.z, DOOR_OUT.x, DOOR_OUT.z) < 30 && dist2d(P.pos.x, P.pos.z, DOOR_OUT.x, DOOR_OUT.z) > 5 && (Game.time % 6) < 0.05) comp.diego.gesture('wave', null, 1.6);
       },
       restore() { const at = S.stage >= 3 ? [12, 4.5, -Math.PI / 2] : [0, 3.2, Math.PI]; Game.player.place(at[0], at[1], at[2]); },
+      dispose() { dossier.dispose(); },
     };
     function startEngine() {
       if (S.engine) return;
@@ -280,12 +285,28 @@ CHAPTERS.prologue = {
           { from: V(0, 2.6, 6), to: V(0, 2.2, 3.5), look: V(0, 1.9, -6), dur: 4, cut: true, onStart: () => { Sound.sfx('door'); scr.veil = true; redraw(); lines([['Хальм', 'Доброе утро. Кто ещё не проснулся — сейчас проснётся. Это Умбра.', 4]]); } },
           { from: V(2.2, 1.7, -1.8), to: V(1.7, 1.7, -2.4), look: V(0.3, 1.55, -4.6), dur: 7, cut: true, onStart: () => lines([['Хальм', 'Сорок лет её нет ни на одной карте. Под этими облаками — экосистема, которой не должно существовать.', 4.2], ['Лена', '«Не должно» — в каком смысле?', 2.6]]) },
           { from: V(-3.2, 1.8, 0.6), to: V(-2.6, 1.8, 0.2), look: V(0.3, 1.5, -4.6), dur: 7, cut: true, onStart: () => { scr.veil = false; redraw(); Sound.sfx('ping'); lines([['Хальм', 'В любом, доктор Арден. Предыдущие исследования… исследование было прекращено. Связь с частью старых объектов потеряна.', 5], ['Хальм', 'Что там сейчас — мы не знаем. Поэтому летите вы.', 2.5]]); } },
-          { from: V(0, 2.1, -3.0), to: V(0, 2.05, -3.6), look: V(1.8, 2.1, -6.95), dur: 9.5, cut: true, onStart: () => {
-            lines([['Хальм', 'Пять видов. Пять генетических образцов.', 2.6], ['Хальм', 'Трицератопс. Велоцираптор. Спинозавр. Птеранодон.', 3.6]]);
-            [0, 1, 2, 3].forEach((i) => setTimeout(() => { scr.n = i + 1; redraw(); Sound.sfx('ping', 0.8); }, 2600 + i * 900));
+          // the camera goes into the holographic island, and the briefing cuts to D-04's footage of
+          // each species where it lives (39-dossier.js); Halm names each one on its own shot
+          { from: V(1.5, 2.6, 1.6), to: V(0.35, 2.25, -0.75), look: V(0, 1.04, -1.75), dur: 4, cut: true, fov: 44, onStart: () => {
+            lines([['Хальм', 'Пять видов. Пять генетических образцов.', 2.6]]);
+            Sound.sfx('ping', 0.6);
+          }, onEnd: () => HUD.flash(0.95, 0.7) },
+          ...dossier.shots({
+            mark: (n) => { scr.n = n; redraw(); },
+            sayName: (k) => ({
+              tri: () => lines([['Хальм', 'Трицератопс.', 1.6]]),
+              rap: () => lines([['Хальм', 'Велоцираптор.', 1.8]]),
+              spi: () => lines([['Хальм', 'Спинозавр.', 1.6]]),
+              pte: () => lines([['Хальм', 'Птеранодон.', 1.6]]),
+              rex: () => lines([['Хальм', 'И тираннозавр.', 2.4]]),
+            })[k](),
+          }),
+          // back in the room: the screen lists all five
+          { from: V(0.6, 2.0, -4.2), to: V(0.5, 2.0, -4.6), look: V(1.8, 2.0, -6.95), dur: 2.6, cut: true, onStart: () => {
+            dossier.show(false); HUD.flash(0.8, 0.6);
+            scr.n = 5; redraw();
+            ['wind', 'insects', 'water'].forEach((b) => Sound.bed(b, 0, 0.6)); Sound.bed('rain', 0.04, 0.8); Sound.bed('hum', 0.035, 0.8);
           } },
-          { from: V(0, 2.05, -3.6), look: V(1.8, 2.1, -6.95), dur: 2.2, onStart: () => { Sound.silenceAll(0.4); } },
-          { from: V(0.6, 2.0, -4.2), to: V(0.5, 2.0, -4.6), look: V(1.8, 2.0, -6.95), dur: 3.5, onStart: () => { scr.n = 5; redraw(); Sound.sfx('thud', 0.9); Sound.tone(49, 2.5, 'sawtooth', 0.12, 0, 41); lines([['Хальм', 'И тираннозавр.', 2.4]]); } },
           { from: V(3.2, 1.7, -0.6), to: V(3.4, 1.7, -0.9), look: V(5.4, 1.6, -2.2), dur: 3.2, cut: true, onStart: () => lines([['Диего', 'Вы серьёзно хотите, чтобы мы приблизились к нему?', 3]]) },
           { from: V(1.4, 1.7, -2.6), look: V(0.3, 1.55, -4.6), dur: 3.2, cut: true, onStart: () => lines([['Хальм', 'Вам не нужно его убивать. Нам нужен только образец.', 3]]) },
           { from: V(1.6, 1.7, 3.8), to: V(1.9, 1.7, 3.6), look: V(3.6, 1.2, 1.6), dur: 4.2, cut: true, onStart: () => lines([['Лукас', 'Отличная новость. А ему кто-нибудь скажет, что нам нужен только образец?', 4]]) },

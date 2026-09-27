@@ -42,9 +42,12 @@ const Sound = {
     let b = 0;
     for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b = (b + 0.02 * w) / 1.02; d[i] = w * 0.5 + b * 3; }
     this.noiseBuf = buf;
-    // ambience beds
-    this.beds.wind = this._bed('lowpass', 420, 0.7, 0);
-    this.beds.insects = this._bed('bandpass', 4600, 9, 0, 22);
+    // ambience beds. Wind and insects used to be a low-passed brown-noise rumble and a narrow noise
+    // band chopped at a steady 22 Hz: the same two ingredients as the helicopter's engine (wash +
+    // blade slap at ~17 Hz), so the quiet menu sounded like a rotor turning somewhere. Wind now has
+    // no sub-bass and breathes in slow gusts; the insects are separate crickets with real chirps.
+    this.beds.wind = this._windBed();
+    this.beds.insects = this._insectBed();
     this.beds.rain = this._bed('highpass', 1200, 0.5, 0);
     this.beds.water = this._bed('bandpass', 700, 1.2, 0);
     this.beds.hum = this._tone(55, 'sawtooth', 180, 0);
@@ -107,7 +110,7 @@ const Sound = {
     } else if (L.setPosition) { L.setPosition(p.x, p.y, p.z); L.setOrientation(_lsnF.x, _lsnF.y, _lsnF.z, _lsnU.x, _lsnU.y, _lsnU.z); }
     for (let i = this.emitters.length - 1; i >= 0; i--) this.emitters[i]._tick(p);
   },
-  // looping positional source; kinds: 'heli' (rotor + turbine), 'gen' (generator hum), 'fire'
+  // looping positional source; kinds: 'heli' (rotor + turbine), 'gen' (generator hum), 'falls', 'fire'
   emitter(kind, o = {}) {
     const dummy = { setPos() {}, setLevel() {}, setRate() {}, stop() {}, _tick() {}, dead: true };
     if (!this.ctx) return dummy;
@@ -144,6 +147,12 @@ const Sound = {
       const hum = osc('sawtooth', 50, 0.12); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260; hum.g.connect(f); f.connect(out);
       const rattle = noise('bandpass', 900, 3, 0.18); rattle.g.connect(out);
       e.setRate = (r) => { rate = r; hum.s.frequency.setTargetAtTime(35 + r * 15, ctx.currentTime, 0.3); };
+    } else if (kind === 'falls') {
+      // falling water: a broad hiss over a low roar, both breathing slowly
+      const hiss = noise('lowpass', 2600, 0.4, 0.3); hiss.g.connect(out);
+      const roar = noise('bandpass', 380, 0.6, 0.55); roar.g.connect(out);
+      const wob = osc('sine', 0.23, 0.08); wob.g.connect(roar.g.gain);
+      e.setRate = (r) => { rate = r; };
     } else if (kind === 'fire') {
       const crackle = noise('highpass', 2000, 0.6, 0.35); crackle.g.connect(out);
       const roar = noise('lowpass', 300, 0.5, 0.6); roar.g.connect(out);
@@ -188,6 +197,79 @@ const Sound = {
     src.start();
     return { gain: g, filter: f, target: level };
   },
+  // wind: air in leaves and grass, not an engine. No energy below ~110 Hz; two slow, unrelated LFOs
+  // move the gain and the brightness, so gusts rise and fall without a pattern you can count
+  _windBed() {
+    const ctx = this.ctx, src = this._noiseSrc();
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 120; hp.Q.value = 0.6;
+    const hp2 = ctx.createBiquadFilter(); hp2.type = 'highpass'; hp2.frequency.value = 120; hp2.Q.value = 0.6; // two stages: brown noise is steep
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 0.4;
+    const g = ctx.createGain(); g.gain.value = 0;
+    const gust = ctx.createGain(); gust.gain.value = 0.75;
+    const lfo = (f, depth, into) => { const o = ctx.createOscillator(); o.frequency.value = f; const d = ctx.createGain(); d.gain.value = depth; o.connect(d); d.connect(into); o.start(); };
+    lfo(0.071, 0.2, gust.gain); lfo(0.029, 0.12, gust.gain);
+    lfo(0.053, 420, lp.frequency);
+    src.connect(hp); hp.connect(hp2); hp2.connect(lp); lp.connect(g); g.connect(gust); gust.connect(this.bedBus);
+    src.start(0, Math.random() * 1.5);
+    // brown noise above 110 Hz is far quieter than below it: this keeps old levels sounding alike
+    return { gain: g, filter: lp, target: 0, scale: 1.5 };
+  },
+  // insects: a night chorus rendered once into a 12 s stereo loop. Seven crickets, each its own pitch
+  // (3.9–5.3 kHz), pulse count and chirp rate, placed across the stereo field; chirp periods divide
+  // the loop so it has no seam. A faint high hiss of smaller insects fills the gaps.
+  _insectBed() {
+    const ctx = this.ctx, sr = ctx.sampleRate, len = Math.floor(sr * 12);
+    const buf = ctx.createBuffer(2, len, sr), L = buf.getChannelData(0), R = buf.getChannelData(1);
+    let seed = 1983;
+    const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    for (let v = 0; v < 7; v++) {
+      const f = 3900 + rand() * 1400, pan = rand() * 2 - 1, amp = 0.35 + rand() * 0.65;
+      const pulses = 2 + Math.floor(rand() * 4), pLen = 0.009 + rand() * 0.008, pGap = 0.026 + rand() * 0.016;
+      const per = 12 / Math.round(12 / (0.42 + rand() * 0.9)), off = rand() * per;
+      const gl = amp * Math.min(1, 1 - pan) * 0.5 + amp * 0.25, gr = amp * Math.min(1, 1 + pan) * 0.5 + amp * 0.25;
+      for (let t0 = off; t0 < 12; t0 += per) {
+        if (rand() < 0.12) continue; // a cricket skips a beat now and then
+        const ca = 0.7 + rand() * 0.3;
+        for (let p = 0; p < pulses; p++) {
+          const s0 = Math.floor((t0 + p * pGap) * sr), n = Math.floor(pLen * sr);
+          for (let i = 0; i < n; i++) {
+            const k = (s0 + i) % len, e = Math.sin(Math.PI * i / n);
+            const s = Math.sin(2 * Math.PI * f * (i / sr)) * e * e * ca;
+            L[k] += s * gl; R[k] += s * gr;
+          }
+        }
+      }
+    }
+    // the hiss: white noise differenced once (tilted toward the highs), swelling slowly, very low
+    let pl = 0, pr = 0;
+    for (let i = 0; i < len; i++) {
+      const wl = rand() * 2 - 1, wr = rand() * 2 - 1;
+      const m = 0.5 + 0.5 * Math.sin(2 * Math.PI * i / len * 3);
+      L[i] += (wl - pl) * 0.01 * m; R[i] += (wr - pr) * 0.01 * (1 - m * 0.5);
+      pl = wl; pr = wr;
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const g = ctx.createGain(); g.gain.value = 0;
+    src.connect(g); g.connect(this.bedBus);
+    src.start(0, Math.random() * 12);
+    return { gain: g, filter: null, target: 0, scale: 1.0 };
+  },
+  // a songbird somewhere in the trees: two to four quick whistled notes, panned, on the ambience bus
+  bird(vol = 0.03, pan = 0) {
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = ctx.currentTime, p = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    const out = ctx.createGain(); out.gain.value = vol;
+    if (p) { p.pan.value = clamp(pan, -1, 1); out.connect(p); p.connect(this.bedBus); } else out.connect(this.bedBus);
+    const base = 2100 + Math.random() * 1500, notes = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < notes; i++) {
+      const o = ctx.createOscillator(), g = ctx.createGain(), s = t + i * (0.11 + Math.random() * 0.07), d = 0.07 + Math.random() * 0.06;
+      const f0 = base * (0.85 + Math.random() * 0.3);
+      o.frequency.setValueAtTime(f0, s); o.frequency.exponentialRampToValueAtTime(f0 * (Math.random() < 0.5 ? 1.35 : 0.72), s + d);
+      g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(1, s + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, s + d);
+      o.connect(g); g.connect(out); o.start(s); o.stop(s + d + 0.05);
+    }
+    setTimeout(() => { out.disconnect(); if (p) p.disconnect(); }, 1500);
+  },
   _tone(freq, type, lp, level, freq2) {
     const ctx = this.ctx;
     const g = ctx.createGain(); g.gain.value = level;
@@ -203,7 +285,7 @@ const Sound = {
     b.target = level;
     const t = this.ctx.currentTime;
     b.gain.gain.cancelScheduledValues(t);
-    b.gain.gain.setTargetAtTime(level, t, time / 3);
+    b.gain.gain.setTargetAtTime(level * (b.scale ?? 1), t, time / 3);
   },
   silenceAll(time = 1) { Object.keys(this.beds).forEach((k) => this.bed(k, 0, time)); },
   setMuted(m) {

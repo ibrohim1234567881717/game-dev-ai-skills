@@ -173,8 +173,23 @@ function flightIntro(world, herd) {
   const crew = {};
   [['lucas', 0, 'flight'], ['halm', 1], ['lena', 2], ['diego', 4]].forEach(([k, seat, v]) => { const n = makeNPC(k, v); world.add(n); heli.userData.seat(n, seat); crew[k] = n; });
   heli.userData.cabinLight.intensity = 0.45;
-  const pts = [V(0, 72, 980), V(0, 68, 760), V(4, 62, 560), V(12, 52, 360), V(46, 46, 200), V(112, 42, 40), V(138, 36, -58), V(100, 34, -128), V(24, 34, -92), V(-48, 30, -34), V(-46, 22, 78), V(-14, 10, 150), V(VALLEY.pad.x, valleyHeight(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z)];
+  const pts = [V(0, 78, 980), V(0, 84, 760), V(4, 92, 560), V(12, 98, 360), V(46, 64, 200), V(112, 42, 40), V(138, 36, -58), V(100, 34, -128), V(24, 34, -92), V(-48, 30, -34), V(-46, 22, 78), V(-14, 10, 150), V(VALLEY.pad.x, valleyHeight(VALLEY.pad.x, VALLEY.pad.z), VALLEY.pad.z)];
   const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+  // The points were drawn over a lower ridge than the terrain has: the southern ridge stands 74 m
+  // where the path crossed it at 50, and the helicopter flew through the mountain inside the Veil.
+  // So the path is lifted wherever the ground (and the chase cameras 24 m around the helicopter)
+  // would come closer than 22 m: it climbs before a ridge and eases down after it. The clearance
+  // shrinks on the final approach, where the helicopter has to come down to the pad.
+  const LN = 400, need = new Float32Array(LN + 1), lift = new Float32Array(LN + 1), _lp = new THREE.Vector3();
+  for (let i = 0; i <= LN; i++) {
+    curve.getPointAt(i / LN, _lp);
+    let g = -1e9;
+    for (let a = 0; a < 8; a++) for (const r of [0, 12, 24]) g = Math.max(g, valleyHeight(_lp.x + Math.cos(a * TAU / 8) * r, _lp.z + Math.sin(a * TAU / 8) * r));
+    need[i] = i / LN > 0.95 ? 0 : Math.max(0, g + lerp(22, 6, smoothstep(0.86, 0.95, i / LN)) - _lp.y);
+  }
+  const LW = 40; // about 150 m of path either side of a ridge
+  for (let i = 0; i <= LN; i++) { let m = 0; for (let j = Math.max(0, i - LW); j <= Math.min(LN, i + LW); j++) m = Math.max(m, need[j] * (0.5 + 0.5 * Math.cos(Math.PI * (j - i) / (LW + 1)))); lift[i] = m * (1 - smoothstep(0.95, 0.99, i / LN)); }
+  const liftAt = (u) => { const f = clamp(u, 0, 1) * LN, i = Math.min(LN - 1, Math.floor(f)); return lerp(lift[i], lift[i + 1], f - i); };
   const T = 52; let t = 0; let active = true; let heading = 0, bank = 0;
   const fog = world.scene.fog, baseNear = fog.near, baseFar = fog.far;
   const loc = (x, y, z) => () => heli.localToWorld(new THREE.Vector3(x, y, z));
@@ -185,10 +200,12 @@ function flightIntro(world, herd) {
   world.onUpdate((dt) => {
     heli.userData.update(dt);
     if (!active) return;
-    t += dt * Cine.speed;
+    // the path is timed to the shots, which stretch to fit the crew's lines. It waits for them: the
+    // chapter fades in first, and the helicopter used to be two seconds down the path by then
+    t += dt * (Cine.active ? Cine.rate() : t > 0 ? 1 : 0);
     const k = clamp(t / T, 0, 1), u = uOf(k);
     const p = curve.getPointAt(u), p2 = curve.getPointAt(Math.min(1, u + 0.004));
-    heli.position.copy(p);
+    heli.position.copy(p); heli.position.y += liftAt(u);
     if (Math.hypot(p2.x - p.x, p2.z - p.z) > 0.25) { const nh = Math.atan2(p2.x - p.x, p2.z - p.z); bank = damp(bank, clamp(wrapAngle(nh - heading) * 18, -0.35, 0.35), 2, dt); heading = nh; }
     const flare = smoothstep(0.9, 1, k);
     heli.rotation.set(-0.08 * (1 - flare) + flare * 0.1, heading, -bank * (1 - flare));

@@ -67,17 +67,22 @@ const Voice = {
     const step = () => { if (i >= ids.length) return; Promise.all(ids.slice(i, i + 6).map((id) => this._decode(id))).then(() => { i += 6; setTimeout(step, 30); }); };
     step();
   },
-  play(v, radio) {
+  // cb.onStart(seconds) once the clip actually sounds (decoding is asynchronous, so that can be
+  // later than the call); cb.onEnd() when it finishes by itself: not when stopped, paused or replaced.
+  // The subtitle queue advances on onEnd, so a line is never cut by the next one.
+  play(v, radio, cb = {}) {
     this.stop();
-    if (!Sound.ctx) return;
-    const token = { radio, off: 0 };
+    if (!Sound.ctx) return null;
+    const token = { radio, off: 0, cb };
     this.cur = token;
     this._decode(v.id).then((buf) => {
-      if (!buf || this.cur !== token) return;
+      if (this.cur !== token) return;
+      if (!buf) { this.cur = null; if (cb.onEnd) cb.onEnd(); return; }
       token.buf = buf;
       if (radio) { Sound.noise(Math.min(buf.duration, 8), 2400, 'bandpass', 0.018); Sound.sfx('click', 0.25); }
       if (!token.paused) this._start(token);
     });
+    return token;
   },
   _start(token) {
     const ctx = Sound.ctx, buf = token.buf;
@@ -94,7 +99,12 @@ const Voice = {
     src.start(0, Math.min(token.off, Math.max(0, buf.duration - 0.01)));
     token.src = src; token.t0 = ctx.currentTime - token.off;
     Sound.duck(true);
-    src.onended = () => { if (this.cur === token && !token.paused) { this.cur = null; Sound.duck(false); } };
+    if (token.cb.onStart) token.cb.onStart(buf.duration - token.off);
+    src.onended = () => {
+      if (this.cur !== token || token.paused || token.src !== src) return;
+      this.cur = null; Sound.duck(false);
+      if (token.cb.onEnd) token.cb.onEnd();
+    };
   },
   // the pause menu holds the line where it is and picks it up from the same word
   pause() {
@@ -108,7 +118,7 @@ const Voice = {
     if (!c || !c.paused) return;
     c.paused = false;
     if (c.buf && c.off < c.buf.duration - 0.05) this._start(c);
-    else if (c.buf) { this.cur = null; Sound.duck(false); }
+    else if (c.buf) { this.cur = null; Sound.duck(false); if (c.cb.onEnd) c.cb.onEnd(); }
   },
   stop() {
     const c = this.cur;

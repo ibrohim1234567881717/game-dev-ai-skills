@@ -41,10 +41,26 @@ const HUD = {
       this._radioQ.length = 0;
       this._radioBusy = false;
     }
+    // start decoding every clip of the batch now, so the second line is ready when the first ends
+    for (const l of lines) { const v = Voice.lookup(l.who, l.text); if (v) Voice._decode(v.id); }
+    // a cutscene shot starting now fits its length to what it says (see Cine._start)
+    if (typeof Cine !== 'undefined' && Cine._said) Cine._said.push(...lines);
     return new Promise((resolve) => {
       lines.forEach((l, i) => this._radioQ.push({ ...l, done: i === lines.length - 1 ? resolve : null }));
       if (!this._radioBusy) this._nextRadio();
     });
+  },
+  // a cutscene holds its shot while a line is still being said (see Cine.update)
+  talking() { return this._radioBusy; },
+  // how long a batch of lines keeps the radio busy: the voice clips when they will play, the
+  // subtitle times otherwise, and the breaths _nextRadio leaves between voiced lines
+  airTime(lines) {
+    let sec = 0;
+    lines.forEach((l, i) => {
+      const v = Voice.lookup(l.who, l.text), voiced = !!(v && Sound.ctx && !Game.muted), next = lines[i + 1];
+      sec += voiced ? v.d + (next ? (next.who && next.who !== l.who ? 0.4 : 0.25) : 0) : (l.dur ?? clamp(1.6 + l.text.length * 0.055, 2.2, 7.5));
+    });
+    return sec;
   },
   _nextRadio() {
     const r = $('radio');
@@ -61,13 +77,22 @@ const HUD = {
     let dur = l.dur ?? clamp(1.6 + l.text.length * 0.055, 2.2, 7.5);
     const v = Voice.lookup(l.who, l.text);
     const voiced = !!(v && Sound.ctx && !Game.muted);
-    if (voiced) { Voice.play(v, radio); dur = v.d + 0.35; }
+    // a short breath between lines; a little longer when the speaker changes
+    const next = this._radioQ[0], gap = next && next.who && next.who !== l.who ? 0.4 : 0.25;
+    const fn = () => { if (this._radioFn !== fn) return; const d = l.done; l.done = null; if (d) d(); this._nextRadio(); };
+    const arm = (sec) => { clearTimeout(this._radioTimer); this._radioEnd = performance.now() + sec * 1000; if (!this._radioPaused) this._radioTimer = setTimeout(fn, sec * 1000); else this._radioLeft = sec * 1000; };
+    if (voiced) {
+      // the voice drives the line: the next one starts when this clip has actually finished. The
+      // timer is only a safety net (decoding failed, the tab slept), sized from the real clip once
+      // it plays and from the manifest until then.
+      dur = v.d + 2.5;
+      Voice.play(v, radio, { onStart: (sec) => arm(sec + 1.5), onEnd: () => arm(gap) });
+    }
     // subtitles off hides voiced lines only: an unvoiced line is the only way to get its words
     r.classList.toggle('nosub', voiced && !Settings.v.subs);
-    this._radioFn = () => { const d = l.done; l.done = null; if (d) d(); this._nextRadio(); };
-    this._radioEnd = performance.now() + dur * 1000;
+    this._radioFn = fn;
     this._radioPaused = false;
-    this._radioTimer = setTimeout(this._radioFn, dur * 1000);
+    arm(dur);
     // only the pause menu and the journal hold lines; the K-4 power panel also sets Game.paused
     if (this._hold) this.pauseRadio();
   },
@@ -159,6 +184,15 @@ const HUD = {
     f.style.transition = `opacity ${dur}s ease`;
     f.style.opacity = to;
     return wait(dur);
+  },
+  // the briefing's species card over D-04's footage (39-dossier.js); null hides it
+  dossier(k, i = 0) {
+    const d = $('dossier');
+    if (!k) { d.hidden = true; return; }
+    const sp = SPECIES[k];
+    d.className = k === 'rex' ? 'rex' : '';
+    d.innerHTML = `<div class="dz-n">${String(i + 1).padStart(2, '0')} / 05</div><div class="dz-name">${sp.name}</div><div class="dz-ru">${sp.ru.split(' ·')[0].split(' (')[0]}</div><div class="dz-era">${sp.era}</div><div class="dz-need">Нужен живой образец ДНК</div>`;
+    d.hidden = false; void d.offsetWidth; d.classList.add('show');
   },
   flash(intensity = 0.8, dur = 0.25) {
     const f = $('flash');
