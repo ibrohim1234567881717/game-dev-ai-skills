@@ -2183,11 +2183,19 @@ const HUD = {
     if (progress !== null) bar.firstElementChild.style.width = (clamp(progress, 0, 1) * 100).toFixed(1) + '%';
     $('tbInteract').classList.toggle('hot', key === 'E');
   },
-  // radio lines: [{who, text, dur}] — returns promise when the batch finishes
+  // radio lines: [{who, text, dur}] — returns promise when the batch finishes.
+  // interrupt: true cuts the line being said (danger calls: "Итан, сзади!"); 'soft' drops what is
+  // queued but lets a voiced line finish (a new clue replacing the last). A cutscene is soft toward
+  // a line begun before it (it finishes, and the shot holds for it), hard toward its own earlier
+  // shots' lines, which only outlast their shot after the 8 s hold in Cine.update.
   say(lines, interrupt = false) {
     if (!Array.isArray(lines)) lines = [lines];
-    if (typeof Cine !== 'undefined' && Cine.active) interrupt = true;
-    if (interrupt) {
+    if (typeof Cine !== 'undefined' && Cine.active && !interrupt) interrupt = this._radioCur && this._radioCur.cine === Cine.serial ? true : 'soft';
+    if (interrupt === 'soft' && this._radioCur && !this._radioCur.voiced) interrupt = true; // subtitles alone can go at once
+    if (interrupt === 'soft') {
+      for (const q of this._radioQ) if (q.done) q.done();
+      this._radioQ.length = 0;
+    } else if (interrupt) {
       clearTimeout(this._radioTimer);
       this._radioPaused = false;
       Voice.stop();
@@ -2232,6 +2240,7 @@ const HUD = {
     let dur = l.dur ?? clamp(1.6 + l.text.length * 0.055, 2.2, 7.5);
     const v = Voice.lookup(l.who, l.text);
     const voiced = !!(v && Sound.ctx && !Game.muted);
+    l.voiced = voiced; l.cine = typeof Cine !== 'undefined' && Cine.active ? Cine.serial : 0;
     // a short breath between lines; a little longer when the speaker changes
     const next = this._radioQ[0], gap = next && next.who && next.who !== l.who ? 0.4 : 0.25;
     const fn = () => { if (this._radioFn !== fn) return; const d = l.done; l.done = null; if (d) d(); this._nextRadio(); };
@@ -5545,6 +5554,7 @@ const Cine = {
   play(shots, o = {}) {
     return new Promise((resolve) => {
       this.shots = shots; this.i = 0; this.t = 0; this.hold = 0; this.holding = false; this.stretch = 1; this.resolve = resolve; this.active = true; this.speed = 1;
+      this.serial = (this.serial || 0) + 1; // which cutscene a radio line belongs to (HUD.say)
       this.prevMode = Cam.mode === 'cine' ? this.prevMode : Cam.mode;
       Cam.mode = 'cine';
       this.snap = o.snap !== false;
@@ -8985,7 +8995,7 @@ CHAPTERS.truth = {
       ['trail', cx - 14, cz + 12, 'Изучить тропу', 'Следы ботинок: один человек, туда и обратно, много раз. Месяцами. К пещерам.'],
     ];
     clueList.forEach(([id, x, z, label, text]) => world.interact({ x, z, r: 2.2, hold: 0.6, label, enabled: () => S.stage === 'camp' && !S.clues.has(id),
-      onUse: () => { S.clues.add(id); Sound.sfx('ping'); HUD.say([{ who: `[Улика ${S.clues.size}/8]`, text, dur: 5 }], true); HUD.objective(`Выясните, что случилось с D-04 · ${S.clues.size}/8`, 'Осмотрите лагерь: модуль, фотостену, кейсы, тропу к пещерам.'); if (S.clues.size === 8) setTimeout(reveal, 5200); } }));
+      onUse: () => { S.clues.add(id); Sound.sfx('ping'); HUD.say([{ who: `[Улика ${S.clues.size}/8]`, text, dur: 5 }], 'soft'); HUD.objective(`Выясните, что случилось с D-04 · ${S.clues.size}/8`, 'Осмотрите лагерь: модуль, фотостену, кейсы, тропу к пещерам.'); if (S.clues.size === 8) setTimeout(reveal, 5200); } }));
     world.interact({ x: TRUTH.core[0] + 2.4, z: TRUTH.core[1], r: 2.6, label: 'Осмотреть станцию кернов', enabled: () => !S.core,
       onUse: () => { S.core = true; Game.state.flags.clueCore = true; HUD.say([{ who: '[Керн · станция Варна]', text: 'Базальт. Возраст породы по метке Варна: 43 года. Под ним — привезённая почва, слоями.', dur: 5 }, { who: 'Хальм (рация)', text: '<em>(тихо)</em> Этот остров моложе меня.', dur: 3 }]); } });
     TRUTH.bunkers.forEach(([x, z]) => world.interact({ x, z: z + 2.4, r: 2.4, label: 'Осмотреть люк', enabled: () => !S.bunker,

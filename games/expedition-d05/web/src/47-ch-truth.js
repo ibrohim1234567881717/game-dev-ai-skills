@@ -161,7 +161,7 @@ CHAPTERS.truth = {
       ['trail', cx - 14, cz + 12, 'Изучить тропу', 'Следы ботинок: один человек, туда и обратно, много раз. Месяцами. К пещерам.'],
     ];
     clueList.forEach(([id, x, z, label, text]) => world.interact({ x, z, r: 2.2, hold: 0.6, label, enabled: () => S.stage === 'camp' && !S.clues.has(id),
-      onUse: () => { S.clues.add(id); Sound.sfx('ping'); HUD.say([{ who: `[Улика ${S.clues.size}/8]`, text, dur: 5 }], true); HUD.objective(`Выясните, что случилось с D-04 · ${S.clues.size}/8`, 'Осмотрите лагерь: модуль, фотостену, кейсы, тропу к пещерам.'); if (S.clues.size === 8) setTimeout(reveal, 5200); } }));
+      onUse: () => { S.clues.add(id); Sound.sfx('ping'); HUD.say([{ who: `[Улика ${S.clues.size}/8]`, text, dur: 5 }], 'soft'); HUD.objective(`Выясните, что случилось с D-04 · ${S.clues.size}/8`, 'Осмотрите лагерь: модуль, фотостену, кейсы, тропу к пещерам.'); if (S.clues.size === 8) setTimeout(reveal, 5200); } }));
     world.interact({ x: TRUTH.core[0] + 2.4, z: TRUTH.core[1], r: 2.6, label: 'Осмотреть станцию кернов', enabled: () => !S.core,
       onUse: () => { S.core = true; Game.state.flags.clueCore = true; HUD.say([{ who: '[Керн · станция Варна]', text: 'Базальт. Возраст породы по метке Варна: 43 года. Под ним — привезённая почва, слоями.', dur: 5 }, { who: 'Хальм (рация)', text: '<em>(тихо)</em> Этот остров моложе меня.', dur: 3 }]); } });
     TRUTH.bunkers.forEach(([x, z]) => world.interact({ x, z: z + 2.4, r: 2.4, label: 'Осмотреть люк', enabled: () => !S.bunker,

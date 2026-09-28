@@ -219,6 +219,7 @@ const Cine = {
   play(shots, o = {}) {
     return new Promise((resolve) => {
       this.shots = shots; this.i = 0; this.t = 0; this.hold = 0; this.holding = false; this.stretch = 1; this.resolve = resolve; this.active = true; this.speed = 1;
+      this.serial = (this.serial || 0) + 1; // which cutscene a radio line belongs to (HUD.say)
       this.prevMode = Cam.mode === 'cine' ? this.prevMode : Cam.mode;
       Cam.mode = 'cine';
       this.snap = o.snap !== false;

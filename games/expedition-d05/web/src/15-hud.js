@@ -28,11 +28,19 @@ const HUD = {
     if (progress !== null) bar.firstElementChild.style.width = (clamp(progress, 0, 1) * 100).toFixed(1) + '%';
     $('tbInteract').classList.toggle('hot', key === 'E');
   },
-  // radio lines: [{who, text, dur}] — returns promise when the batch finishes
+  // radio lines: [{who, text, dur}] — returns promise when the batch finishes.
+  // interrupt: true cuts the line being said (danger calls: "Итан, сзади!"); 'soft' drops what is
+  // queued but lets a voiced line finish (a new clue replacing the last). A cutscene is soft toward
+  // a line begun before it (it finishes, and the shot holds for it), hard toward its own earlier
+  // shots' lines, which only outlast their shot after the 8 s hold in Cine.update.
   say(lines, interrupt = false) {
     if (!Array.isArray(lines)) lines = [lines];
-    if (typeof Cine !== 'undefined' && Cine.active) interrupt = true;
-    if (interrupt) {
+    if (typeof Cine !== 'undefined' && Cine.active && !interrupt) interrupt = this._radioCur && this._radioCur.cine === Cine.serial ? true : 'soft';
+    if (interrupt === 'soft' && this._radioCur && !this._radioCur.voiced) interrupt = true; // subtitles alone can go at once
+    if (interrupt === 'soft') {
+      for (const q of this._radioQ) if (q.done) q.done();
+      this._radioQ.length = 0;
+    } else if (interrupt) {
       clearTimeout(this._radioTimer);
       this._radioPaused = false;
       Voice.stop();
@@ -77,6 +85,7 @@ const HUD = {
     let dur = l.dur ?? clamp(1.6 + l.text.length * 0.055, 2.2, 7.5);
     const v = Voice.lookup(l.who, l.text);
     const voiced = !!(v && Sound.ctx && !Game.muted);
+    l.voiced = voiced; l.cine = typeof Cine !== 'undefined' && Cine.active ? Cine.serial : 0;
     // a short breath between lines; a little longer when the speaker changes
     const next = this._radioQ[0], gap = next && next.who && next.who !== l.who ? 0.4 : 0.25;
     const fn = () => { if (this._radioFn !== fn) return; const d = l.done; l.done = null; if (d) d(); this._nextRadio(); };
