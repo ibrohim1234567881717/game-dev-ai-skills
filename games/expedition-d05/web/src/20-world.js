@@ -522,11 +522,13 @@ function coniferGeo(seedv = 1) {
   const tiers = 5;
   for (let i = 0; i < tiers; i++) {
     const t = i / (tiers - 1), rad = lerp(2.35, 0.75, t), hgt = lerp(2.5, 1.9, t), y = 2.3 + i * 1.3 + hgt / 2;
-    const g = new THREE.ConeGeometry(rad, hgt, 9, 2);
-    const p = g.attributes.position;
+    // one ring per tier: the droop and the ragged rim live on the rim, a middle ring cost 2.5x the triangles
+    const g = new THREE.ConeGeometry(rad, hgt, 8, 1);
+    const p = g.attributes.position, jit = new Map();
     for (let k = 0; k < p.count; k++) {
       const vy = p.getY(k), px = p.getX(k), pz = p.getZ(k), rr = Math.hypot(px, pz);
-      if (rr > 0.01) { const j = 1 + (r() - 0.5) * 0.28, droop = (rr / rad) ** 2 * 0.45; p.setXYZ(k, px * j, vy - droop, pz * j); }
+      // the same jitter for the side's rim and the cap's rim at one angle, so they stay joined
+      if (rr > 0.01) { const key = Math.round(Math.atan2(pz, px) * 1000); if (!jit.has(key)) jit.set(key, 1 + (r() - 0.5) * 0.28); const j = jit.get(key), droop = (rr / rad) ** 2 * 0.45; p.setXYZ(k, px * j, vy - droop, pz * j); }
     }
     const y0 = y - hgt / 2, y1 = y + hgt / 2, lo = 0.62 + t * 0.2;
     parts.push({ geo: g, color: i % 2 ? '#2b4d36' : '#2f5439', m: M4(0, y, 0, (r() - 0.5) * 0.06, r() * TAU, (r() - 0.5) * 0.06),
@@ -603,10 +605,10 @@ function broadleafGeo(seedv = 1, detail = 1) {
     parts.push({ geo: G.cyl(0.06, 0.13, len, 6), color: bark, m: M4(Math.cos(a) * Math.sin(lean) * len * 0.5, 3.5 + Math.cos(lean) * len * 0.5, Math.sin(a) * Math.sin(lean) * len * 0.5, Math.sin(a) * lean, 0, -Math.cos(a) * lean) });
   }
   const greens = ['#557f3a', '#5f8a40', '#4d7536', '#6a9448', '#5a8440', '#4a6e34'];
-  const n = 11 + (seedv % 3) * 2, top = 7.2, bot = 4.0;
+  const n = 9 + (seedv % 3), top = 7.2, bot = 4.0;
   for (let i = 0; i < n; i++) {
     const a = r() * TAU, k = i / n, rr = k < 0.15 ? r() * 0.5 : 0.9 + r() * 1.7, y = k < 0.15 ? 6.4 + r() * 0.6 : 4.5 + r() * 2.2 - rr * 0.35;
-    parts.push({ geo: _blob(0.85 + r() * 0.55, detail, mulberry32((r() * 4294967296) >>> 0)), color: greens[(i + seedv) % greens.length],
+    parts.push({ geo: _blob(0.95 + r() * 0.55, detail, mulberry32((r() * 4294967296) >>> 0)), color: greens[(i + seedv) % greens.length],
       m: M4(Math.cos(a) * rr, y, Math.sin(a) * rr, 0, r() * TAU, 0, 1.25, 0.85, 1.25),
       shade: (vy, ny) => (0.58 + 0.5 * smoothstep(bot, top, vy)) * (0.86 + 0.18 * ny) });
   }

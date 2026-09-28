@@ -318,37 +318,47 @@ function makeCompy() {
 
 // ---------- Velociraptor (Varn's reconstruction) ----------
 function makeRaptor(o = {}) {
-  const skin = o.skin || '#5a5a48', M = mat(skin), MS = mat(o.stripe || '#3a3b30'), MF = mat('#2c2a24'), MC = mat('#d8d0bb', { rough: 0.5 });
+  // lofted and striped, a crest of quills down the neck and back, feathered arms, the sickle claw
+  const skin = o.skin || '#5a5a48', stripe = o.stripe || '#3a3b30', SK = skinMat();
+  const back = new THREE.Color(skin).multiplyScalar(0.9).getStyle(), belly = new THREE.Color(skin).lerp(new THREE.Color('#b0a88a'), 0.45).getStyle();
+  const MF = mat('#2c2a24'), MC = mat('#d8d0bb', { rough: 0.5 }), MQ = mat(stripe, { side: THREE.DoubleSide });
+  const col = { back, belly, foot: '#3a3a30' }, bands = { back, belly, bands: 1.3, mottle: 0.05 };
   const g = new THREE.Group();
   const body = new THREE.Group(); body.position.y = 1.15; g.add(body);
-  mesh(G.sphere(1, 10, 8), M, { parent: body, scale: [0.42, 0.45, 0.95] });
-  mesh(G.sphere(1, 8, 6), MS, { parent: body, pos: [0, 0.2, -0.1], scale: [0.3, 0.3, 0.8] });
+  mesh(bodyLoft([[-0.9, 0.04, 0.26, 0.3], [-0.5, 0.08, 0.36, 0.42], [0.0, 0.05, 0.42, 0.46], [0.45, 0.1, 0.36, 0.4], [0.82, 0.22, 0.22, 0.26]], { ...bands, seg: 12 }), SK, { parent: body });
+  // quills down the back (the stripes are in the skin's vertex colour)
+  const quill = new THREE.PlaneGeometry(0.05, 0.22); quill.translate(0, 0.11, 0);
+  for (let i = 0; i < 9; i++) mesh(quill, MQ, { parent: body, pos: [0, 0.44 + Math.sin(i / 8 * Math.PI) * 0.06, 0.6 - i * 0.17], rot: [-0.9, 0, 0], cast: false });
   const tail = new THREE.Group(); tail.position.set(0, 0.05, -0.85); body.add(tail);
-  mesh(G.cone(0.26, 2.2, 6), M, { parent: tail, rot: [-Math.PI / 2, 0, 0], pos: [0, 0, -1.0] });
-  const plume = mesh(G.cone(0.2, 0.6, 5), MF, { parent: tail, rot: [-Math.PI / 2, 0, 0], pos: [0, 0.05, -2.1] });
+  mesh(bodyLoft([[0.12, 0, 0.26, 0.29], [-0.7, 0.02, 0.17, 0.2], [-1.5, 0.04, 0.09, 0.11], [-2.2, 0.06, 0.03, 0.04]], { ...bands, seg: 10 }), SK, { parent: tail });
+  // the tail's feather fan
+  const plume = new THREE.Group(); plume.position.set(0, 0.06, -1.9); tail.add(plume);
+  for (let i = -3; i <= 3; i++) mesh(new THREE.PlaneGeometry(0.09, 0.55).translate(0, -0.27, 0), MQ, { parent: plume, rot: [Math.PI / 2, 0, i * 0.16], cast: false });
   const neck = new THREE.Group(); neck.position.set(0, 0.25, 0.8); body.add(neck);
-  mesh(G.cyl(0.14, 0.2, 0.65, 6), M, { parent: neck, rot: [0.9, 0, 0], pos: [0, 0.18, 0.18] });
+  mesh(bodyLoft([[-0.1, -0.05, 0.19, 0.21], [0.18, 0.14, 0.15, 0.17], [0.36, 0.34, 0.13, 0.15], [0.44, 0.46, 0.12, 0.14]], { back, belly, seg: 10, sub: 2 }), SK, { parent: neck });
   const head = new THREE.Group(); head.position.set(0, 0.42, 0.42); neck.add(head);
-  mesh(G.box(0.26, 0.26, 0.52), M, { parent: head, pos: [0, 0, 0.12] });
+  mesh(bodyLoft([[-0.14, 0.03, 0.12, 0.14], [0.06, 0.04, 0.14, 0.15], [0.3, 0.0, 0.11, 0.12], [0.52, -0.04, 0.07, 0.08], [0.6, -0.05, 0.03, 0.04]], { back, belly, seg: 10 }), SK, { parent: head });
   const jaw = new THREE.Group(); jaw.position.set(0, -0.08, 0); head.add(jaw);
-  mesh(G.box(0.2, 0.08, 0.45), M, { parent: jaw, pos: [0, -0.04, 0.2] });
-  mesh(G.box(0.16, 0.14, 0.36), M, { parent: head, pos: [0, 0.02, 0.48] });
-  const crest = mesh(G.box(0.05, 0.16, 0.4), MF, { parent: head, pos: [0, 0.2, -0.05] });
+  mesh(bodyLoft([[0.0, -0.02, 0.09, 0.05], [0.25, -0.04, 0.08, 0.045], [0.5, -0.05, 0.04, 0.03]], { back: belly, belly, seg: 8, sub: 2 }), SK, { parent: jaw });
+  for (let i = 0; i < 6; i++) for (const sx of [-1, 1]) mesh(G.cone(0.012, 0.045, 3), MC, { parent: head, pos: [sx * (0.075 - i * 0.008), -0.075, 0.12 + i * 0.07], rot: [Math.PI, 0, 0], cast: false });
+  const crest = new THREE.Group(); head.add(crest);
+  for (let i = 0; i < 5; i++) mesh(quill, MQ, { parent: crest, pos: [0, 0.12, 0.1 - i * 0.07], rot: [-1.1 - i * 0.1, 0, 0], scale: [1, 0.8 - i * 0.08, 1], cast: false });
   if (o.notch) crest.scale.set(1, 1, 0.55);
-  for (const sx of [-1, 1]) mesh(G.sphere(0.035, 5, 4), mat('#d9a520', { emissive: '#8a5a00', ei: 0.6 }), { parent: head, pos: [sx * 0.13, 0.06, 0.22], cast: false });
+  for (const sx of [-1, 1]) mesh(G.sphere(0.035, 6, 5), mat('#d9a520', { emissive: '#8a5a00', ei: 0.6, flat: false }), { parent: head, pos: [sx * 0.11, 0.07, 0.18], cast: false });
   for (const sx of [-1, 1]) {
-    const arm = new THREE.Group(); arm.position.set(sx * 0.3, -0.05, 0.55); body.add(arm);
-    mesh(G.box(0.07, 0.35, 0.07), M, { parent: arm, pos: [0, -0.15, 0.05], rot: [0.6, 0, 0] });
-    mesh(G.box(0.02, 0.2, 0.22), MF, { parent: arm, pos: [0, -0.18, -0.06] });
+    const arm = new THREE.Group(); arm.position.set(sx * 0.28, -0.05, 0.55); body.add(arm);
+    mesh(bodyLoft([[0.05, 0, 0.06, 0.06], [-0.3, 0, 0.04, 0.045]], { back, belly, seg: 6, sub: 1, axis: 'y' }), SK, { parent: arm, rot: [0.6, 0, 0] });
+    for (let k = 0; k < 3; k++) mesh(new THREE.PlaneGeometry(0.05, 0.24).translate(0, -0.12, 0), MQ, { parent: arm, pos: [sx * 0.02, -0.1 - k * 0.05, -0.04 - k * 0.02], rot: [0.9, sx * 1.2, 0], cast: false });
+    mesh(G.cone(0.015, 0.08, 4), MF, { parent: arm, pos: [0, -0.3, 0.12], rot: [1.9, 0, 0], cast: false });
   }
   const legs = [];
   for (const sx of [-1, 1]) {
     const hip = new THREE.Group(); hip.position.set(sx * 0.26, 1.1, -0.15); g.add(hip);
-    mesh(G.cyl(0.13, 0.18, 0.6, 6), M, { parent: hip, pos: [0, -0.25, 0.05], rot: [-0.3, 0, 0] });
+    mesh(bodyLoft([[0.1, 0.04, 0.17, 0.2], [-0.2, 0.06, 0.15, 0.17], [-0.5, 0.12, 0.09, 0.1]], { back, belly: back, seg: 8, sub: 2, axis: 'y' }), SK, { parent: hip });
     const knee = new THREE.Group(); knee.position.set(0, -0.52, 0.15); hip.add(knee);
-    mesh(G.cyl(0.07, 0.09, 0.62, 6), M, { parent: knee, pos: [0, -0.28, -0.1], rot: [0.45, 0, 0] });
-    mesh(G.box(0.1, 0.06, 0.3), M, { parent: knee, pos: [0, -0.56, 0.02] });
-    mesh(G.cone(0.03, 0.18, 4), MC, { parent: knee, pos: [0.03 * sx, -0.47, 0.15], rot: [-0.9, 0, 0] });
+    mesh(bodyLoft([[0.04, 0, 0.08, 0.09], [-0.3, -0.12, 0.06, 0.065], [-0.54, -0.1, 0.05, 0.055]], { back, belly: back, seg: 8, sub: 2, axis: 'y' }), SK, { parent: knee });
+    mesh(G.box(0.1, 0.05, 0.3), mat('#3a3a30'), { parent: knee, pos: [0, -0.56, 0.02] });
+    mesh(hornGeo(0.2, 0.025, 0.6, 5), MC, { parent: knee, pos: [0.03 * sx, -0.5, 0.06], rot: [-2.4, 0, 0], cast: false });
     legs.push({ hip, knee });
   }
   let ph = rnd(0, TAU);
@@ -374,34 +384,45 @@ function makeRaptor(o = {}) {
 
 // ---------- Spinosaurus ----------
 function makeSpino() {
-  const M = mat('#6a766a'), MB = mat('#9aa090'), MS = new THREE.MeshStandardMaterial({ color: '#b04a34', roughness: 0.55, side: THREE.DoubleSide, emissive: new THREE.Color('#5a1a0e'), emissiveIntensity: 0.9, flatShading: true });
+  // lofted body, a paddle tail, a long croc-like snout, and the sail: a membrane on spines, red
+  // at the top fading dark at the base
+  const back = '#4c5a50', belly = '#8e9484', SK = skinMat(), col = { back, belly, foot: '#34382e' };
   const g = new THREE.Group();
   const body = new THREE.Group(); body.position.y = 3.2; g.add(body);
-  mesh(G.sphere(1, 12, 9), M, { parent: body, scale: [1.5, 1.5, 4.2] });
-  mesh(G.sphere(1, 10, 7), MB, { parent: body, pos: [0, -0.6, 0.3], scale: [1.3, 0.9, 3.4] });
-  // sail
-  const sailShape = new THREE.Shape();
-  sailShape.moveTo(-3.6, 0);
-  for (let i = 0; i <= 12; i++) { const t = i / 12; sailShape.lineTo(-3.6 + t * 7.2, Math.sin(t * Math.PI) * 4.2 * (0.85 + 0.15 * Math.sin(t * 17))); }
-  sailShape.lineTo(3.6, 0); sailShape.lineTo(-3.6, 0);
-  const sail = new THREE.Mesh(new THREE.ShapeGeometry(sailShape), MS);
-  sail.rotation.y = Math.PI / 2; sail.position.set(0, 1.1, 0);
-  sail.castShadow = true; body.add(sail);
-  // scar notch on the sail (Charon)
-  mesh(G.box(0.06, 1.1, 0.35), mat('#2a1a14'), { parent: body, pos: [0.02, 4.1, -0.7], rot: [0.3, 0, 0], cast: false });
+  mesh(bodyLoft([[-3.9, 0.0, 0.92, 1.0], [-2.6, 0.1, 1.36, 1.45], [-1.0, 0.1, 1.56, 1.6], [0.8, 0.05, 1.5, 1.55], [2.4, 0.15, 1.2, 1.3], [3.6, 0.45, 0.8, 0.9], [4.25, 0.6, 0.6, 0.7]], { back, belly, mottle: 0.08, seg: 16 }), SK, { parent: body });
+  // the sail: spines, and a membrane between them whose top edge dips between each pair
+  {
+    const n = 15, P = [], C = [], I = [], top = new THREE.Color('#c05036'), base = new THREE.Color('#4a2a20'), rows = 6;
+    const hAt = (t) => Math.sin(t * Math.PI) * 4.3 * (0.86 + 0.14 * Math.sin(t * 5.3)) + 0.3;
+    for (let i = 0; i <= n * 2; i++) {
+      const t = i / (n * 2), z = -3.4 + t * 6.8, hTop = hAt(t) * (i % 2 ? 0.9 : 1);
+      for (let r = 0; r <= rows; r++) { const k = r / rows; P.push(0, 1.0 + hTop * k, z); _c1.copy(base).lerp(top, Math.pow(k, 0.8)); C.push(_c1.r, _c1.g, _c1.b); }
+      if (i < n * 2) for (let r = 0; r < rows; r++) { const a0 = i * (rows + 1) + r, b0 = a0 + rows + 1; I.push(a0, b0, a0 + 1, a0 + 1, b0, b0 + 1); }
+    }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); sg.setIndex(I); sg.computeVertexNormals();
+    const sailM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, side: THREE.DoubleSide, emissive: new THREE.Color('#3a0e06'), emissiveIntensity: 0.6 });
+    const sail = new THREE.Mesh(sg, sailM); sail.castShadow = true; body.add(sail);
+    const spineM = mat('#5a2a1c', { flat: false });
+    for (let i = 0; i <= n; i++) { const t = i / n, h = hAt(t); mesh(G.cyl(0.03, 0.07, h, 5), spineM, { parent: body, pos: [0, 1.0 + h / 2, -3.4 + t * 6.8], cast: false }); }
+    // Charon's scar: a torn notch in the sail
+    mesh(G.box(0.08, 1.1, 0.35), mat('#2a1a14'), { parent: body, pos: [0.02, 4.1, -0.7], rot: [0.3, 0, 0], cast: false });
+  }
   const tail = new THREE.Group(); tail.position.set(0, 0, -3.9); body.add(tail);
-  mesh(G.cone(1.0, 6.5, 7), M, { parent: tail, rot: [-Math.PI / 2, 0, 0], pos: [0, 0, -3] });
-  mesh(G.box(0.12, 1.6, 4.5), MS, { parent: tail, pos: [0, 0.6, -3.2], cast: false });
+  // a paddle: narrow side to side, deep top to bottom, the way Spinosaurus swam
+  mesh(bodyLoft([[0.3, 0.0, 0.9, 1.0], [-1.6, 0.05, 0.62, 0.95], [-3.6, 0.1, 0.34, 0.8], [-5.6, 0.15, 0.14, 0.55], [-7.0, 0.2, 0.05, 0.22]], { back, belly, mottle: 0.08, seg: 12 }), SK, { parent: tail });
   const neck = new THREE.Group(); neck.position.set(0, 0.6, 3.9); body.add(neck);
-  mesh(G.cyl(0.7, 0.95, 2.4, 8), M, { parent: neck, rot: [1.1, 0, 0], pos: [0, 0.4, 0.9] });
+  mesh(bodyLoft([[-0.3, -0.05, 0.66, 0.74], [0.6, 0.3, 0.55, 0.62], [1.4, 0.65, 0.48, 0.54], [2.1, 0.85, 0.44, 0.5]], { back, belly, mottle: 0.06, seg: 12, sub: 2 }), SK, { parent: neck });
   const head = new THREE.Group(); head.position.set(0, 0.9, 2.1); neck.add(head);
-  mesh(G.box(0.8, 0.7, 1.6), M, { parent: head, pos: [0, 0.1, 0.2] });
-  mesh(G.box(0.5, 0.42, 2.4), M, { parent: head, pos: [0, 0, 2.0] });
+  mesh(bodyLoft([[-0.35, 0.1, 0.44, 0.44], [0.3, 0.16, 0.4, 0.4], [1.0, 0.06, 0.27, 0.27], [1.9, 0.0, 0.2, 0.19], [2.7, 0.02, 0.22, 0.2], [3.05, 0.0, 0.1, 0.11]], { back, belly, seg: 12 }), SK, { parent: head });
+  mesh(G.cone(0.1, 0.5, 5), mat('#5a3a2a', { flat: false }), { parent: head, pos: [0, 0.42, 0.25], rot: [-0.3, 0, 0], cast: false });
   const jaw = new THREE.Group(); jaw.position.set(0, -0.2, 0.6); head.add(jaw);
-  mesh(G.box(0.46, 0.2, 3.0), MB, { parent: jaw, pos: [0, -0.1, 1.2] });
-  for (const sx of [-1, 1]) mesh(G.sphere(0.07, 5, 4), mat('#e8c24a', { emissive: '#704a00' }), { parent: head, pos: [sx * 0.4, 0.3, 0.6], cast: false });
-  const legs = [limb(g, -1.2, 3.0, -1.4, 3.1, 0.55, M), limb(g, 1.2, 3.0, -1.4, 3.1, 0.55, M)];
-  const arms = [limb(g, -1.0, 2.7, 2.6, 2.0, 0.28, M), limb(g, 1.0, 2.7, 2.6, 2.0, 0.28, M)];
+  mesh(bodyLoft([[-0.8, -0.05, 0.36, 0.18], [0.4, -0.08, 0.22, 0.13], [1.6, -0.1, 0.17, 0.11], [2.4, -0.1, 0.18, 0.11], [2.5, -0.1, 0.08, 0.05]], { back: belly, belly, seg: 10 }), SK, { parent: jaw });
+  const tooth = mat('#e2d8c0', { rough: 0.4 });
+  for (let i = 0; i < 9; i++) for (const sx of [-1, 1]) mesh(G.cone(0.03, 0.14, 4), tooth, { parent: head, pos: [sx * (0.19 - i * 0.004), -0.16, 0.9 + i * 0.22], rot: [Math.PI, 0, 0], cast: false });
+  for (const sx of [-1, 1]) mesh(G.sphere(0.07, 6, 5), mat('#e8c24a', { emissive: '#704a00', flat: false }), { parent: head, pos: [sx * 0.38, 0.3, 0.55], cast: false });
+  const legs = [limbSmooth(g, -1.2, 3.0, -1.4, 3.1, 0.55, col, { toes: true }), limbSmooth(g, 1.2, 3.0, -1.4, 3.1, 0.55, col, { toes: true })];
+  const arms = [limbSmooth(g, -1.0, 2.7, 2.6, 2.0, 0.27, col, { toes: true }), limbSmooth(g, 1.0, 2.7, 2.6, 2.0, 0.27, col, { toes: true })];
   let ph = 0;
   g.userData = {
     kind: 'spi', head, jaw, neck, tail, body,
