@@ -8825,7 +8825,8 @@ CHAPTERS.peaks = {
         HUD.danger(true);
         HUD.timer(null);
         HUD.objective('Бегите вниз по тропе!', 'К осыпи на спуске. Слышите свист — уходите с места: там упадёт птеранодон.');
-        HUD.say([{ who: 'Хальм (рация)', text: 'Вниз! Не останавливаться!' }, { who: 'Лена (рация)', text: 'Итан, слева!' }], true);
+        // soft: Lena's line about the chick finishes first; the rockfall and the danger HUD are already on
+        HUD.say([{ who: 'Хальм (рация)', text: 'Вниз! Не останавливаться!' }, { who: 'Лена (рация)', text: 'Итан, слева!' }], 'soft');
       } });
     return ctx;
   },
