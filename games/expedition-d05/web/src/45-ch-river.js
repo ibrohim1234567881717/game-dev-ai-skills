@@ -430,9 +430,9 @@ CHAPTERS.attack = {
           { from: g(cx + 3, cz + 7, 1.2), to: g(cx + 3, cz + 6.5, 1.3), look: g(cx - 6, cz - 6, 1.2), dur: 4, cut: true, fov: 60, onStart: () => { HUD.say([{ who: '', text: '<em>Лагерь «Эхо». Ночь. Шторм.</em>', dur: 3 }]); } },
           { from: g(cx - 8, cz + 12, 2.5), look: g(cx - 16, cz - 6, 1), dur: 3.5, cut: true, fov: 55, onStart: () => { lightning(world, 1, 0.5); Sound.sfx('click', 0.8); } },
           { from: g(cx + 6, cz - 2, 1.8), look: g(cx - 2, cz + 2, 1.4), dur: 4, cut: true, fov: 55, onStart: () => HUD.say([{ who: 'Лена', text: 'Они пришли за нами. Они шли от комплекса всё это время.', dur: 3.6 }]) },
-          { from: g(cx - 2, cz + 6, 1.6), look: g(cx - 4, cz - 2, 1.6), dur: 3, cut: true, fov: 50, onStart: () => { lightning(world, 0.8, 0.3); HUD.say([{ who: 'Диего', text: 'Эй! ЭЙ! Сюда, уроды! За мной!', dur: 2.6 }]); Sound.sfx('shot', 1); setTimeout(() => Sound.sfx('shot', 1), 400); } },
-          { from: g(cx + 4, cz + 4, 3), look: () => diego.position.clone().add(V(0, 1, 0)), dur: 7, cut: true, fov: 50, onStart: () => { setTimeout(() => HUD.say([{ who: 'Итан', text: 'Диего!', dur: 1.6 }]), 1500); [1200, 2600, 4100, 5600].forEach((ms, i) => setTimeout(() => Sound.sfx('shot', 0.8 - i * 0.18), ms)); } },
-          { from: g(cx + 2, cz + 5, 1.7), look: g(cx - 20, cz - 40, 2), dur: 5, cut: true, fov: 45, onStart: () => { setTimeout(() => HUD.say([{ who: 'Лукас', text: '<em>(тихо)</em> …Диего?', dur: 2.6 }]), 2200); } },
+          { from: g(cx - 2, cz + 6, 1.6), look: g(cx - 4, cz - 2, 1.6), dur: 3, cut: true, fov: 50, onStart: () => { lightning(world, 0.8, 0.3); HUD.say([{ who: 'Диего', text: 'Эй! ЭЙ! Сюда, уроды! За мной!', dur: 2.6 }]); Sound.sfx('shot', 1); Cine.later(400, () => Sound.sfx('shot', 1)); } },
+          { from: g(cx + 4, cz + 4, 3), look: () => diego.position.clone().add(V(0, 1, 0)), dur: 7, cut: true, fov: 50, onStart: () => { Cine.later(1500, () => HUD.say([{ who: 'Итан', text: 'Диего!', dur: 1.6 }])); [1200, 2600, 4100, 5600].forEach((ms, i) => Cine.later(ms, () => Sound.sfx('shot', 0.8 - i * 0.18))); } },
+          { from: g(cx + 2, cz + 5, 1.7), look: g(cx - 20, cz - 40, 2), dur: 5, cut: true, fov: 45, onStart: () => { Cine.later(2200, () => HUD.say([{ who: 'Лукас', text: '<em>(тихо)</em> …Диего?', dur: 2.6 }])); } },
         ], { skippable: true });
         await HUD.fade(1, 1.2);
         Game.complete('peaks');

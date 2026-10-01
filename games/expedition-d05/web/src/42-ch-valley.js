@@ -227,15 +227,15 @@ function flightIntro(world, herd) {
     { from: loc(-0.2, 2.28, -1.5), look: loc(0.2, 2.0, 5), dur: 6, cut: true, fov: 60, rigid: true, onUpdate: sit,
       onStart: () => { crew.lena.userData.pose = { sit: true, lookY: 0.9 }; HUD.say([{ who: 'Лена', text: 'Это она? Вуаль?', dur: 2.2 }, { who: 'Хальм', text: 'Сорок лет облаков на одном месте. Погода так не умеет.', dur: 3.4 }]); } },
     { from: loc(0.05, 2.05, 1.7), look: loc(0.1, 1.62, 3.0), dur: 5, cut: true, fov: 52, rigid: true, onUpdate: sit,
-      onStart: () => { HUD.say([{ who: 'Лукас', text: 'У меня компас пляшет. Да все приборы пляшут.', dur: 2.8 }, { who: 'Нора (радио)', text: 'Дельта-пять… вас не… повто…', dur: 2.4 }]); setTimeout(() => lightning(world, 1, 0.6), 2500); } },
+      onStart: () => { HUD.say([{ who: 'Лукас', text: 'У меня компас пляшет. Да все приборы пляшут.', dur: 2.8 }, { who: 'Нора (радио)', text: 'Дельта-пять… вас не… повто…', dur: 2.4 }]); Cine.later(2500, () => lightning(world, 1, 0.6)); } },
     { from: loc(-8, 3, -14), to: loc(-5, 2.6, -11), look: loc(0, 1.5, 4), dur: 5, cut: true, fov: 58, rigid: true,
-      onStart: () => { Cam.shake = 0.5; Sound.bed('rain', 0.14); HUD.say([{ who: 'Хальм', text: 'Это нормально. Держите курс на ноль-восемь-пять.', dur: 2.6 }, { who: 'Лукас', text: 'Нормально? Откуда вы знаете, что нормально?', dur: 2.4 }]); setTimeout(() => lightning(world, 1, 0.2), 1800); },
+      onStart: () => { Cam.shake = 0.5; Sound.bed('rain', 0.14); HUD.say([{ who: 'Хальм', text: 'Это нормально. Держите курс на ноль-восемь-пять.', dur: 2.6 }, { who: 'Лукас', text: 'Нормально? Откуда вы знаете, что нормально?', dur: 2.4 }]); Cine.later(1800, () => lightning(world, 1, 0.2)); },
       onUpdate: () => { Cam.shake = Math.max(Cam.shake, 0.25); } },
     { from: loc(-0.3, 2.25, -1.4), look: loc(0.3, 1.9, 3), dur: 4.5, cut: true, fov: 62, rigid: true,
-      onStart: () => { crew.lena.userData.pose = { sit: true, hold: true }; crew.diego.userData.pose = { sit: true, hold: true }; Sound.sfx('thud', 0.5); setTimeout(() => lightning(world, 1.2, 0.1), 900); },
+      onStart: () => { crew.lena.userData.pose = { sit: true, hold: true }; crew.diego.userData.pose = { sit: true, hold: true }; Sound.sfx('thud', 0.5); Cine.later(900, () => lightning(world, 1.2, 0.1)); },
       onUpdate: (k, dt) => { sit(k, dt); Cam.shake = Math.max(Cam.shake, 0.35 * (1 - k)); if (k > 0.85 && !shake) { shake = 1; HUD.flash(0.9, 1.2); Sound.silenceAll(0.6); } } },
     { from: V(170, 9, -40), to: V(166, 11, -62), look: () => V(herd.center.x, 3, herd.center.y).lerp(heli.position, 0.28), dur: 11, cut: true, fov: 52,
-      onStart: () => { heli.userData.cabinLight.intensity = 0.3; Sound.bed('wind', 0.08); if (!Music.play('island', { loop: false, fade: 1.5 })) Sound.theme(0.1); setTimeout(() => HUD.big('UMBRA', 'Expedition D-05', 'title', 5), 2500); setTimeout(() => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Они живые. Они настоящие.', dur: 3 }]), 7500); } },
+      onStart: () => { heli.userData.cabinLight.intensity = 0.3; Sound.bed('wind', 0.08); if (!Music.play('island', { loop: false, fade: 1.5 })) Sound.theme(0.1); Cine.later(2500, () => HUD.big('UMBRA', 'Expedition D-05', 'title', 5)); Cine.later(7500, () => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Они живые. Они настоящие.', dur: 3 }])); } },
     { from: loc(0.1, 2.1, 1.75), look: loc(0.62, 2.02, 0.85), dur: 5, cut: true, fov: 42, rigid: true, onUpdate: sit,
       onStart: () => { crew.lena.userData.pose = { sit: true, lookY: 1.05 }; crew.diego.userData.pose = { sit: true }; HUD.say([{ who: 'Диего', text: 'Скажи это ещё раз, когда будем внизу.', dur: 2.6 }, { who: 'Лена', text: 'Они живые, Диего.', dur: 2 }]); } },
     { from: V(-30, 14, -44), to: V(-32, 15, -36), look: () => V(-62, 15, -18).lerp(heli.position, 0.35), dur: 6, cut: true, fov: 50 },
@@ -243,7 +243,7 @@ function flightIntro(world, herd) {
       onStart: () => { Sound.bed('insects', 0.05); Sound.bed('wind', 0.06); } },
     // touchdown: door slides open, the team steps out
     { from: loc(7, 1.7, 5), to: loc(6.2, 1.6, 4.2), look: loc(1.6, 1.3, 0.2), dur: 7, cut: true, fov: 48,
-      onStart: () => { heli.userData.openDoor(true); heli.userData.idle(); setTimeout(() => heli.userData.stop(), 3500); disembark(); } },
+      onStart: () => { heli.userData.openDoor(true); heli.userData.idle(); Cine.later(3500, () => heli.userData.stop(), true); disembark(); } },
   ];
   const door = () => { const d = heli.localToWorld(V(2.4, 0, 0.7)); d.y = valleyHeight(d.x, d.z); return d; };
   const walkers = {};
@@ -301,6 +301,17 @@ CHAPTERS.valley = {
       for (let k = 0; k < 4; k++) mesh(G.box(0.2, 0.04, 0.9), mat('#4b7a36'), { parent: st, pos: [rnd(-1, 1), 0.03, rnd(-1, 1)], rot: [0, rnd(0, TAU), 0] });
       st.position.set(x, world.groundH(x, z), z); world.add(st);
     }
+    // The first sign of EVA-0, beside the track Lena leads along: a print that matches nothing in the
+    // scanner's register. In the caves Lena says she had seen it in the valley and took it for a
+    // scanner error, and until now the valley showed no such print.
+    for (let i = 0; i < 5; i++) decal(world, 13 + i * 1.1, 66 - i * 2.3, { size: 1.6, ry: Math.PI + 0.3, map: evaPrintTexture() });
+    world.interact({
+      x: 15.2, z: 61.4, r: 3, label: 'Изучить странный отпечаток', enabled: () => !S.evaPrint,
+      onUse: () => {
+        S.evaPrint = true; Game.state.flags.evaPrintValley = true; Sound.sfx('ping');
+        HUD.say([{ who: '[Сканер]', text: 'ОТПЕЧАТОК · 4 пальца + волочащийся коготь · вид: НЕТ СОВПАДЕНИЙ В РЕЕСТРЕ', dur: 4.6 }], 'soft');
+      },
+    });
     // carcass & compies
     makeCarcass(world, VALLEY.carcass.x, VALLEY.carcass.z);
     const compies = [];

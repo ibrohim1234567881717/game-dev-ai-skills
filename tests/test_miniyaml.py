@@ -66,7 +66,9 @@ def test_block_scalar_literal():
 
 def test_block_scalar_folded():
     doc = miniyaml.safe_load("body: >\n  line one\n  line two\n")
-    assert doc["body"] == "line one line two"
+    # the default ("clip") chomping keeps one trailing newline, as it does for ``|`` above and as
+    # PyYAML does; the lines are joined by a space
+    assert doc["body"] == "line one line two\n"
 
 
 def test_url_value_is_not_parsed_as_mapping():

@@ -106,7 +106,7 @@ CHAPTERS.dawn = {
         { from: V(0, 2.2, 5), to: V(0, 2.0, 3.6), look: V(0, 1.2, 0), dur: 3, cut: true, fov: 45, onStart: () => { mon('…'); } },
         { from: V(0, 3, 4), look: V(0, 3.2, -9.8), dur: 3, cut: true, fov: 50, onStart: () => { mon('GENETIC SEQUENCE COMPLETE', '#ffffff'); HUD.big('GENETIC SEQUENCE COMPLETE', '', 'ark', 3.2); Sound.motif(1, 0.12); } },
         { from: V(6, 3.5, 6), to: V(-6, 3.5, 6), look: V(0, 1.5, 0), dur: 5, cut: true, fov: 55,
-          onStart: () => { mon('ARK PROTOCOL: AUTHENTICATED'); setTimeout(() => mon('DRIFT VALIDATION: PASSED'), 900); setTimeout(() => mon('ECOSYSTEM STATUS: SELF-SUSTAINING'), 1800); setTimeout(() => mon('INITIATING: DAWN', '#86b4ff'), 2700); rings.forEach((r) => r.material.color.set('#dfe8ff')); },
+          onStart: () => { mon('ARK PROTOCOL: AUTHENTICATED'); Cine.later(900, () => mon('DRIFT VALIDATION: PASSED'), true); Cine.later(1800, () => mon('ECOSYSTEM STATUS: SELF-SUSTAINING'), true); Cine.later(2700, () => mon('INITIATING: DAWN', '#86b4ff'), true); rings.forEach((r) => r.material.color.set('#dfe8ff')); },
           onUpdate: (k) => { ringLight.intensity = k * 25; cols.forEach((c, i) => { c.position.y = lerp(-4.5, 2.25, clamp(k * 1.4 - i * 0.04, 0, 1)); c.material.emissiveIntensity = 0.05 + k * 0.45; }); } },
         { from: V(1.6, 1.7, 1.6), to: V(1.2, 1.7, 0.4), look: V(0, 2.1, -3.2), dur: 22, cut: true, fov: 42,
           onStart: () => { varn.visible = true; Sound.theme(0.07); HUD.say([

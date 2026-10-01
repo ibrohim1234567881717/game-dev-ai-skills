@@ -55,7 +55,7 @@ knowledge/version-matrix.yaml                   version reference
 tools/uad/                                      detect, select, validate, install
 tools/audit.py                                  skill-quality linting
 tools/make_social_preview.py                    regenerates assets/social-preview.png
-tests/                                          118 tests
+tests/                                          131 tests
 ```
 
 ## Conventions that are enforced

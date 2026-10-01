@@ -13,6 +13,7 @@ class Player {
     this.speed = 0;
     this.noise = 0;
     this.health = 3;
+    this.invuln = 0;
     this.frozen = false;
     this.knock = new THREE.Vector3();
     this.radius = 0.4;
@@ -40,7 +41,11 @@ class Player {
     this.lastSafe.copy(this.pos);
     this.knock.set(0, 0, 0);
   }
+  // A hit is followed by a short window in which nothing can hurt again: two raptors reaching the
+  // player in the same moment used to take two of the three hearts at once, with no way to react.
   hurt(n = 1, from) {
+    if (this.invuln > 0) return this.health;
+    this.invuln = 1.5;
     this.health = Math.max(0, this.health - n);
     HUD.health(this.health);
     Cam.shake = 0.6;
@@ -48,9 +53,10 @@ class Player {
     if (from) { _v1.subVectors(this.pos, from).setY(0).normalize().multiplyScalar(9); this.knock.copy(_v1); }
     return this.health;
   }
-  heal() { this.health = 3; HUD.health(3); }
+  heal() { this.health = 3; this.invuln = 0; HUD.health(3); }
   update(dt) {
     const w = this.world;
+    if (this.invuln > 0) this.invuln -= dt;
     if (!this.frozen && Input.enabled && Input.pressed('crouch')) { this.crouch = !this.crouch; $('tbCrouch').classList.toggle('on', this.crouch); }
     const mv = this.frozen || !Input.enabled || Cam.mode !== 'third' ? { x: 0, y: 0 } : Input.computeMove();
     const mag = Math.hypot(mv.x, mv.y);
@@ -215,11 +221,12 @@ const Cam = {
 // ---------- cinematics ----------
 const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 const Cine = {
-  active: false, shots: [], i: 0, t: 0, resolve: null, fov: 55, snap: false, prevMode: 'third', speed: 1,
+  active: false, shots: [], i: 0, t: 0, resolve: null, fov: 55, snap: false, prevMode: 'third', speed: 1, clock: 0, timers: [],
   play(shots, o = {}) {
     return new Promise((resolve) => {
       this.shots = shots; this.i = 0; this.t = 0; this.hold = 0; this.holding = false; this.stretch = 1; this.resolve = resolve; this.active = true; this.speed = 1;
       this.serial = (this.serial || 0) + 1; // which cutscene a radio line belongs to (HUD.say)
+      this.clock = 0; this.timers = [];
       this.prevMode = Cam.mode === 'cine' ? this.prevMode : Cam.mode;
       Cam.mode = 'cine';
       this.snap = o.snap !== false;
@@ -249,12 +256,27 @@ const Cine = {
   // slower while a shot is stretched, normal outside cutscenes. A hold does not stop it: a
   // helicopter frozen in the air would look worse than a path a second out of step.
   rate() { return !this.active ? 1 : this.speed > 1 ? this.speed : 1 / (this.stretch || 1); },
+  // A timer on the cutscene's own clock, for lines, sounds and flashes a shot sets off a moment after
+  // it starts. A setTimeout runs in real time: skipping a cutscene (6x) left those events behind, so a
+  // line from the middle of the scene arrived after the next shot's, or after the scene was over.
+  // This clock runs at the skipping speed and stops with a pause. When the cutscene ends, what is
+  // still pending is dropped, unless `flush` says it changes the state of the scene (then it is run
+  // at once, so the world is left as if the cutscene had played out).
+  later(ms, fn, flush = false) { this.timers.push({ at: this.clock + ms / 1000, fn, flush }); },
+  _runTimers(all) {
+    if (!this.timers.length) return;
+    const due = all ? this.timers.filter((t) => t.flush) : this.timers.filter((t) => t.at <= this.clock);
+    this.timers = all ? [] : this.timers.filter((t) => t.at > this.clock);
+    for (const t of due) { try { t.fn(); } catch (e) { console.error(e); } }
+  },
   _eval(v, k) { return typeof v === 'function' ? v(k) : v; },
   update(dt) {
     if (!this.active) return;
     if (this.skippable && (Input.pressed('confirm') || Input.pressed('interact') || Input.pressed('shoot'))) this.speed = 6;
     const s = this.shots[this.i];
     this.t += dt * this.speed;
+    this.clock += dt * this.speed;
+    this._runTimers(false);
     // skipping drops the stretch: it was only there to let the lines finish
     const k = s.dur ? clamp(this.t / (s.dur * (this.speed > 1 ? 1 : this.stretch)), 0, 1) : 1;
     const e = s.linear ? k : ease(k);
@@ -281,6 +303,7 @@ const Cine = {
     HUD.letterbox(false);
     Input.enabled = true;
     Input.edges.clear();
+    this._runTimers(true);
     const r = this.resolve; this.resolve = null;
     if (r) r();
   },

@@ -828,6 +828,17 @@ function decal(world, x, z, o = {}) {
   world.add(d);
   return d;
 }
+// EVA-0's track: four toes and a claw dragged behind. The valley shows it first (a scanner entry with
+// no match) and the caves again, where Lena says she had seen it before
+let _evaPrintTex = null;
+function evaPrintTexture() {
+  if (_evaPrintTex) return _evaPrintTex;
+  return (_evaPrintTex = canvasTex(64, 64, (g) => {
+    g.fillStyle = 'rgba(20,16,12,0.85)'; g.beginPath(); g.ellipse(32, 42, 12, 14, 0, 0, TAU); g.fill();
+    [[-16, 14, -0.5], [-5, 8, -0.15], [6, 8, 0.15], [17, 14, 0.5]].forEach(([dx, dy, r]) => { g.save(); g.translate(32 + dx, dy + 8); g.rotate(r); g.beginPath(); g.ellipse(0, 0, 4, 10, 0, 0, TAU); g.fill(); g.restore(); });
+    g.strokeStyle = 'rgba(20,16,12,0.8)'; g.lineWidth = 3; g.beginPath(); g.moveTo(52, 50); g.lineTo(62, 64); g.stroke();
+  }));
+}
 const BLOOD_MAT = () => new THREE.MeshStandardMaterial({ color: '#6e0b0b', roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.92, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
 let _bloodTex = null;
 function bloodTexture() {

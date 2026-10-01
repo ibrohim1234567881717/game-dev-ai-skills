@@ -262,14 +262,14 @@ function makeDossier(station) {
         // down through the clouds onto the island
         { from: V(80, 158, 190), to: V(18, 40, 58), look: () => V(0, 4, -12), dur: 3.4, cut: true, fov: 50,
           onStart: () => { D.show(true); S.set = 'dive'; look('day', DOS.tri); Sound.bed('hum', 0, 0.6); Sound.bed('rain', 0, 0.6); Sound.bed('wind', 0.1, 0.8); Sound.bed('insects', 0.035, 2); Sound.sfx('whistle', 0.25); } },
-        species('tri', 0, 'day', G0(-17, 19, 1.4), G0(-13, 14.5, 1.3), () => V(0, H(0, -4) + 2.2, -4), 3.8, { onStart: () => { Sound.bird(0.03, -0.4); setTimeout(() => Sound.sfx('horn', 0.35), 900); } }),
+        species('tri', 0, 'day', G0(-17, 19, 1.4), G0(-13, 14.5, 1.3), () => V(0, H(0, -4) + 2.2, -4), 3.8, { onStart: () => { Sound.bird(0.03, -0.4); Cine.later(900, () => Sound.sfx('horn', 0.35)); } }),
         species('rap', 1, 'jungle', G0(DOS.rap.x + 6.5, DOS.rap.z + 5.5, 1.25), G0(DOS.rap.x + 4.8, DOS.rap.z + 3.6, 1.15), () => V(rapA.position.x, rapA.position.y + 1.7, rapA.position.z), 3.8,
-          { fov: 40, onStart: () => { rapB.position.set(DOS.rap.x + 9, H(DOS.rap.x + 9, DOS.rap.z + 3), DOS.rap.z + 3); Sound.bed('insects', 0.05, 0.3); setTimeout(() => Sound.sfx('click', 0.5), 600); } }),
+          { fov: 40, onStart: () => { rapB.position.set(DOS.rap.x + 9, H(DOS.rap.x + 9, DOS.rap.z + 3), DOS.rap.z + 3); Sound.bed('insects', 0.05, 0.3); Cine.later(600, () => Sound.sfx('click', 0.5)); } }),
         species('spi', 2, 'river', V(dosRiverX(36) + 5.5, 0.25, 36), V(dosRiverX(33) + 4.5, 0.45, 33), V(dosRiverX(8), 3.6, 4), 3.8, { fov: 46, at: { x: dosRiverX(12), z: 12 }, onStart: () => { Sound.bed('water', 0.1, 0.4); Sound.bed('insects', 0.02, 0.4); Sound.sfx('splash', 0.5); } }),
-        species('pte', 3, 'cliffs', G0(62, 178, 2.2), G0(58, 181, 2.8), () => V(30, H(30, 190) + 7, 196), 3.8, { fov: 52, at: { x: 35, z: 190 }, onStart: () => { Sound.bed('water', 0.04, 0.6); Sound.bed('wind', 0.14, 0.6); setTimeout(() => Sound.sfx('shriek', 0.45), 700); } }),
+        species('pte', 3, 'cliffs', G0(62, 178, 2.2), G0(58, 181, 2.8), () => V(30, H(30, 190) + 7, 196), 3.8, { fov: 52, at: { x: 35, z: 190 }, onStart: () => { Sound.bed('water', 0.04, 0.6); Sound.bed('wind', 0.14, 0.6); Cine.later(700, () => Sound.sfx('shriek', 0.45)); } }),
         // the storm comes in over the forest: silence, one footfall
         { from: G0(DOS.rex.x + 5, DOS.rex.z + 16, 1.7), to: G0(DOS.rex.x + 4, DOS.rex.z + 13, 1.6), look: () => V(DOS.rex.x, H(DOS.rex.x, DOS.rex.z) + 3.5, DOS.rex.z - 20), dur: 2.4, cut: true, fov: 46,
-          onStart: () => { S.set = 'still'; rex.visible = false; look('storm', DOS.rex); HUD.dossier(null); Sound.silenceAll(0.4); setTimeout(() => { Sound.sfx('thud', 0.7); Cam.shake = Math.max(Cam.shake, 0.25); }, 1400); } },
+          onStart: () => { S.set = 'still'; rex.visible = false; look('storm', DOS.rex); HUD.dossier(null); Sound.silenceAll(0.4); Cine.later(1400, () => { Sound.sfx('thud', 0.7); Cam.shake = Math.max(Cam.shake, 0.25); }); } },
         species('rex', 4, 'storm', G0(DOS.rex.x + 4, DOS.rex.z + 6, 1.1), G0(DOS.rex.x + 3.6, DOS.rex.z + 4.5, 1.0), () => V(rex.position.x, rex.position.y + 5.2, rex.position.z + 2), 3.8,
           { fov: 44, onStart: () => { rex.visible = true; S.flashT = 0; Sound.sfx('thunder', 0.9); Sound.bed('rain', 0.12, 0.3); Sound.sfx('thud', 0.9); Sound.tone(49, 2.5, 'sawtooth', 0.12, 0, 41); } }),
       ];

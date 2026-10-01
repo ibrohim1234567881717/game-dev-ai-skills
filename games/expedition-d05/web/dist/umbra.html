@@ -3561,6 +3561,17 @@ function decal(world, x, z, o = {}) {
   world.add(d);
   return d;
 }
+// EVA-0's track: four toes and a claw dragged behind. The valley shows it first (a scanner entry with
+// no match) and the caves again, where Lena says she had seen it before
+let _evaPrintTex = null;
+function evaPrintTexture() {
+  if (_evaPrintTex) return _evaPrintTex;
+  return (_evaPrintTex = canvasTex(64, 64, (g) => {
+    g.fillStyle = 'rgba(20,16,12,0.85)'; g.beginPath(); g.ellipse(32, 42, 12, 14, 0, 0, TAU); g.fill();
+    [[-16, 14, -0.5], [-5, 8, -0.15], [6, 8, 0.15], [17, 14, 0.5]].forEach(([dx, dy, r]) => { g.save(); g.translate(32 + dx, dy + 8); g.rotate(r); g.beginPath(); g.ellipse(0, 0, 4, 10, 0, 0, TAU); g.fill(); g.restore(); });
+    g.strokeStyle = 'rgba(20,16,12,0.8)'; g.lineWidth = 3; g.beginPath(); g.moveTo(52, 50); g.lineTo(62, 64); g.stroke();
+  }));
+}
 const BLOOD_MAT = () => new THREE.MeshStandardMaterial({ color: '#6e0b0b', roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.92, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
 let _bloodTex = null;
 function bloodTexture() {
@@ -5348,6 +5359,7 @@ class Player {
     this.speed = 0;
     this.noise = 0;
     this.health = 3;
+    this.invuln = 0;
     this.frozen = false;
     this.knock = new THREE.Vector3();
     this.radius = 0.4;
@@ -5375,7 +5387,11 @@ class Player {
     this.lastSafe.copy(this.pos);
     this.knock.set(0, 0, 0);
   }
+  // A hit is followed by a short window in which nothing can hurt again: two raptors reaching the
+  // player in the same moment used to take two of the three hearts at once, with no way to react.
   hurt(n = 1, from) {
+    if (this.invuln > 0) return this.health;
+    this.invuln = 1.5;
     this.health = Math.max(0, this.health - n);
     HUD.health(this.health);
     Cam.shake = 0.6;
@@ -5383,9 +5399,10 @@ class Player {
     if (from) { _v1.subVectors(this.pos, from).setY(0).normalize().multiplyScalar(9); this.knock.copy(_v1); }
     return this.health;
   }
-  heal() { this.health = 3; HUD.health(3); }
+  heal() { this.health = 3; this.invuln = 0; HUD.health(3); }
   update(dt) {
     const w = this.world;
+    if (this.invuln > 0) this.invuln -= dt;
     if (!this.frozen && Input.enabled && Input.pressed('crouch')) { this.crouch = !this.crouch; $('tbCrouch').classList.toggle('on', this.crouch); }
     const mv = this.frozen || !Input.enabled || Cam.mode !== 'third' ? { x: 0, y: 0 } : Input.computeMove();
     const mag = Math.hypot(mv.x, mv.y);
@@ -5550,11 +5567,12 @@ const Cam = {
 // ---------- cinematics ----------
 const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 const Cine = {
-  active: false, shots: [], i: 0, t: 0, resolve: null, fov: 55, snap: false, prevMode: 'third', speed: 1,
+  active: false, shots: [], i: 0, t: 0, resolve: null, fov: 55, snap: false, prevMode: 'third', speed: 1, clock: 0, timers: [],
   play(shots, o = {}) {
     return new Promise((resolve) => {
       this.shots = shots; this.i = 0; this.t = 0; this.hold = 0; this.holding = false; this.stretch = 1; this.resolve = resolve; this.active = true; this.speed = 1;
       this.serial = (this.serial || 0) + 1; // which cutscene a radio line belongs to (HUD.say)
+      this.clock = 0; this.timers = [];
       this.prevMode = Cam.mode === 'cine' ? this.prevMode : Cam.mode;
       Cam.mode = 'cine';
       this.snap = o.snap !== false;
@@ -5584,12 +5602,27 @@ const Cine = {
   // slower while a shot is stretched, normal outside cutscenes. A hold does not stop it: a
   // helicopter frozen in the air would look worse than a path a second out of step.
   rate() { return !this.active ? 1 : this.speed > 1 ? this.speed : 1 / (this.stretch || 1); },
+  // A timer on the cutscene's own clock, for lines, sounds and flashes a shot sets off a moment after
+  // it starts. A setTimeout runs in real time: skipping a cutscene (6x) left those events behind, so a
+  // line from the middle of the scene arrived after the next shot's, or after the scene was over.
+  // This clock runs at the skipping speed and stops with a pause. When the cutscene ends, what is
+  // still pending is dropped, unless `flush` says it changes the state of the scene (then it is run
+  // at once, so the world is left as if the cutscene had played out).
+  later(ms, fn, flush = false) { this.timers.push({ at: this.clock + ms / 1000, fn, flush }); },
+  _runTimers(all) {
+    if (!this.timers.length) return;
+    const due = all ? this.timers.filter((t) => t.flush) : this.timers.filter((t) => t.at <= this.clock);
+    this.timers = all ? [] : this.timers.filter((t) => t.at > this.clock);
+    for (const t of due) { try { t.fn(); } catch (e) { console.error(e); } }
+  },
   _eval(v, k) { return typeof v === 'function' ? v(k) : v; },
   update(dt) {
     if (!this.active) return;
     if (this.skippable && (Input.pressed('confirm') || Input.pressed('interact') || Input.pressed('shoot'))) this.speed = 6;
     const s = this.shots[this.i];
     this.t += dt * this.speed;
+    this.clock += dt * this.speed;
+    this._runTimers(false);
     // skipping drops the stretch: it was only there to let the lines finish
     const k = s.dur ? clamp(this.t / (s.dur * (this.speed > 1 ? 1 : this.stretch)), 0, 1) : 1;
     const e = s.linear ? k : ease(k);
@@ -5616,6 +5649,7 @@ const Cine = {
     HUD.letterbox(false);
     Input.enabled = true;
     Input.edges.clear();
+    this._runTimers(true);
     const r = this.resolve; this.resolve = null;
     if (r) r();
   },
@@ -5971,14 +6005,14 @@ function makeDossier(station) {
         // down through the clouds onto the island
         { from: V(80, 158, 190), to: V(18, 40, 58), look: () => V(0, 4, -12), dur: 3.4, cut: true, fov: 50,
           onStart: () => { D.show(true); S.set = 'dive'; look('day', DOS.tri); Sound.bed('hum', 0, 0.6); Sound.bed('rain', 0, 0.6); Sound.bed('wind', 0.1, 0.8); Sound.bed('insects', 0.035, 2); Sound.sfx('whistle', 0.25); } },
-        species('tri', 0, 'day', G0(-17, 19, 1.4), G0(-13, 14.5, 1.3), () => V(0, H(0, -4) + 2.2, -4), 3.8, { onStart: () => { Sound.bird(0.03, -0.4); setTimeout(() => Sound.sfx('horn', 0.35), 900); } }),
+        species('tri', 0, 'day', G0(-17, 19, 1.4), G0(-13, 14.5, 1.3), () => V(0, H(0, -4) + 2.2, -4), 3.8, { onStart: () => { Sound.bird(0.03, -0.4); Cine.later(900, () => Sound.sfx('horn', 0.35)); } }),
         species('rap', 1, 'jungle', G0(DOS.rap.x + 6.5, DOS.rap.z + 5.5, 1.25), G0(DOS.rap.x + 4.8, DOS.rap.z + 3.6, 1.15), () => V(rapA.position.x, rapA.position.y + 1.7, rapA.position.z), 3.8,
-          { fov: 40, onStart: () => { rapB.position.set(DOS.rap.x + 9, H(DOS.rap.x + 9, DOS.rap.z + 3), DOS.rap.z + 3); Sound.bed('insects', 0.05, 0.3); setTimeout(() => Sound.sfx('click', 0.5), 600); } }),
+          { fov: 40, onStart: () => { rapB.position.set(DOS.rap.x + 9, H(DOS.rap.x + 9, DOS.rap.z + 3), DOS.rap.z + 3); Sound.bed('insects', 0.05, 0.3); Cine.later(600, () => Sound.sfx('click', 0.5)); } }),
         species('spi', 2, 'river', V(dosRiverX(36) + 5.5, 0.25, 36), V(dosRiverX(33) + 4.5, 0.45, 33), V(dosRiverX(8), 3.6, 4), 3.8, { fov: 46, at: { x: dosRiverX(12), z: 12 }, onStart: () => { Sound.bed('water', 0.1, 0.4); Sound.bed('insects', 0.02, 0.4); Sound.sfx('splash', 0.5); } }),
-        species('pte', 3, 'cliffs', G0(62, 178, 2.2), G0(58, 181, 2.8), () => V(30, H(30, 190) + 7, 196), 3.8, { fov: 52, at: { x: 35, z: 190 }, onStart: () => { Sound.bed('water', 0.04, 0.6); Sound.bed('wind', 0.14, 0.6); setTimeout(() => Sound.sfx('shriek', 0.45), 700); } }),
+        species('pte', 3, 'cliffs', G0(62, 178, 2.2), G0(58, 181, 2.8), () => V(30, H(30, 190) + 7, 196), 3.8, { fov: 52, at: { x: 35, z: 190 }, onStart: () => { Sound.bed('water', 0.04, 0.6); Sound.bed('wind', 0.14, 0.6); Cine.later(700, () => Sound.sfx('shriek', 0.45)); } }),
         // the storm comes in over the forest: silence, one footfall
         { from: G0(DOS.rex.x + 5, DOS.rex.z + 16, 1.7), to: G0(DOS.rex.x + 4, DOS.rex.z + 13, 1.6), look: () => V(DOS.rex.x, H(DOS.rex.x, DOS.rex.z) + 3.5, DOS.rex.z - 20), dur: 2.4, cut: true, fov: 46,
-          onStart: () => { S.set = 'still'; rex.visible = false; look('storm', DOS.rex); HUD.dossier(null); Sound.silenceAll(0.4); setTimeout(() => { Sound.sfx('thud', 0.7); Cam.shake = Math.max(Cam.shake, 0.25); }, 1400); } },
+          onStart: () => { S.set = 'still'; rex.visible = false; look('storm', DOS.rex); HUD.dossier(null); Sound.silenceAll(0.4); Cine.later(1400, () => { Sound.sfx('thud', 0.7); Cam.shake = Math.max(Cam.shake, 0.25); }); } },
         species('rex', 4, 'storm', G0(DOS.rex.x + 4, DOS.rex.z + 6, 1.1), G0(DOS.rex.x + 3.6, DOS.rex.z + 4.5, 1.0), () => V(rex.position.x, rex.position.y + 5.2, rex.position.z + 2), 3.8,
           { fov: 44, onStart: () => { rex.visible = true; S.flashT = 0; Sound.sfx('thunder', 0.9); Sound.bed('rain', 0.12, 0.3); Sound.sfx('thud', 0.9); Sound.tone(49, 2.5, 'sawtooth', 0.12, 0, 41); } }),
       ];
@@ -7093,15 +7127,15 @@ function flightIntro(world, herd) {
     { from: loc(-0.2, 2.28, -1.5), look: loc(0.2, 2.0, 5), dur: 6, cut: true, fov: 60, rigid: true, onUpdate: sit,
       onStart: () => { crew.lena.userData.pose = { sit: true, lookY: 0.9 }; HUD.say([{ who: 'Лена', text: 'Это она? Вуаль?', dur: 2.2 }, { who: 'Хальм', text: 'Сорок лет облаков на одном месте. Погода так не умеет.', dur: 3.4 }]); } },
     { from: loc(0.05, 2.05, 1.7), look: loc(0.1, 1.62, 3.0), dur: 5, cut: true, fov: 52, rigid: true, onUpdate: sit,
-      onStart: () => { HUD.say([{ who: 'Лукас', text: 'У меня компас пляшет. Да все приборы пляшут.', dur: 2.8 }, { who: 'Нора (радио)', text: 'Дельта-пять… вас не… повто…', dur: 2.4 }]); setTimeout(() => lightning(world, 1, 0.6), 2500); } },
+      onStart: () => { HUD.say([{ who: 'Лукас', text: 'У меня компас пляшет. Да все приборы пляшут.', dur: 2.8 }, { who: 'Нора (радио)', text: 'Дельта-пять… вас не… повто…', dur: 2.4 }]); Cine.later(2500, () => lightning(world, 1, 0.6)); } },
     { from: loc(-8, 3, -14), to: loc(-5, 2.6, -11), look: loc(0, 1.5, 4), dur: 5, cut: true, fov: 58, rigid: true,
-      onStart: () => { Cam.shake = 0.5; Sound.bed('rain', 0.14); HUD.say([{ who: 'Хальм', text: 'Это нормально. Держите курс на ноль-восемь-пять.', dur: 2.6 }, { who: 'Лукас', text: 'Нормально? Откуда вы знаете, что нормально?', dur: 2.4 }]); setTimeout(() => lightning(world, 1, 0.2), 1800); },
+      onStart: () => { Cam.shake = 0.5; Sound.bed('rain', 0.14); HUD.say([{ who: 'Хальм', text: 'Это нормально. Держите курс на ноль-восемь-пять.', dur: 2.6 }, { who: 'Лукас', text: 'Нормально? Откуда вы знаете, что нормально?', dur: 2.4 }]); Cine.later(1800, () => lightning(world, 1, 0.2)); },
       onUpdate: () => { Cam.shake = Math.max(Cam.shake, 0.25); } },
     { from: loc(-0.3, 2.25, -1.4), look: loc(0.3, 1.9, 3), dur: 4.5, cut: true, fov: 62, rigid: true,
-      onStart: () => { crew.lena.userData.pose = { sit: true, hold: true }; crew.diego.userData.pose = { sit: true, hold: true }; Sound.sfx('thud', 0.5); setTimeout(() => lightning(world, 1.2, 0.1), 900); },
+      onStart: () => { crew.lena.userData.pose = { sit: true, hold: true }; crew.diego.userData.pose = { sit: true, hold: true }; Sound.sfx('thud', 0.5); Cine.later(900, () => lightning(world, 1.2, 0.1)); },
       onUpdate: (k, dt) => { sit(k, dt); Cam.shake = Math.max(Cam.shake, 0.35 * (1 - k)); if (k > 0.85 && !shake) { shake = 1; HUD.flash(0.9, 1.2); Sound.silenceAll(0.6); } } },
     { from: V(170, 9, -40), to: V(166, 11, -62), look: () => V(herd.center.x, 3, herd.center.y).lerp(heli.position, 0.28), dur: 11, cut: true, fov: 52,
-      onStart: () => { heli.userData.cabinLight.intensity = 0.3; Sound.bed('wind', 0.08); if (!Music.play('island', { loop: false, fade: 1.5 })) Sound.theme(0.1); setTimeout(() => HUD.big('UMBRA', 'Expedition D-05', 'title', 5), 2500); setTimeout(() => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Они живые. Они настоящие.', dur: 3 }]), 7500); } },
+      onStart: () => { heli.userData.cabinLight.intensity = 0.3; Sound.bed('wind', 0.08); if (!Music.play('island', { loop: false, fade: 1.5 })) Sound.theme(0.1); Cine.later(2500, () => HUD.big('UMBRA', 'Expedition D-05', 'title', 5)); Cine.later(7500, () => HUD.say([{ who: 'Лена', text: '<em>(шёпотом)</em> Они живые. Они настоящие.', dur: 3 }])); } },
     { from: loc(0.1, 2.1, 1.75), look: loc(0.62, 2.02, 0.85), dur: 5, cut: true, fov: 42, rigid: true, onUpdate: sit,
       onStart: () => { crew.lena.userData.pose = { sit: true, lookY: 1.05 }; crew.diego.userData.pose = { sit: true }; HUD.say([{ who: 'Диего', text: 'Скажи это ещё раз, когда будем внизу.', dur: 2.6 }, { who: 'Лена', text: 'Они живые, Диего.', dur: 2 }]); } },
     { from: V(-30, 14, -44), to: V(-32, 15, -36), look: () => V(-62, 15, -18).lerp(heli.position, 0.35), dur: 6, cut: true, fov: 50 },
@@ -7109,7 +7143,7 @@ function flightIntro(world, herd) {
       onStart: () => { Sound.bed('insects', 0.05); Sound.bed('wind', 0.06); } },
     // touchdown: door slides open, the team steps out
     { from: loc(7, 1.7, 5), to: loc(6.2, 1.6, 4.2), look: loc(1.6, 1.3, 0.2), dur: 7, cut: true, fov: 48,
-      onStart: () => { heli.userData.openDoor(true); heli.userData.idle(); setTimeout(() => heli.userData.stop(), 3500); disembark(); } },
+      onStart: () => { heli.userData.openDoor(true); heli.userData.idle(); Cine.later(3500, () => heli.userData.stop(), true); disembark(); } },
   ];
   const door = () => { const d = heli.localToWorld(V(2.4, 0, 0.7)); d.y = valleyHeight(d.x, d.z); return d; };
   const walkers = {};
@@ -7167,6 +7201,17 @@ CHAPTERS.valley = {
       for (let k = 0; k < 4; k++) mesh(G.box(0.2, 0.04, 0.9), mat('#4b7a36'), { parent: st, pos: [rnd(-1, 1), 0.03, rnd(-1, 1)], rot: [0, rnd(0, TAU), 0] });
       st.position.set(x, world.groundH(x, z), z); world.add(st);
     }
+    // The first sign of EVA-0, beside the track Lena leads along: a print that matches nothing in the
+    // scanner's register. In the caves Lena says she had seen it in the valley and took it for a
+    // scanner error, and until now the valley showed no such print.
+    for (let i = 0; i < 5; i++) decal(world, 13 + i * 1.1, 66 - i * 2.3, { size: 1.6, ry: Math.PI + 0.3, map: evaPrintTexture() });
+    world.interact({
+      x: 15.2, z: 61.4, r: 3, label: 'Изучить странный отпечаток', enabled: () => !S.evaPrint,
+      onUse: () => {
+        S.evaPrint = true; Game.state.flags.evaPrintValley = true; Sound.sfx('ping');
+        HUD.say([{ who: '[Сканер]', text: 'ОТПЕЧАТОК · 4 пальца + волочащийся коготь · вид: НЕТ СОВПАДЕНИЙ В РЕЕСТРЕ', dur: 4.6 }], 'soft');
+      },
+    });
     // carcass & compies
     makeCarcass(world, VALLEY.carcass.x, VALLEY.carcass.z);
     const compies = [];
@@ -7767,7 +7812,9 @@ CHAPTERS.k4 = {
     const patrolPts = ['den', 'den3', 'c1', 'c2', 'hall', 'hall2', 'c4', 'sec', 'gn', 'c3'];
 
     // ---------- state ----------
-    const S = { stage: 'outside', gen: false, power: { light: true, lab: false, cams: true, vent: true }, secVisited: false, lures: 3, lureSpots: [], seen: false, cp: 'start', alphaHunt: false, slammed: false, dna: false, escape: false, diegoShots: 0, labSeen: false };
+    const S = { stage: 'outside', gen: false, power: { light: true, lab: false, cams: true, vent: true }, secVisited: false, lures: 3, lureSpots: [], seen: false, cp: 'start', alphaHunt: false, slammed: false, dna: false, escape: false, diegoShots: 0, labSeen: false, fails: 0, noticeHint: false };
+    // each failed attempt makes the raptors a little less sharp: casual players should not hit a wall here
+    const assist = () => Math.min(S.fails, 3);
     const applyPower = () => {
       const on = S.gen;
       reds.forEach((l) => { l.intensity = on && S.power.light ? 5 : 0; });
@@ -7789,19 +7836,20 @@ CHAPTERS.k4 = {
         this.yaw = rnd(0, TAU); this.speed = 0; this.state = 'dormant'; this.t = 0; this.path = null; this.goal = null;
         this.col = { x: this.pos.x, z: this.pos.y, r: 0.55 }; world.circles.push(this.col);
         this.lastSeen = null; this.anim = {};
+        this.notice = 0; // 0..1: how far the raptor has got to realising what it is looking at
       }
-      reset(node) { this.pos.set(nodes[node].x, nodes[node].z); this.state = S.gen ? 'patrol' : 'dormant'; this.path = null; this.goal = null; this.t = rnd(0, 2); this.lastSeen = null; }
+      reset(node) { this.pos.set(nodes[node].x, nodes[node].z); this.state = S.gen ? 'patrol' : 'dormant'; this.path = null; this.goal = null; this.t = rnd(0, 2); this.lastSeen = null; this.notice = 0; }
       goTo(x, z) { this.goal = { x, z }; this.path = nav.path(this.pos.x, this.pos.y, x, z); }
       canSee(P) {
         const d = dist2d(P.pos.x, P.pos.z, this.pos.x, this.pos.y);
         const lit = (S.gen && S.power.light) || !inside(P.pos.x, P.pos.z);
-        const range = (lit ? 17 : 8) * (P.crouch ? 0.6 : 1) * (P.moving ? 1 : 0.7);
+        const range = (lit ? 13 : 6) * (1 - 0.12 * assist()) * (P.crouch ? 0.6 : 1) * (P.moving ? 1 : 0.7);
         if (d > range) return false;
         const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
         if ((fx * (P.pos.x - this.pos.x) + fz * (P.pos.z - this.pos.y)) / (d || 1) < 0.35 && d > 2.5) return false;
         return losClear(world, this.pos.x, this.pos.y, P.pos.x, P.pos.z);
       }
-      hear(P) { const d = dist2d(P.pos.x, P.pos.z, this.pos.x, this.pos.y); return P.noise > 0 && d < P.noise * 1.7; }
+      hear(P) { const d = dist2d(P.pos.x, P.pos.z, this.pos.x, this.pos.y); return P.noise > 0 && d < P.noise * 1.4; }
       onNoise(x, z, r, kind) {
         if (this.state === 'dormant' || this.state === 'hunt' || this.state === 'rage' || this.state === 'chase') return;
         if (dist2d(x, z, this.pos.x, this.pos.y) > r) return;
@@ -7816,19 +7864,30 @@ CHAPTERS.k4 = {
       }
       update(dt, P) {
         const d = dist2d(P.pos.x, P.pos.z, this.pos.x, this.pos.y);
-        let speed = 0; let tx = null, tz = null;
+        let speed = 0; let tx = null, tz = null, alerting = false;
         this.anim = { alert: false, sniff: false, tilt: false, open: false, crouch: false };
-        if (this.state === 'dormant') { this.anim.crouch = true; }
+        if (this.state === 'dormant') { this.anim.crouch = true; this.notice = 0; }
         else if (this.state === 'rage') {
           this.anim.open = Math.sin(Game.time * 6) > 0; this.yaw = dampAngle(this.yaw, Math.PI / 2, 6, dt);
           if (Math.random() < dt * 0.8) { Sound.sfx('thud', 0.4); Sound.sfx('shriek', 0.5); Cam.shake = Math.max(Cam.shake, 0.12); }
         } else {
           const sees = this.canSee(P), hears = this.hear(P);
-          if (this.state !== 'stalk' && (sees || (hears && d < 9))) {
-            if (this.state !== 'hunt' && this.state !== 'chase') { Sound.sfx('shriek', Sound.vol(d, 3, 40)); if (!S.seen) { S.seen = true; Journal.add('rap', 'seen'); } }
+          const spotted = sees || (hears && d < 6), engaged = this.state === 'hunt' || this.state === 'chase';
+          // A raptor that has only just spotted the player stops and looks first. It used to start the
+          // hunt on the very frame it saw anything, and a hunting raptor was as fast as a sprinting
+          // player, so there was nothing to do about it.
+          if (spotted && !engaged && this.state !== 'stalk') {
+            const grace = (d < 4 ? 0.3 : 1.2) * (1 + 0.25 * assist());
+            if (this.notice <= 0) Sound.sfx('click', Sound.vol(d, 3, 30));
+            this.notice = Math.min(1, this.notice + dt / grace);
+            alerting = this.notice < 1;
+            if (alerting && !S.noticeHint) { S.noticeHint = true; Tutorial.show('rapnotice', IS_TOUCH ? 'Раптор насторожился. Замрите или отойдите за угол, пока он не заметил вас' : 'Раптор насторожился. Замрите или отойдите за угол, пока он не заметил вас (<kbd>C</kbd> — присесть)', () => raptors.every((r) => r.notice < 0.05), { max: 9, min: 0.6 }); }
+          } else this.notice = Math.max(0, this.notice - dt / 1.5);
+          if (spotted && (engaged || this.notice >= 1) && this.state !== 'stalk') {
+            if (!engaged) { Sound.sfx('shriek', Sound.vol(d, 3, 40)); if (!S.seen) { S.seen = true; Journal.add('rap', 'seen'); } }
             if (this.state !== 'chase') this.state = 'hunt';
             this.lastSeen = { x: P.pos.x, z: P.pos.z, t: Game.time };
-          } else if (hears && this.state === 'patrol') { this.state = 'investigate'; this.goTo(P.pos.x, P.pos.z); this.t = 0; }
+          } else if (hears && !spotted && this.state === 'patrol') { this.state = 'investigate'; this.goTo(P.pos.x, P.pos.z); this.t = 0; }
           if (this.state === 'patrol') {
             if (!this.path || !this.path.length) {
               this.t -= dt; this.anim.sniff = this.t > 0.8;
@@ -7847,12 +7906,12 @@ CHAPTERS.k4 = {
             if (this.t <= 0) this.state = 'hunt';
           } else if (this.state === 'hunt' || this.state === 'chase') {
             this.anim.alert = true; this.anim.open = d < 4;
-            speed = this.state === 'chase' ? 5.9 : 6.2;
+            speed = this.state === 'chase' ? 5.0 : 5.2; // a sprinting player (6.6 m/s) pulls away
             const target = this.state === 'chase' ? { x: P.pos.x, z: P.pos.z } : this.lastSeen;
             if (target && losClear(world, this.pos.x, this.pos.y, target.x, target.z)) { tx = target.x; tz = target.z; this.path = null; }
             else if (target) { if (!this.path || !this.path.length || Math.random() < dt * 2) this.goTo(target.x, target.z); }
             if (this.state === 'hunt' && this.lastSeen && Game.time - this.lastSeen.t > 4) { this.state = 'investigate'; this.goTo(this.lastSeen.x, this.lastSeen.z); this.t = 0; }
-            if (d < 1.5) {
+            if (d < 1.5 && !(P.invuln > 0)) {
               Sound.sfx('shriek', 1);
               const left = P.hurt(1, new THREE.Vector3(this.pos.x, 0, this.pos.y));
               this.state = 'stalk'; this.t = 3.5;
@@ -7860,8 +7919,9 @@ CHAPTERS.k4 = {
               else HUD.say([{ who: 'Лена (рация)', text: 'Итан! Уходите от него — за угол, в темноту!' }], true);
             }
           }
+          if (alerting) { speed = 0; this.anim.alert = true; this.yaw = dampAngle(this.yaw, Math.atan2(P.pos.x - this.pos.x, P.pos.z - this.pos.y), 6, dt); }
           // follow path
-          if (tx === null && this.path && this.path.length) {
+          if (!alerting && tx === null && this.path && this.path.length) {
             const n = this.path[0];
             if (dist2d(this.pos.x, this.pos.y, n.x, n.z) < 0.7) this.path.shift();
             else { tx = n.x; tz = n.z; }
@@ -7892,7 +7952,7 @@ CHAPTERS.k4 = {
       const box = $('choiceBtns');
       const render = () => {
         const used = Object.values(S.power).filter(Boolean).length;
-        $('choiceText').textContent = `Генератор тянет только 3 системы из 4. Включено: ${used}/3.`;
+        $('choiceText').textContent = `Генератор тянет только 3 системы из 4. Включено: ${used}/3.` + (S.power.lab ? '' : ' Чтобы открыть лабораторию, выключите любую другую систему и включите «Двери лаборатории».');
         box.innerHTML = '';
         for (const k of ['light', 'lab', 'cams', 'vent']) {
           const b = document.createElement('button');
@@ -7942,7 +8002,7 @@ CHAPTERS.k4 = {
       reds.forEach((l, i) => { l.intensity = 0; setTimeout(() => { l.intensity = S.power.light ? 7 : 0; Sound.sfx('lever', 0.3); }, 250 + i * 160); });
       [0, 1, 2].forEach((i) => setTimeout(() => Sound.sfx('door', 0.5 - i * 0.12), 800 + i * 500));
       setTimeout(() => { Sound.sfx('shriek', 0.45); setTimeout(() => Sound.sfx('shriek', 0.3), 700); }, 2600);
-      raptors.forEach((r) => { r.state = 'patrol'; r.t = rnd(2, 6); });
+      raptors.forEach((r) => { r.state = 'patrol'; r.t = rnd(8, 14); }); // they wake and sniff in their den before they move
       HUD.throwBtn(true);
       HUD.say([{ who: 'Диего (рация)', text: 'Есть свет.' }, { who: 'Лена (рация)', text: 'Итан… это были все двери? Я слышала… что-то.' }, { who: 'Диего (рация)', text: 'Никто не бежит. Слышишь? Никто не бежит.' }]);
       HUD.objective('Откройте лабораторию', 'Щиток в холле. Генератор тянет 3 системы из 4 — чем пожертвовать?');
@@ -7960,6 +8020,19 @@ CHAPTERS.k4 = {
       Cam.pull = { x: a.pos.x, z: a.pos.y, strength: 3, time: 1.5 };
       HUD.objective('Бегите в чистую зону!', 'Бронедверь в восточной стене лаборатории. Закройте её за собой.');
       HUD.say([{ who: 'Лена (рация)', text: 'Итан! Сзади! Бронедверь — справа от вас, бегите!' }], true);
+    }
+    function slamBlast() {
+      if (S.slammed) return;
+      const a = raptors[0];
+      S.slammed = true; blast.set(false); Game.timeScale = 1; slowmo = -1;
+      Cam.shake = 0.7; Sound.sfx('slam', 1.2); setTimeout(() => Sound.sfx('shriek', 1), 150);
+      a.state = 'rage'; a.pos.set(38.6, 9.5); a.path = null;
+      for (let i = 0; i < 6; i++) { const f = mesh(G.box(0.03, 0.02, 0.3), mat('#2c2a24'), { parent: world.scene, pos: [40.6 + rnd(0, 0.8), 0.02, 9 + rnd(0, 1.2)], rot: [0, rnd(0, TAU), 0], cast: false }); f.userData.feather = true; }
+      bloodDecal(world, 40.7, 9.6, 0.5);
+      S.cp = 'cr';
+      HUD.objective('Возьмите перо', 'Вожак оставил в щели двери растущее перо. Оно живое, пока свежее.');
+      HUD.say([{ who: 'Лена (рация)', text: 'Вы… вы захлопнули её прямо перед ней. Итан, в щели перо — с кровью. Берите!' }], true);
+      Journal.add('rap', 'seen', true);
     }
     async function takeFeather() {
       S.dna = true;
@@ -8024,24 +8097,19 @@ CHAPTERS.k4 = {
             HUD.prompt('Закрыть бронедверь!', 'E', null, true);
             const ad = dist2d(a.pos.x, a.pos.y, 40, 9.5);
             if (ad < 9 && slowmo === 0) { slowmo = 2.6; Sound.sfx('shriek', 1); }
-            if (Input.pressed('interact')) {
-              S.slammed = true; blast.set(false); Game.timeScale = 1; slowmo = -1;
-              Cam.shake = 0.7; Sound.sfx('slam', 1.2); setTimeout(() => Sound.sfx('shriek', 1), 150);
-              a.state = 'rage'; a.pos.set(38.6, 9.5); a.path = null;
-              for (let i = 0; i < 6; i++) { const f = mesh(G.box(0.03, 0.02, 0.3), mat('#2c2a24'), { parent: world.scene, pos: [40.6 + rnd(0, 0.8), 0.02, 9 + rnd(0, 1.2)], rot: [0, rnd(0, TAU), 0], cast: false }); f.userData.feather = true; }
-              bloodDecal(world, 40.7, 9.6, 0.5);
-              S.cp = 'cr';
-              HUD.objective('Возьмите перо', 'Вожак оставил в щели двери растущее перо. Оно живое, пока свежее.');
-              HUD.say([{ who: 'Лена (рация)', text: 'Вы… вы захлопнули её прямо перед ней. Итан, в щели перо — с кровью. Берите!' }], true);
-              Journal.add('rap', 'seen', true);
-            }
+            if (Input.pressed('interact')) slamBlast();
           }
-          if (slowmo > 0) { slowmo -= dt / Math.max(Game.timeScale || 1, 0.2); Game.timeScale = 0.35; if (slowmo <= 0) { Game.timeScale = 1; slowmo = -1; } }
+          if (slowmo > 0) {
+            slowmo -= dt / Math.max(Game.timeScale || 1, 0.2); Game.timeScale = 0.35;
+            // the player had the whole slow-motion window to press E; if it is still not done the door
+            // closes itself, rather than the scene ending in a failure for a missed key
+            if (slowmo <= 0) { Game.timeScale = 1; slowmo = -1; if (inCR) slamBlast(); }
+          }
         }
         // escape: Diego covers the service corridor
         if (S.escape) {
           for (const r of raptors) {
-            if (r.state === 'chase' && P.pos.x > 46 && dist2d(r.pos.x, r.pos.y, P.pos.x, P.pos.z) < 6 && S.diegoShots < 4 && (!S.lastShot || Game.time - S.lastShot > 2.2)) {
+            if (r.state === 'chase' && P.pos.x > 46 && dist2d(r.pos.x, r.pos.y, P.pos.x, P.pos.z) < 6 && S.diegoShots < 8 && (!S.lastShot || Game.time - S.lastShot > 1.6)) {
               S.diegoShots++; S.lastShot = Game.time;
               Sound.sfx('shot', 1); setTimeout(() => Sound.sfx('shot', 0.9), 180);
               r.state = 'stalk'; r.t = 2.4;
@@ -8059,7 +8127,7 @@ CHAPTERS.k4 = {
         }
       },
       restore() {
-        Game.timeScale = 1;
+        Game.timeScale = 1; S.fails++;
         const at = { start: [24, 70, Math.PI], gate: [23, 34, Math.PI], gen: [8, 27, Math.PI / 2], labEntry: [30, 16, Math.PI], lab: [30, 16, Math.PI], cr: [43, 9, -Math.PI / 2], escape: [43, 9, -Math.PI / 2] }[S.cp] || [24, 70, Math.PI];
         Game.player.place(at[0], at[1], at[2]);
         raptors.forEach((r, i) => r.reset(['den', 'den2', 'den3'][i]));
@@ -8068,6 +8136,7 @@ CHAPTERS.k4 = {
         if (S.cp === 'escape') raptors.slice(1).forEach((r) => { r.state = 'chase'; r.pos.set(nodes.c3.x, nodes.c3.z); r.path = null; });
         HUD.danger(S.cp === 'escape');
       },
+      debug: () => ({ S, _r: raptors, raptors: raptors.map((r) => ({ state: r.state, notice: +r.notice.toFixed(2), x: +r.pos.x.toFixed(1), z: +r.pos.y.toFixed(1), speed: +r.speed.toFixed(2) })) }),
       dispose() { Game.timeScale = 1; HUD.throwBtn(false); },
     };
     return ctx;
@@ -8507,9 +8576,9 @@ CHAPTERS.attack = {
           { from: g(cx + 3, cz + 7, 1.2), to: g(cx + 3, cz + 6.5, 1.3), look: g(cx - 6, cz - 6, 1.2), dur: 4, cut: true, fov: 60, onStart: () => { HUD.say([{ who: '', text: '<em>Лагерь «Эхо». Ночь. Шторм.</em>', dur: 3 }]); } },
           { from: g(cx - 8, cz + 12, 2.5), look: g(cx - 16, cz - 6, 1), dur: 3.5, cut: true, fov: 55, onStart: () => { lightning(world, 1, 0.5); Sound.sfx('click', 0.8); } },
           { from: g(cx + 6, cz - 2, 1.8), look: g(cx - 2, cz + 2, 1.4), dur: 4, cut: true, fov: 55, onStart: () => HUD.say([{ who: 'Лена', text: 'Они пришли за нами. Они шли от комплекса всё это время.', dur: 3.6 }]) },
-          { from: g(cx - 2, cz + 6, 1.6), look: g(cx - 4, cz - 2, 1.6), dur: 3, cut: true, fov: 50, onStart: () => { lightning(world, 0.8, 0.3); HUD.say([{ who: 'Диего', text: 'Эй! ЭЙ! Сюда, уроды! За мной!', dur: 2.6 }]); Sound.sfx('shot', 1); setTimeout(() => Sound.sfx('shot', 1), 400); } },
-          { from: g(cx + 4, cz + 4, 3), look: () => diego.position.clone().add(V(0, 1, 0)), dur: 7, cut: true, fov: 50, onStart: () => { setTimeout(() => HUD.say([{ who: 'Итан', text: 'Диего!', dur: 1.6 }]), 1500); [1200, 2600, 4100, 5600].forEach((ms, i) => setTimeout(() => Sound.sfx('shot', 0.8 - i * 0.18), ms)); } },
-          { from: g(cx + 2, cz + 5, 1.7), look: g(cx - 20, cz - 40, 2), dur: 5, cut: true, fov: 45, onStart: () => { setTimeout(() => HUD.say([{ who: 'Лукас', text: '<em>(тихо)</em> …Диего?', dur: 2.6 }]), 2200); } },
+          { from: g(cx - 2, cz + 6, 1.6), look: g(cx - 4, cz - 2, 1.6), dur: 3, cut: true, fov: 50, onStart: () => { lightning(world, 0.8, 0.3); HUD.say([{ who: 'Диего', text: 'Эй! ЭЙ! Сюда, уроды! За мной!', dur: 2.6 }]); Sound.sfx('shot', 1); Cine.later(400, () => Sound.sfx('shot', 1)); } },
+          { from: g(cx + 4, cz + 4, 3), look: () => diego.position.clone().add(V(0, 1, 0)), dur: 7, cut: true, fov: 50, onStart: () => { Cine.later(1500, () => HUD.say([{ who: 'Итан', text: 'Диего!', dur: 1.6 }])); [1200, 2600, 4100, 5600].forEach((ms, i) => Cine.later(ms, () => Sound.sfx('shot', 0.8 - i * 0.18))); } },
+          { from: g(cx + 2, cz + 5, 1.7), look: g(cx - 20, cz - 40, 2), dur: 5, cut: true, fov: 45, onStart: () => { Cine.later(2200, () => HUD.say([{ who: 'Лукас', text: '<em>(тихо)</em> …Диего?', dur: 2.6 }])); } },
         ], { skippable: true });
         await HUD.fade(1, 1.2);
         Game.complete('peaks');
@@ -8938,7 +9007,7 @@ CHAPTERS.truth = {
     const flash = makeFlashlight(world, 30); flash.intensity = 0;
     const cavePlants = scatter(QUALITY ? 200 : 100, () => { const x = rnd(-140, -30), z = rnd(-48, 38); const t = tunnelInfo(x, z); if (t.s > 0 || t.s < -3) return null; return { x, y: truthH(x, z), z, s: rnd(0.5, 1.1), ry: rnd(0, TAU), tint: '#49c8a0' }; });
     makeFerns(world, cavePlants, { color: '#8affd8' });
-    for (let i = 0; i < 7; i++) { const x = -62 + i * 0.9, z = 30 - i * 2.4; decal(world, x, z, { size: 1.6, ry: Math.PI + 0.2, map: canvasTex(64, 64, (g) => { g.fillStyle = 'rgba(20,16,12,0.85)'; g.beginPath(); g.ellipse(32, 42, 12, 14, 0, 0, TAU); g.fill(); [[-16, 14, -0.5], [-5, 8, -0.15], [6, 8, 0.15], [17, 14, 0.5]].forEach(([dx, dy, r]) => { g.save(); g.translate(32 + dx, dy + 8); g.rotate(r); g.beginPath(); g.ellipse(0, 0, 4, 10, 0, 0, TAU); g.fill(); g.restore(); }); g.strokeStyle = 'rgba(20,16,12,0.8)'; g.lineWidth = 3; g.beginPath(); g.moveTo(52, 50); g.lineTo(62, 64); g.stroke(); }) }); }
+    for (let i = 0; i < 7; i++) { const x = -62 + i * 0.9, z = 30 - i * 2.4; decal(world, x, z, { size: 1.6, ry: Math.PI + 0.2, map: evaPrintTexture() }); }
     const diego = makeNPC('diego'); diego.position.set(TRUTH.alcove[0], truthH(...TRUTH.alcove), TRUTH.alcove[1]); diego.rotation.y = 0.8; world.add(diego);
     world.circles.push({ x: TRUTH.alcove[0], z: TRUTH.alcove[1], r: 0.6 });
     const shelter = new THREE.Group();
@@ -9351,12 +9420,12 @@ CHAPTERS.queen = {
         const boom = () => { ripple = 1; Sound.sfx('step', 1); Cam.shake = 0.3; labLights.forEach((l) => { l.intensity = 4; setTimeout(() => { l.intensity = 10; }, 120); }); };
         await Cine.play([
           { from: V(1.4, 1.5, -9.6), look: V(0.3, 1.0, -9), dur: 3, cut: true, fov: 35, onStart: () => HUD.say([{ who: '[Журнал D-03 · 2011]', text: '«Она ходит вокруг здания. Мы слышим её, но не видим. Виктор говорит — не смотреть в окна».', dur: 3 }]) },
-          { from: V(0.9, 1.25, -9.3), look: V(0.3, 1.05, -9), dur: 2.2, fov: 28, onStart: () => setTimeout(boom, 600) },
+          { from: V(0.9, 1.25, -9.3), look: V(0.3, 1.05, -9), dur: 2.2, fov: 28, onStart: () => Cine.later(600, boom) },
           { from: V(3, 1.7, -14), look: V(0, 1.6, -11), dur: 2.4, cut: true, fov: 45, onStart: () => HUD.say([{ who: 'Хальм', text: '<em>(шёпотом)</em> …раз… два…', dur: 2 }]) },
-          { from: V(0.9, 1.25, -9.3), look: V(0.3, 1.05, -9), dur: 1.8, cut: true, fov: 28, onStart: () => setTimeout(boom, 400) },
+          { from: V(0.9, 1.25, -9.3), look: V(0.3, 1.05, -9), dur: 1.8, cut: true, fov: 28, onStart: () => Cine.later(400, boom) },
           { from: V(0, 1.7, -6), to: V(0, 1.7, -4.5), look: V(0, 2.2, 6), dur: 3.2, cut: true, fov: 50, onStart: () => HUD.say([{ who: 'Лена', text: 'Что вы считаете?', dur: 1.6 }, { who: 'Хальм', text: 'Сколько у нас времени.', dur: 1.8 }]) },
-          { from: V(0, 1.7, -4.5), look: V(0, 3, 10), dur: 1.6, fov: 50, onStart: () => { Q.state = 'staged'; Q.x = 6; Q.z = 13; Q.yaw = -Math.PI / 2; rex.visible = true; rex.position.set(Q.x, 0, Q.z); rex.rotation.y = Q.yaw; rex.userData.anim(0.016, 0, { sniff: false }); setTimeout(() => { lightning(world, 1.3, 0.2); Journal.add('rex', 'seen'); }, 200); } },
-          { from: V(0, 1.7, -4.4), look: V(0, 3, 10), dur: 2.2, fov: 50, onStart: () => { setTimeout(() => { rex.visible = false; Q.x = 60; Q.z = 60; lightning(world, 1, 0.1); }, 900); } },
+          { from: V(0, 1.7, -4.5), look: V(0, 3, 10), dur: 1.6, fov: 50, onStart: () => { Q.state = 'staged'; Q.x = 6; Q.z = 13; Q.yaw = -Math.PI / 2; rex.visible = true; rex.position.set(Q.x, 0, Q.z); rex.rotation.y = Q.yaw; rex.userData.anim(0.016, 0, { sniff: false }); Cine.later(200, () => { lightning(world, 1.3, 0.2); Journal.add('rex', 'seen'); }, true); } },
+          { from: V(0, 1.7, -4.4), look: V(0, 3, 10), dur: 2.2, fov: 50, onStart: () => { Cine.later(900, () => { rex.visible = false; Q.x = 60; Q.z = 60; lightning(world, 1, 0.1); }, true); } },
           { from: V(0, 1.7, -4.3), to: V(0, 1.7, -3.8), look: V(0, 2.5, 10), dur: 3.6, fov: 50, onStart: () => HUD.say([{ who: 'Диего', text: 'Ушла?', dur: 1.4 }, { who: 'Хальм', text: 'Она никогда не уходит.', dur: 2 }]) },
           { from: V(3, 2.2, -8), look: V(0, 3, 0.5), dur: 2.4, cut: true, fov: 55, onStart: () => {
             Q.x = 0; Q.z = 1.8; Q.yaw = Math.PI; Q.state = 'staged'; rex.visible = true; rex.position.set(0, 0, 1.8); rex.rotation.y = Math.PI;
@@ -9523,7 +9592,7 @@ CHAPTERS.dawn = {
         { from: V(0, 2.2, 5), to: V(0, 2.0, 3.6), look: V(0, 1.2, 0), dur: 3, cut: true, fov: 45, onStart: () => { mon('…'); } },
         { from: V(0, 3, 4), look: V(0, 3.2, -9.8), dur: 3, cut: true, fov: 50, onStart: () => { mon('GENETIC SEQUENCE COMPLETE', '#ffffff'); HUD.big('GENETIC SEQUENCE COMPLETE', '', 'ark', 3.2); Sound.motif(1, 0.12); } },
         { from: V(6, 3.5, 6), to: V(-6, 3.5, 6), look: V(0, 1.5, 0), dur: 5, cut: true, fov: 55,
-          onStart: () => { mon('ARK PROTOCOL: AUTHENTICATED'); setTimeout(() => mon('DRIFT VALIDATION: PASSED'), 900); setTimeout(() => mon('ECOSYSTEM STATUS: SELF-SUSTAINING'), 1800); setTimeout(() => mon('INITIATING: DAWN', '#86b4ff'), 2700); rings.forEach((r) => r.material.color.set('#dfe8ff')); },
+          onStart: () => { mon('ARK PROTOCOL: AUTHENTICATED'); Cine.later(900, () => mon('DRIFT VALIDATION: PASSED'), true); Cine.later(1800, () => mon('ECOSYSTEM STATUS: SELF-SUSTAINING'), true); Cine.later(2700, () => mon('INITIATING: DAWN', '#86b4ff'), true); rings.forEach((r) => r.material.color.set('#dfe8ff')); },
           onUpdate: (k) => { ringLight.intensity = k * 25; cols.forEach((c, i) => { c.position.y = lerp(-4.5, 2.25, clamp(k * 1.4 - i * 0.04, 0, 1)); c.material.emissiveIntensity = 0.05 + k * 0.45; }); } },
         { from: V(1.6, 1.7, 1.6), to: V(1.2, 1.7, 0.4), look: V(0, 2.1, -3.2), dur: 22, cut: true, fov: 42,
           onStart: () => { varn.visible = true; Sound.theme(0.07); HUD.say([

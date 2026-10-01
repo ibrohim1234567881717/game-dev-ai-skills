@@ -127,7 +127,9 @@ CHAPTERS.k4 = {
     const patrolPts = ['den', 'den3', 'c1', 'c2', 'hall', 'hall2', 'c4', 'sec', 'gn', 'c3'];
 
     // ---------- state ----------
-    const S = { stage: 'outside', gen: false, power: { light: true, lab: false, cams: true, vent: true }, secVisited: false, lures: 3, lureSpots: [], seen: false, cp: 'start', alphaHunt: false, slammed: false, dna: false, escape: false, diegoShots: 0, labSeen: false };
+    const S = { stage: 'outside', gen: false, power: { light: true, lab: false, cams: true, vent: true }, secVisited: false, lures: 3, lureSpots: [], seen: false, cp: 'start', alphaHunt: false, slammed: false, dna: false, escape: false, diegoShots: 0, labSeen: false, fails: 0, noticeHint: false };
+    // each failed attempt makes the raptors a little less sharp: casual players should not hit a wall here
+    const assist = () => Math.min(S.fails, 3);
     const applyPower = () => {
       const on = S.gen;
       reds.forEach((l) => { l.intensity = on && S.power.light ? 5 : 0; });
@@ -149,19 +151,20 @@ CHAPTERS.k4 = {
         this.yaw = rnd(0, TAU); this.speed = 0; this.state = 'dormant'; this.t = 0; this.path = null; this.goal = null;
         this.col = { x: this.pos.x, z: this.pos.y, r: 0.55 }; world.circles.push(this.col);
         this.lastSeen = null; this.anim = {};
+        this.notice = 0; // 0..1: how far the raptor has got to realising what it is looking at
       }
-      reset(node) { this.pos.set(nodes[node].x, nodes[node].z); this.state = S.gen ? 'patrol' : 'dormant'; this.path = null; this.goal = null; this.t = rnd(0, 2); this.lastSeen = null; }
+      reset(node) { this.pos.set(nodes[node].x, nodes[node].z); this.state = S.gen ? 'patrol' : 'dormant'; this.path = null; this.goal = null; this.t = rnd(0, 2); this.lastSeen = null; this.notice = 0; }
       goTo(x, z) { this.goal = { x, z }; this.path = nav.path(this.pos.x, this.pos.y, x, z); }
       canSee(P) {
         const d = dist2d(P.pos.x, P.pos.z, this.pos.x, this.pos.y);
         const lit = (S.gen && S.power.light) || !inside(P.pos.x, P.pos.z);
-        const range = (lit ? 17 : 8) * (P.crouch ? 0.6 : 1) * (P.moving ? 1 : 0.7);
+        const range = (lit ? 13 : 6) * (1 - 0.12 * assist()) * (P.crouch ? 0.6 : 1) * (P.moving ? 1 : 0.7);
         if (d > range) return false;
         const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
         if ((fx * (P.pos.x - this.pos.x) + fz * (P.pos.z - this.pos.y)) / (d || 1) < 0.35 && d > 2.5) return false;
         return losClear(world, this.pos.x, this.pos.y, P.pos.x, P.pos.z);
       }
-      hear(P) { const d = dist2d(P.pos.x, P.pos.z, this.pos.x, this.pos.y); return P.noise > 0 && d < P.noise * 1.7; }
+      hear(P) { const d = dist2d(P.pos.x, P.pos.z, this.pos.x, this.pos.y); return P.noise > 0 && d < P.noise * 1.4; }
       onNoise(x, z, r, kind) {
         if (this.state === 'dormant' || this.state === 'hunt' || this.state === 'rage' || this.state === 'chase') return;
         if (dist2d(x, z, this.pos.x, this.pos.y) > r) return;
@@ -176,19 +179,30 @@ CHAPTERS.k4 = {
       }
       update(dt, P) {
         const d = dist2d(P.pos.x, P.pos.z, this.pos.x, this.pos.y);
-        let speed = 0; let tx = null, tz = null;
+        let speed = 0; let tx = null, tz = null, alerting = false;
         this.anim = { alert: false, sniff: false, tilt: false, open: false, crouch: false };
-        if (this.state === 'dormant') { this.anim.crouch = true; }
+        if (this.state === 'dormant') { this.anim.crouch = true; this.notice = 0; }
         else if (this.state === 'rage') {
           this.anim.open = Math.sin(Game.time * 6) > 0; this.yaw = dampAngle(this.yaw, Math.PI / 2, 6, dt);
           if (Math.random() < dt * 0.8) { Sound.sfx('thud', 0.4); Sound.sfx('shriek', 0.5); Cam.shake = Math.max(Cam.shake, 0.12); }
         } else {
           const sees = this.canSee(P), hears = this.hear(P);
-          if (this.state !== 'stalk' && (sees || (hears && d < 9))) {
-            if (this.state !== 'hunt' && this.state !== 'chase') { Sound.sfx('shriek', Sound.vol(d, 3, 40)); if (!S.seen) { S.seen = true; Journal.add('rap', 'seen'); } }
+          const spotted = sees || (hears && d < 6), engaged = this.state === 'hunt' || this.state === 'chase';
+          // A raptor that has only just spotted the player stops and looks first. It used to start the
+          // hunt on the very frame it saw anything, and a hunting raptor was as fast as a sprinting
+          // player, so there was nothing to do about it.
+          if (spotted && !engaged && this.state !== 'stalk') {
+            const grace = (d < 4 ? 0.3 : 1.2) * (1 + 0.25 * assist());
+            if (this.notice <= 0) Sound.sfx('click', Sound.vol(d, 3, 30));
+            this.notice = Math.min(1, this.notice + dt / grace);
+            alerting = this.notice < 1;
+            if (alerting && !S.noticeHint) { S.noticeHint = true; Tutorial.show('rapnotice', IS_TOUCH ? 'Раптор насторожился. Замрите или отойдите за угол, пока он не заметил вас' : 'Раптор насторожился. Замрите или отойдите за угол, пока он не заметил вас (<kbd>C</kbd> — присесть)', () => raptors.every((r) => r.notice < 0.05), { max: 9, min: 0.6 }); }
+          } else this.notice = Math.max(0, this.notice - dt / 1.5);
+          if (spotted && (engaged || this.notice >= 1) && this.state !== 'stalk') {
+            if (!engaged) { Sound.sfx('shriek', Sound.vol(d, 3, 40)); if (!S.seen) { S.seen = true; Journal.add('rap', 'seen'); } }
             if (this.state !== 'chase') this.state = 'hunt';
             this.lastSeen = { x: P.pos.x, z: P.pos.z, t: Game.time };
-          } else if (hears && this.state === 'patrol') { this.state = 'investigate'; this.goTo(P.pos.x, P.pos.z); this.t = 0; }
+          } else if (hears && !spotted && this.state === 'patrol') { this.state = 'investigate'; this.goTo(P.pos.x, P.pos.z); this.t = 0; }
           if (this.state === 'patrol') {
             if (!this.path || !this.path.length) {
               this.t -= dt; this.anim.sniff = this.t > 0.8;
@@ -207,12 +221,12 @@ CHAPTERS.k4 = {
             if (this.t <= 0) this.state = 'hunt';
           } else if (this.state === 'hunt' || this.state === 'chase') {
             this.anim.alert = true; this.anim.open = d < 4;
-            speed = this.state === 'chase' ? 5.9 : 6.2;
+            speed = this.state === 'chase' ? 5.0 : 5.2; // a sprinting player (6.6 m/s) pulls away
             const target = this.state === 'chase' ? { x: P.pos.x, z: P.pos.z } : this.lastSeen;
             if (target && losClear(world, this.pos.x, this.pos.y, target.x, target.z)) { tx = target.x; tz = target.z; this.path = null; }
             else if (target) { if (!this.path || !this.path.length || Math.random() < dt * 2) this.goTo(target.x, target.z); }
             if (this.state === 'hunt' && this.lastSeen && Game.time - this.lastSeen.t > 4) { this.state = 'investigate'; this.goTo(this.lastSeen.x, this.lastSeen.z); this.t = 0; }
-            if (d < 1.5) {
+            if (d < 1.5 && !(P.invuln > 0)) {
               Sound.sfx('shriek', 1);
               const left = P.hurt(1, new THREE.Vector3(this.pos.x, 0, this.pos.y));
               this.state = 'stalk'; this.t = 3.5;
@@ -220,8 +234,9 @@ CHAPTERS.k4 = {
               else HUD.say([{ who: 'Лена (рация)', text: 'Итан! Уходите от него — за угол, в темноту!' }], true);
             }
           }
+          if (alerting) { speed = 0; this.anim.alert = true; this.yaw = dampAngle(this.yaw, Math.atan2(P.pos.x - this.pos.x, P.pos.z - this.pos.y), 6, dt); }
           // follow path
-          if (tx === null && this.path && this.path.length) {
+          if (!alerting && tx === null && this.path && this.path.length) {
             const n = this.path[0];
             if (dist2d(this.pos.x, this.pos.y, n.x, n.z) < 0.7) this.path.shift();
             else { tx = n.x; tz = n.z; }
@@ -252,7 +267,7 @@ CHAPTERS.k4 = {
       const box = $('choiceBtns');
       const render = () => {
         const used = Object.values(S.power).filter(Boolean).length;
-        $('choiceText').textContent = `Генератор тянет только 3 системы из 4. Включено: ${used}/3.`;
+        $('choiceText').textContent = `Генератор тянет только 3 системы из 4. Включено: ${used}/3.` + (S.power.lab ? '' : ' Чтобы открыть лабораторию, выключите любую другую систему и включите «Двери лаборатории».');
         box.innerHTML = '';
         for (const k of ['light', 'lab', 'cams', 'vent']) {
           const b = document.createElement('button');
@@ -302,7 +317,7 @@ CHAPTERS.k4 = {
       reds.forEach((l, i) => { l.intensity = 0; setTimeout(() => { l.intensity = S.power.light ? 7 : 0; Sound.sfx('lever', 0.3); }, 250 + i * 160); });
       [0, 1, 2].forEach((i) => setTimeout(() => Sound.sfx('door', 0.5 - i * 0.12), 800 + i * 500));
       setTimeout(() => { Sound.sfx('shriek', 0.45); setTimeout(() => Sound.sfx('shriek', 0.3), 700); }, 2600);
-      raptors.forEach((r) => { r.state = 'patrol'; r.t = rnd(2, 6); });
+      raptors.forEach((r) => { r.state = 'patrol'; r.t = rnd(8, 14); }); // they wake and sniff in their den before they move
       HUD.throwBtn(true);
       HUD.say([{ who: 'Диего (рация)', text: 'Есть свет.' }, { who: 'Лена (рация)', text: 'Итан… это были все двери? Я слышала… что-то.' }, { who: 'Диего (рация)', text: 'Никто не бежит. Слышишь? Никто не бежит.' }]);
       HUD.objective('Откройте лабораторию', 'Щиток в холле. Генератор тянет 3 системы из 4 — чем пожертвовать?');
@@ -320,6 +335,19 @@ CHAPTERS.k4 = {
       Cam.pull = { x: a.pos.x, z: a.pos.y, strength: 3, time: 1.5 };
       HUD.objective('Бегите в чистую зону!', 'Бронедверь в восточной стене лаборатории. Закройте её за собой.');
       HUD.say([{ who: 'Лена (рация)', text: 'Итан! Сзади! Бронедверь — справа от вас, бегите!' }], true);
+    }
+    function slamBlast() {
+      if (S.slammed) return;
+      const a = raptors[0];
+      S.slammed = true; blast.set(false); Game.timeScale = 1; slowmo = -1;
+      Cam.shake = 0.7; Sound.sfx('slam', 1.2); setTimeout(() => Sound.sfx('shriek', 1), 150);
+      a.state = 'rage'; a.pos.set(38.6, 9.5); a.path = null;
+      for (let i = 0; i < 6; i++) { const f = mesh(G.box(0.03, 0.02, 0.3), mat('#2c2a24'), { parent: world.scene, pos: [40.6 + rnd(0, 0.8), 0.02, 9 + rnd(0, 1.2)], rot: [0, rnd(0, TAU), 0], cast: false }); f.userData.feather = true; }
+      bloodDecal(world, 40.7, 9.6, 0.5);
+      S.cp = 'cr';
+      HUD.objective('Возьмите перо', 'Вожак оставил в щели двери растущее перо. Оно живое, пока свежее.');
+      HUD.say([{ who: 'Лена (рация)', text: 'Вы… вы захлопнули её прямо перед ней. Итан, в щели перо — с кровью. Берите!' }], true);
+      Journal.add('rap', 'seen', true);
     }
     async function takeFeather() {
       S.dna = true;
@@ -384,24 +412,19 @@ CHAPTERS.k4 = {
             HUD.prompt('Закрыть бронедверь!', 'E', null, true);
             const ad = dist2d(a.pos.x, a.pos.y, 40, 9.5);
             if (ad < 9 && slowmo === 0) { slowmo = 2.6; Sound.sfx('shriek', 1); }
-            if (Input.pressed('interact')) {
-              S.slammed = true; blast.set(false); Game.timeScale = 1; slowmo = -1;
-              Cam.shake = 0.7; Sound.sfx('slam', 1.2); setTimeout(() => Sound.sfx('shriek', 1), 150);
-              a.state = 'rage'; a.pos.set(38.6, 9.5); a.path = null;
-              for (let i = 0; i < 6; i++) { const f = mesh(G.box(0.03, 0.02, 0.3), mat('#2c2a24'), { parent: world.scene, pos: [40.6 + rnd(0, 0.8), 0.02, 9 + rnd(0, 1.2)], rot: [0, rnd(0, TAU), 0], cast: false }); f.userData.feather = true; }
-              bloodDecal(world, 40.7, 9.6, 0.5);
-              S.cp = 'cr';
-              HUD.objective('Возьмите перо', 'Вожак оставил в щели двери растущее перо. Оно живое, пока свежее.');
-              HUD.say([{ who: 'Лена (рация)', text: 'Вы… вы захлопнули её прямо перед ней. Итан, в щели перо — с кровью. Берите!' }], true);
-              Journal.add('rap', 'seen', true);
-            }
+            if (Input.pressed('interact')) slamBlast();
           }
-          if (slowmo > 0) { slowmo -= dt / Math.max(Game.timeScale || 1, 0.2); Game.timeScale = 0.35; if (slowmo <= 0) { Game.timeScale = 1; slowmo = -1; } }
+          if (slowmo > 0) {
+            slowmo -= dt / Math.max(Game.timeScale || 1, 0.2); Game.timeScale = 0.35;
+            // the player had the whole slow-motion window to press E; if it is still not done the door
+            // closes itself, rather than the scene ending in a failure for a missed key
+            if (slowmo <= 0) { Game.timeScale = 1; slowmo = -1; if (inCR) slamBlast(); }
+          }
         }
         // escape: Diego covers the service corridor
         if (S.escape) {
           for (const r of raptors) {
-            if (r.state === 'chase' && P.pos.x > 46 && dist2d(r.pos.x, r.pos.y, P.pos.x, P.pos.z) < 6 && S.diegoShots < 4 && (!S.lastShot || Game.time - S.lastShot > 2.2)) {
+            if (r.state === 'chase' && P.pos.x > 46 && dist2d(r.pos.x, r.pos.y, P.pos.x, P.pos.z) < 6 && S.diegoShots < 8 && (!S.lastShot || Game.time - S.lastShot > 1.6)) {
               S.diegoShots++; S.lastShot = Game.time;
               Sound.sfx('shot', 1); setTimeout(() => Sound.sfx('shot', 0.9), 180);
               r.state = 'stalk'; r.t = 2.4;
@@ -419,7 +442,7 @@ CHAPTERS.k4 = {
         }
       },
       restore() {
-        Game.timeScale = 1;
+        Game.timeScale = 1; S.fails++;
         const at = { start: [24, 70, Math.PI], gate: [23, 34, Math.PI], gen: [8, 27, Math.PI / 2], labEntry: [30, 16, Math.PI], lab: [30, 16, Math.PI], cr: [43, 9, -Math.PI / 2], escape: [43, 9, -Math.PI / 2] }[S.cp] || [24, 70, Math.PI];
         Game.player.place(at[0], at[1], at[2]);
         raptors.forEach((r, i) => r.reset(['den', 'den2', 'den3'][i]));
@@ -428,6 +451,7 @@ CHAPTERS.k4 = {
         if (S.cp === 'escape') raptors.slice(1).forEach((r) => { r.state = 'chase'; r.pos.set(nodes.c3.x, nodes.c3.z); r.path = null; });
         HUD.danger(S.cp === 'escape');
       },
+      debug: () => ({ S, _r: raptors, raptors: raptors.map((r) => ({ state: r.state, notice: +r.notice.toFixed(2), x: +r.pos.x.toFixed(1), z: +r.pos.y.toFixed(1), speed: +r.speed.toFixed(2) })) }),
       dispose() { Game.timeScale = 1; HUD.throwBtn(false); },
     };
     return ctx;

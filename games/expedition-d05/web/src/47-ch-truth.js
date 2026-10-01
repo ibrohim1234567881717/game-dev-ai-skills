@@ -103,7 +103,7 @@ CHAPTERS.truth = {
     const flash = makeFlashlight(world, 30); flash.intensity = 0;
     const cavePlants = scatter(QUALITY ? 200 : 100, () => { const x = rnd(-140, -30), z = rnd(-48, 38); const t = tunnelInfo(x, z); if (t.s > 0 || t.s < -3) return null; return { x, y: truthH(x, z), z, s: rnd(0.5, 1.1), ry: rnd(0, TAU), tint: '#49c8a0' }; });
     makeFerns(world, cavePlants, { color: '#8affd8' });
-    for (let i = 0; i < 7; i++) { const x = -62 + i * 0.9, z = 30 - i * 2.4; decal(world, x, z, { size: 1.6, ry: Math.PI + 0.2, map: canvasTex(64, 64, (g) => { g.fillStyle = 'rgba(20,16,12,0.85)'; g.beginPath(); g.ellipse(32, 42, 12, 14, 0, 0, TAU); g.fill(); [[-16, 14, -0.5], [-5, 8, -0.15], [6, 8, 0.15], [17, 14, 0.5]].forEach(([dx, dy, r]) => { g.save(); g.translate(32 + dx, dy + 8); g.rotate(r); g.beginPath(); g.ellipse(0, 0, 4, 10, 0, 0, TAU); g.fill(); g.restore(); }); g.strokeStyle = 'rgba(20,16,12,0.8)'; g.lineWidth = 3; g.beginPath(); g.moveTo(52, 50); g.lineTo(62, 64); g.stroke(); }) }); }
+    for (let i = 0; i < 7; i++) { const x = -62 + i * 0.9, z = 30 - i * 2.4; decal(world, x, z, { size: 1.6, ry: Math.PI + 0.2, map: evaPrintTexture() }); }
     const diego = makeNPC('diego'); diego.position.set(TRUTH.alcove[0], truthH(...TRUTH.alcove), TRUTH.alcove[1]); diego.rotation.y = 0.8; world.add(diego);
     world.circles.push({ x: TRUTH.alcove[0], z: TRUTH.alcove[1], r: 0.6 });
     const shelter = new THREE.Group();

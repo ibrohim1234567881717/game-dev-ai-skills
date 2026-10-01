@@ -218,12 +218,12 @@ CHAPTERS.queen = {
         const boom = () => { ripple = 1; Sound.sfx('step', 1); Cam.shake = 0.3; labLights.forEach((l) => { l.intensity = 4; setTimeout(() => { l.intensity = 10; }, 120); }); };
         await Cine.play([
           { from: V(1.4, 1.5, -9.6), look: V(0.3, 1.0, -9), dur: 3, cut: true, fov: 35, onStart: () => HUD.say([{ who: '[Журнал D-03 · 2011]', text: '«Она ходит вокруг здания. Мы слышим её, но не видим. Виктор говорит — не смотреть в окна».', dur: 3 }]) },
-          { from: V(0.9, 1.25, -9.3), look: V(0.3, 1.05, -9), dur: 2.2, fov: 28, onStart: () => setTimeout(boom, 600) },
+          { from: V(0.9, 1.25, -9.3), look: V(0.3, 1.05, -9), dur: 2.2, fov: 28, onStart: () => Cine.later(600, boom) },
           { from: V(3, 1.7, -14), look: V(0, 1.6, -11), dur: 2.4, cut: true, fov: 45, onStart: () => HUD.say([{ who: 'Хальм', text: '<em>(шёпотом)</em> …раз… два…', dur: 2 }]) },
-          { from: V(0.9, 1.25, -9.3), look: V(0.3, 1.05, -9), dur: 1.8, cut: true, fov: 28, onStart: () => setTimeout(boom, 400) },
+          { from: V(0.9, 1.25, -9.3), look: V(0.3, 1.05, -9), dur: 1.8, cut: true, fov: 28, onStart: () => Cine.later(400, boom) },
           { from: V(0, 1.7, -6), to: V(0, 1.7, -4.5), look: V(0, 2.2, 6), dur: 3.2, cut: true, fov: 50, onStart: () => HUD.say([{ who: 'Лена', text: 'Что вы считаете?', dur: 1.6 }, { who: 'Хальм', text: 'Сколько у нас времени.', dur: 1.8 }]) },
-          { from: V(0, 1.7, -4.5), look: V(0, 3, 10), dur: 1.6, fov: 50, onStart: () => { Q.state = 'staged'; Q.x = 6; Q.z = 13; Q.yaw = -Math.PI / 2; rex.visible = true; rex.position.set(Q.x, 0, Q.z); rex.rotation.y = Q.yaw; rex.userData.anim(0.016, 0, { sniff: false }); setTimeout(() => { lightning(world, 1.3, 0.2); Journal.add('rex', 'seen'); }, 200); } },
-          { from: V(0, 1.7, -4.4), look: V(0, 3, 10), dur: 2.2, fov: 50, onStart: () => { setTimeout(() => { rex.visible = false; Q.x = 60; Q.z = 60; lightning(world, 1, 0.1); }, 900); } },
+          { from: V(0, 1.7, -4.5), look: V(0, 3, 10), dur: 1.6, fov: 50, onStart: () => { Q.state = 'staged'; Q.x = 6; Q.z = 13; Q.yaw = -Math.PI / 2; rex.visible = true; rex.position.set(Q.x, 0, Q.z); rex.rotation.y = Q.yaw; rex.userData.anim(0.016, 0, { sniff: false }); Cine.later(200, () => { lightning(world, 1.3, 0.2); Journal.add('rex', 'seen'); }, true); } },
+          { from: V(0, 1.7, -4.4), look: V(0, 3, 10), dur: 2.2, fov: 50, onStart: () => { Cine.later(900, () => { rex.visible = false; Q.x = 60; Q.z = 60; lightning(world, 1, 0.1); }, true); } },
           { from: V(0, 1.7, -4.3), to: V(0, 1.7, -3.8), look: V(0, 2.5, 10), dur: 3.6, fov: 50, onStart: () => HUD.say([{ who: 'Диего', text: 'Ушла?', dur: 1.4 }, { who: 'Хальм', text: 'Она никогда не уходит.', dur: 2 }]) },
           { from: V(3, 2.2, -8), look: V(0, 3, 0.5), dur: 2.4, cut: true, fov: 55, onStart: () => {
             Q.x = 0; Q.z = 1.8; Q.yaw = Math.PI; Q.state = 'staged'; rex.visible = true; rex.position.set(0, 0, 1.8); rex.rotation.y = Math.PI;

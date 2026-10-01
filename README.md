@@ -10,7 +10,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT"></a>
   <a href="https://agentskills.io"><img src="https://img.shields.io/badge/format-Agent%20Skills-5A67D8" alt="Agent Skills"></a>
   <img src="https://img.shields.io/badge/skills-71-brightgreen" alt="71 skills">
-  <img src="https://img.shields.io/badge/tests-118%20passing-success" alt="118 tests">
+  <img src="https://img.shields.io/badge/tests-131%20passing-success" alt="131 tests">
   <img src="https://img.shields.io/badge/dependencies-none-success" alt="No dependencies">
 </p>
 
@@ -320,7 +320,7 @@ This project would rather be trusted than admired, so:
 **Solid.** The architecture, detection (23 tests including false-positive
 checks), skill selection and context isolation (19 scenario tests), validation
 (19 tests, all asserting the validator *rejects* defects), install (14 tests).
-118 tests, CI on Linux, macOS and Windows across Python 3.9 and 3.12.
+131 tests, CI on Linux, macOS and Windows across Python 3.9 and 3.12.
 
 **Partial.** 42 platform skills against roughly 90 planned. Each pack carries
 its entry skill plus the areas where a mistake is most expensive; everything
