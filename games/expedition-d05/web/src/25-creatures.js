@@ -383,7 +383,11 @@ function makeRaptor(o = {}) {
 }
 
 // ---------- Spinosaurus ----------
+// the author's Meshy model when it is built in, the lofted stand-in below otherwise
 function makeSpino() {
+  return makeSpinoSkinned() || makeSpinoProcedural();
+}
+function makeSpinoProcedural() {
   // lofted body, a paddle tail, a long croc-like snout, and the sail: a membrane on spines, red
   // at the top fading dark at the base
   const back = '#4c5a50', belly = '#8e9484', SK = skinMat(), col = { back, belly, foot: '#34382e' };

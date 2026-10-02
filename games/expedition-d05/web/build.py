@@ -31,7 +31,7 @@ next to dist/umbra.html. The cues the game knows are MUSIC_CUES; see
 music/README.md.
 
 Models (optional): models/rex.json, written by models/prepare_rex.py from the
-author's Meshy T-Rex, is embedded as window.MODEL_REX. Without it (or with
+author's Meshy T-Rex, is embedded as window.MODEL_REX (and models/spino.json, from the Meshy spinosaurus, as window.MODEL_SPINO). Without it (or with
 --no-models) the game builds its procedural T-Rex instead.
 
 Yandex Games (--target yandex): the platform wants a whole index.html at the
@@ -298,6 +298,12 @@ def main(argv=None) -> None:
     else:
         parts.append("window.MODEL_REX = null;")
         model_note = "models: none, procedural stand-ins" if not args.no_models else "models: off (--no-models)"
+    spino = MODELS / "spino.json"
+    if spino.is_file() and not args.no_models:
+        parts.append("window.MODEL_SPINO = " + spino.read_text(encoding="utf-8") + ";")
+        model_note += f", spinosaurus ({spino.stat().st_size / 1048576:.2f} MB)"
+    else:
+        parts.append("window.MODEL_SPINO = null;")
     if tracks:
         music_note = f"music: {len(tracks)} track(s) ({', '.join(sorted(tracks))}), {music_bytes / 1048576:.2f} MB in {music_out.relative_to(ROOT)}/"
     else:

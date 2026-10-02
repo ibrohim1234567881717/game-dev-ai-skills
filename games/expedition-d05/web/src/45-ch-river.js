@@ -43,6 +43,8 @@ function fishJump(world, x, z, n = 6) {
   Sound.noise(0.3, 2200, 'bandpass', 0.15, 0, 2);
 }
 
+// where the procedural spinosaurus's jaws close; the skinned model gives its own (userData.bite)
+const _spinoBite = new THREE.Vector3(0, 4.6, 7.5);
 CHAPTERS.river = {
   create() {
     seed(777);
@@ -266,7 +268,7 @@ CHAPTERS.river = {
         }
       } else if (SP.state === 'charge') {
         SP.t += dt; tx = pp.x; tz = clamp(pp.z, rz - 16, rz + 17.5); speed = 7; targetRise = SP.t > 0.9 ? 1 : 0.4;
-        spino.localToWorld(spinoHead.set(0, 4.6, 7.5));
+        spino.localToWorld(spinoHead.copy(spino.userData.bite || _spinoBite));
         if (SP.t > 1 && dist2d(spinoHead.x, spinoHead.z, pp.x, pp.z) < 4.2) {
           Sound.sfx('roar', 1); Sound.sfx('splash', 1); Cam.shake = 0.6;
           const left = P.hurt(1, spinoHead.clone());

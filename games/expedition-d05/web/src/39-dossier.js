@@ -193,7 +193,8 @@ function makeDossier(station) {
   const walker = herd[2];
   const brachios = [at(makeBrachio(), 26, -62, 0.9, -0.6), at(makeBrachio(), 46, -76, 2.4, -0.6)];
   const rapA = at(makeRaptor(), DOS.rap.x - 2, DOS.rap.z - 5, 0.35, 1.0), rapB = at(makeRaptor({ notch: true }), DOS.rap.x + 8, DOS.rap.z + 3, -Math.PI / 2);
-  const spino = makeSpino(); spino.position.set(dosRiverX(12), -2.8, 12); spino.rotation.y = 0.15; isle.add(spino);
+  // three-quarter to the camera, so the shot shows the sail, not just its edge
+  const spino = makeSpino(); spino.position.set(dosRiverX(12), -2.8, 12); spino.rotation.y = 0.7; isle.add(spino);
   const pteras = [0, 1, 2, 3].map((i) => { const p = makePtera({ scale: 1.3 }); isle.add(p); p.userData.orbit = { r: 9 + i * 4.5, y: H(20, 190) + 5 + i * 3, w: (i % 2 ? -1 : 1) * (0.42 - i * 0.05), a: i * 1.7 }; return p; });
   const rex = at(makeRex(), DOS.rex.x, DOS.rex.z - 16, 0);
   const rexZ0 = rex.position.z;

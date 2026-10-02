@@ -16,41 +16,43 @@
 const REX_SCALE = 3.8; // the model is 1.7 m tall; the Queen stands about 6.5 m, near the procedural one
 const REX_HIP_Z = -0.6; // where the procedural T-Rex has its hips: cutscenes and collisions are set up around it
 
+// the mesh, textures and skin of a model prepared by models/prepare_rex.py, decoded once
+function decodeMeshy(M) {
+  if (!M || M.v !== 1) return null;
+  const bytes = (s) => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
+  const f32 = (s) => new Float32Array(bytes(s).buffer);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(f32(M.position), 3));
+  geo.setAttribute('normal', new THREE.BufferAttribute(f32(M.normal), 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(f32(M.uv), 2));
+  geo.setAttribute('skinIndex', new THREE.BufferAttribute(bytes(M.skinIndex), 4));
+  geo.setAttribute('skinWeight', new THREE.BufferAttribute(bytes(M.skinWeight), 4, true));
+  const ib = bytes(M.index).buffer;
+  geo.setIndex(new THREE.BufferAttribute(M.index32 ? new Uint32Array(ib) : new Uint16Array(ib), 1));
+  geo.computeBoundingSphere();
+  const loader = new THREE.TextureLoader();
+  const tex = (url, srgb) => {
+    const t = loader.load(url);
+    t.flipY = false; // glTF UVs
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    return t;
+  };
+  const material = new THREE.MeshStandardMaterial({
+    map: tex(M.maps.map, true), normalMap: tex(M.maps.normalMap), roughnessMap: tex(M.maps.roughnessMap),
+    roughness: 1, metalness: 0, envMapIntensity: 0.55,
+    side: M.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
+  });
+  // no tangents in the mesh: three derives them, and glTF's green channel then points the other way
+  material.normalScale.set(1, -1);
+  return { M, geo, material, ibm: f32(M.ibm) };
+}
+
 const RexModel = {
   _base: undefined,
   // decoded once and shared: every Queen the game builds uses the same geometry and textures
   base() {
-    if (this._base !== undefined) return this._base;
-    this._base = null;
-    const M = typeof window !== 'undefined' ? window.MODEL_REX : null;
-    if (!M || M.v !== 1) return null;
-    const bytes = (s) => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
-    const f32 = (s) => new Float32Array(bytes(s).buffer);
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(f32(M.position), 3));
-    geo.setAttribute('normal', new THREE.BufferAttribute(f32(M.normal), 3));
-    geo.setAttribute('uv', new THREE.BufferAttribute(f32(M.uv), 2));
-    geo.setAttribute('skinIndex', new THREE.BufferAttribute(bytes(M.skinIndex), 4));
-    geo.setAttribute('skinWeight', new THREE.BufferAttribute(bytes(M.skinWeight), 4, true));
-    const ib = bytes(M.index).buffer;
-    geo.setIndex(new THREE.BufferAttribute(M.index32 ? new Uint32Array(ib) : new Uint16Array(ib), 1));
-    geo.computeBoundingSphere();
-    const loader = new THREE.TextureLoader();
-    const tex = (url, srgb) => {
-      const t = loader.load(url);
-      t.flipY = false; // glTF UVs
-      if (srgb) t.colorSpace = THREE.SRGBColorSpace;
-      t.anisotropy = 4;
-      return t;
-    };
-    const material = new THREE.MeshStandardMaterial({
-      map: tex(M.maps.map, true), normalMap: tex(M.maps.normalMap), roughnessMap: tex(M.maps.roughnessMap),
-      roughness: 1, metalness: 0, envMapIntensity: 0.55,
-      side: M.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
-    });
-    // no tangents in the mesh: three derives them, and glTF's green channel then points the other way
-    material.normalScale.set(1, -1);
-    this._base = { M, geo, material, ibm: f32(M.ibm) };
+    if (this._base === undefined) this._base = decodeMeshy(typeof window !== 'undefined' ? window.MODEL_REX : null);
     return this._base;
   },
 };

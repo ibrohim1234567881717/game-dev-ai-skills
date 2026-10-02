@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Turn the author's Meshy T-Rex into the compact model the game embeds.
+"""Turn the author's Meshy models into the compact form the game embeds.
 
-    python games/expedition-d05/web/models/prepare_rex.py
+    python games/expedition-d05/web/models/prepare_rex.py              # the T-Rex (the Queen)
+    python games/expedition-d05/web/models/prepare_rex.py spinosaurus  # the spinosaurus (Charon)
 
-Reads assets/meshy/trext.glb (57 MB: its colour texture alone is 8192 x 8192) and writes
-models/rex.json (about 1.5 MB), which build.py embeds as window.MODEL_REX:
+Reads assets/meshy/trext.glb (57 MB: its colour texture alone is 8192 x 8192) or
+assets/meshy/spinosaurus.glb (18 MB) and writes models/rex.json or models/spino.json (about
+1.3 MB each), which build.py embeds as window.MODEL_REX / window.MODEL_SPINO:
 
 - textures scaled down to what a browser game shows (colour 1024, normal 1024, roughness 512)
   and stored as JPEG data: URLs;
@@ -33,8 +35,13 @@ from pathlib import Path
 from PIL import Image, ImageStat
 
 HERE = Path(__file__).resolve().parent
-SRC = HERE.parent.parent / "assets" / "meshy" / "trext.glb"
-OUT = HERE / "rex.json"
+# which model: `prepare_rex.py` (the Queen, the default) or `prepare_rex.py spinosaurus` (Charon)
+MODELS = {"rex": ("trext.glb", "rex.json", "Meshy, CC BY 4.0"), "spinosaurus": ("spinosaurus.glb", "spino.json", "Meshy, CC BY 4.0")}
+WHICH = sys.argv[1] if len(sys.argv) > 1 else "rex"
+if WHICH not in MODELS:
+    sys.exit(f"unknown model {WHICH!r}: one of {', '.join(MODELS)}")
+SRC = HERE.parent.parent / "assets" / "meshy" / MODELS[WHICH][0]
+OUT = HERE / MODELS[WHICH][1]
 SIZES = {"map": 1024, "normalMap": 1024, "roughnessMap": 512}
 COMP = {5120: ("b", 1), 5121: ("B", 1), 5122: ("h", 2), 5123: ("H", 2), 5125: ("I", 4), 5126: ("f", 4)}
 NCOMP = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT4": 16}
@@ -156,7 +163,7 @@ def main() -> None:
     xs, ys, zs = pos[0::3], pos[1::3], pos[2::3]
     model = {
         "v": 1,
-        "source": "assets/meshy/trext.glb (Meshy, CC BY 4.0)",
+        "source": f"assets/meshy/{MODELS[WHICH][0]} ({MODELS[WHICH][2]})",
         "count": count,
         "bounds": [[min(xs), min(ys), min(zs)], [max(xs), max(ys), max(zs)]],
         "position": b64(pos), "normal": b64(nrm), "uv": b64(uv),
